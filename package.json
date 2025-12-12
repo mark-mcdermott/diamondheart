@@ -1,0 +1,46 @@
+{
+	"name": "ortholinear",
+	"version": "0.0.1",
+	"private": true,
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"db:generate": "drizzle-kit generate",
+		"db:push": "drizzle-kit push --force",
+		"db:studio": "drizzle-kit studio",
+		"db:seed-office": "npx tsx scripts/seed-office.ts"
+	},
+	"dependencies": {
+		"bits-ui": "^2.14.4",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"lucide-svelte": "^0.468.0",
+		"svelte-sonner": "^0.3.28",
+		"tailwind-merge": "^3.0.2",
+		"lucia": "^3.2.2",
+		"@lucia-auth/adapter-drizzle": "^1.1.0",
+		"drizzle-orm": "^0.38.3",
+		"@neondatabase/serverless": "^0.10.4",
+		"theme-forseen": "^0.1.1",
+		"stripe": "^17.4.0"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-cloudflare": "^4.0.0",
+		"@sveltejs/kit": "^2.0.0",
+		"@sveltejs/vite-plugin-svelte": "^4.0.0",
+		"svelte": "^5.0.0",
+		"svelte-check": "^4.0.0",
+		"tailwindcss": "^4.0.0",
+		"@tailwindcss/vite": "^4.0.0",
+		"typescript": "^5.0.0",
+		"vite": "^5.0.0",
+		"drizzle-kit": "^0.30.1",
+		"dotenv": "^16.4.7"
+	},
+	"type": "module",
+	"engines": {
+		"node": ">=22"
+	}
+}
