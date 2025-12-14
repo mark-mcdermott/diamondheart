@@ -123,7 +123,7 @@
 			</span>
 		{:else if logo}
 			{#if isLogoImage}
-				<img src={logo} alt={siteName ?? ''} class="w-8 h-8 object-contain" />
+				<img src={logo} alt={siteName ?? ''} class="w-60 h-60 object-contain" />
 			{:else}
 				<span class="text-2xl">{logo}</span>
 			{/if}

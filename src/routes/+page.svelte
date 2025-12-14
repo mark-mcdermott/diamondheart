@@ -34,10 +34,6 @@
 						<span class="font-medium">Users from The Office</span>
 					</div>
 					<div class="flex gap-3 items-center">
-						<div class="text-xl">🎨</div>
-						<span class="font-medium">ThemeForseen live color & font preview</span>
-					</div>
-					<div class="flex gap-3 items-center">
 						<div class="text-xl">👕</div>
 						<span class="font-medium">Merchandise Store</span>
 					</div>

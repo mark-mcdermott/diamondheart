@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	onMount(() => { import('theme-forseen'); });
 	import '../app.css';
 	import { Nav, Footer } from '$lib/components/blocks';
 	import { onNavigate } from '$app/navigation';
@@ -61,8 +59,7 @@
 
 <div class="min-h-dvh flex flex-col">
 	<Nav showThemeToggle={true} themeToggleMode="light-dark-system"
-		siteName="Ortholinear"
-		logo={"rocket"}
+		logo={"/images/logo.svg"}
 		links={navLinks}
 		maxWidth="max-w-6xl"
 		user={data.user}
@@ -73,5 +70,5 @@
 		{@render children()}
 	</main>
 
-	<Footer siteName="Ortholinear" logo={"rocket"} maxWidth="max-w-6xl" />
+	<Footer siteName="Ortholinear" logo={"/images/logo.svg"} maxWidth="max-w-6xl" />
 </div>
