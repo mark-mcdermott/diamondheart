@@ -10,33 +10,38 @@
 		"db:generate": "drizzle-kit generate",
 		"db:push": "drizzle-kit push --force",
 		"db:studio": "drizzle-kit studio",
-		"db:seed-office": "npx tsx scripts/seed-office.ts"
+		"db:seed-office": "npx tsx scripts/seed-office.ts",
+		"ios:open": "npx cap open ios",
+		"ios:sync": "npx cap sync ios"
 	},
 	"dependencies": {
+		"@capacitor/core": "^8.0.0",
+		"@capacitor/ios": "^8.0.0",
+		"@lucia-auth/adapter-drizzle": "^1.1.0",
+		"@neondatabase/serverless": "^0.10.4",
 		"bits-ui": "^2.14.4",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
-		"lucide-svelte": "^0.468.0",
-		"svelte-sonner": "^0.3.28",
-		"tailwind-merge": "^3.0.2",
-		"lucia": "^3.2.2",
-		"@lucia-auth/adapter-drizzle": "^1.1.0",
 		"drizzle-orm": "^0.38.3",
-		"@neondatabase/serverless": "^0.10.4",
-		"stripe": "^17.4.0"
+		"lucia": "^3.2.2",
+		"lucide-svelte": "^0.468.0",
+		"stripe": "^17.4.0",
+		"svelte-sonner": "^0.3.28",
+		"tailwind-merge": "^3.0.2"
 	},
 	"devDependencies": {
+		"@capacitor/cli": "^8.0.0",
 		"@sveltejs/adapter-cloudflare": "^4.0.0",
 		"@sveltejs/kit": "^2.0.0",
 		"@sveltejs/vite-plugin-svelte": "^4.0.0",
+		"@tailwindcss/vite": "^4.0.0",
+		"dotenv": "^16.4.7",
+		"drizzle-kit": "^0.30.1",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
 		"tailwindcss": "^4.0.0",
-		"@tailwindcss/vite": "^4.0.0",
 		"typescript": "^5.0.0",
-		"vite": "^5.0.0",
-		"drizzle-kit": "^0.30.1",
-		"dotenv": "^16.4.7"
+		"vite": "^5.0.0"
 	},
 	"type": "module",
 	"engines": {
