@@ -10,6 +10,7 @@
 	interface Props {
 		siteName?: string;
 		logo?: string;
+		logoHref?: string;
 		logoIcon?: Snippet;
 		user?: { id: string; email: string; name?: string | null; avatarUrl?: string | null } | null;
 		isAdmin?: boolean;
@@ -25,6 +26,7 @@
 	let {
 		siteName,
 		logo,
+		logoHref = '/',
 		logoIcon,
 		user = null,
 		isAdmin = false,
@@ -113,7 +115,7 @@
 
 	<!-- Logo -->
 	<a
-		href="/"
+		href={logoHref}
 		data-testid="nav-logo"
 		class="flex items-center gap-2 no-underline hover:no-underline cursor-pointer"
 	>

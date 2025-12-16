@@ -7,15 +7,14 @@
 
 	let { children, data } = $props();
 
-	const navLinks: NavLink[] = [
-		{ href: '/', label: 'Home' },
-		{ href: '/about', label: 'About' },
-		{ href: '/services', label: 'Services' },
-		{ href: '/contact', label: 'Contact' },
+	const isLoggedIn = $derived(!!data.user);
+	const logoHref = $derived(isLoggedIn ? '/dashboard' : '/');
+
+	const navLinks = $derived<NavLink[]>([
+		{ href: isLoggedIn ? '/dashboard' : '/', label: isLoggedIn ? 'Dashboard' : 'Home' },
 		{ href: '/login', label: 'Log In', hideWhenAuth: true, testId: 'nav-login' },
-		{ href: '/signup', label: 'Sign Up', hideWhenAuth: true, testId: 'nav-signup' },
 		{ href: '/merch', label: 'Merch' }
-	];
+	]);
 
 	const profileUrl = $derived(data.user?.id ? `/u/${data.user.id}` : '#');
 
@@ -60,6 +59,7 @@
 <div class="min-h-dvh flex flex-col">
 	<Nav showThemeToggle={true} themeToggleMode="light-dark-system"
 		logo={"/images/logo.svg"}
+		logoHref={logoHref}
 		links={navLinks}
 		maxWidth="max-w-6xl"
 		user={data.user}

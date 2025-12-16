@@ -52,7 +52,7 @@
 					</span>
 				{:else if logo}
 					{#if isLogoImage}
-						<img src={logo} alt={siteName} class="w-5 h-5" />
+						<img src={logo} alt={siteName} class="w-16 h-16" />
 					{:else}
 						<span>{logo}</span>
 					{/if}

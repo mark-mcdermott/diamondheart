@@ -8,7 +8,7 @@
 	<meta name="description" content="Track your habits, metrics, and goals. Build better routines with simple, powerful tracking." />
 </svelte:head>
 
-<div class="max-w-5xl mx-auto px-6 py-12">
+<div class="max-w-4xl mx-auto px-6 py-8">
 	<!-- Hero Section -->
 	<div class="text-center mb-12">
 		<h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-4">Track what matters</h1>

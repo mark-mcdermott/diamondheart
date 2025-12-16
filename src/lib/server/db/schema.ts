@@ -49,6 +49,8 @@ export const trackerMetrics = pgTable('tracker_metrics', {
 	description: text('description'),
 	unit: text('unit'),
 	valueType: text('value_type').notNull().default('number'),
+	fields: jsonb('fields'),
+	dailyGoal: integer('daily_goal'),
 	icon: text('icon'),
 	color: text('color'),
 	sortOrder: text('sort_order').notNull().default('0'),
