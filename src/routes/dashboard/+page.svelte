@@ -2,9 +2,31 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui';
-	import { Plus, Settings, Activity, Check } from 'lucide-svelte';
+	import { Plus, Settings, Activity, Check, Brain, Droplets, Dumbbell, Heart, Flame, BookOpen, Moon, Sun, Apple, Footprints } from 'lucide-svelte';
+	import type { Component } from 'svelte';
 
 	let { data } = $props();
+
+	// Icon mapping by metric slug
+	const iconMap: Record<string, Component<{ class?: string }>> = {
+		meditation: Brain,
+		water: Droplets,
+		exercise: Dumbbell,
+		sleep: Moon,
+		reading: BookOpen,
+		steps: Footprints,
+		nutrition: Apple,
+		cardio: Flame,
+		health: Heart,
+		energy: Sun
+	};
+
+	// Fallback icons to cycle through for unmapped metrics
+	const fallbackIcons: Component<{ class?: string }>[] = [Heart, Flame, BookOpen, Moon, Sun, Apple, Footprints, Brain, Droplets, Dumbbell];
+
+	function getMetricIcon(metric: Metric, index: number): Component<{ class?: string }> {
+		return iconMap[metric.slug] ?? fallbackIcons[index % fallbackIcons.length];
+	}
 
 	// Track today's entry count per metric
 	function getTodayEntryCount(metricId: string): number {
@@ -95,15 +117,6 @@
 		return defaultColors[index % defaultColors.length];
 	}
 
-	// Check if metric has a custom icon file
-	function getIconPath(metric: Metric): string | null {
-		// Check for icon by slug
-		const knownIcons = ['meditation', 'water', 'exercise'];
-		if (knownIcons.includes(metric.slug)) {
-			return `/images/icons/${metric.slug}.svg`;
-		}
-		return null;
-	}
 </script>
 
 <svelte:head>
@@ -133,14 +146,10 @@
 			{#each data.metrics as metric, index}
 				{@const daysWithGoal = getDaysWithGoalMet(metric.id, metric.dailyGoal)}
 				{@const colorClass = getMetricColor(metric, index)}
-				{@const iconPath = getIconPath(metric)}
+				{@const MetricIcon = getMetricIcon(metric, index)}
 				<div class="bg-background border border-border rounded-lg p-4">
 					<div class="flex items-center justify-between mb-2">
-						{#if iconPath}
-							<img src={iconPath} alt="" class="w-8 h-8" />
-						{:else}
-							<Activity class="w-8 h-8 text-muted-foreground" />
-						{/if}
+						<MetricIcon class="w-8 h-8 text-muted-foreground" />
 						<span class="text-sm text-muted-foreground">{metric.name.toLowerCase()}</span>
 					</div>
 					<div class="grid grid-cols-7 gap-px text-center text-[10px]">
@@ -166,14 +175,10 @@
 				{#each data.metrics as metric, index}
 					{@const todayCount = getTodayEntryCount(metric.id)}
 					{@const goalMet = todayCount >= (metric.dailyGoal ?? 1)}
-					{@const iconPath = getIconPath(metric)}
+					{@const QuickLogIcon = getMetricIcon(metric, index)}
 					<div class="flex items-center justify-between py-2 {index < data.metrics.length - 1 ? 'border-b border-border' : ''}">
 						<div class="flex items-center gap-3">
-							{#if iconPath}
-								<img src={iconPath} alt="" class="w-6 h-6" />
-							{:else}
-								<Activity class="w-6 h-6 text-muted-foreground" />
-							{/if}
+							<QuickLogIcon class="w-6 h-6 text-muted-foreground" />
 							<span class="font-medium">{metric.name}</span>
 							<span class="text-sm text-muted-foreground">
 								{todayCount}/{metric.dailyGoal ?? 1} today
