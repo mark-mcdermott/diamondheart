@@ -1,4 +1,5 @@
 import { redirect, fail, error } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import { createDb, trackerMetrics } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
@@ -8,7 +9,7 @@ export const load: PageServerLoad = async ({ platform, locals, params }) => {
 		redirect(302, '/login');
 	}
 
-	const databaseUrl = platform?.env?.DATABASE_URL;
+	const databaseUrl = platform?.env?.DATABASE_URL || env.DATABASE_URL;
 
 	if (!databaseUrl) {
 		error(500, 'Database not configured');
@@ -35,7 +36,7 @@ export const actions: Actions = {
 			return fail(401, { error: 'Unauthorized' });
 		}
 
-		const databaseUrl = platform?.env?.DATABASE_URL;
+		const databaseUrl = platform?.env?.DATABASE_URL || env.DATABASE_URL;
 		if (!databaseUrl) {
 			return fail(500, { error: 'Database not configured' });
 		}

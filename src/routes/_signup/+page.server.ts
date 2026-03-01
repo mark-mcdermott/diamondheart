@@ -1,4 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import { eq } from 'drizzle-orm';
 import { generateId } from 'lucia';
 import { createLucia } from '$lib/server/auth';
@@ -29,7 +30,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Password must be at least 8 characters' });
 		}
 
-		const databaseUrl = platform?.env?.DATABASE_URL;
+		const databaseUrl = platform?.env?.DATABASE_URL || env.DATABASE_URL;
 		if (!databaseUrl) {
 			return fail(500, { error: 'Database not configured' });
 		}

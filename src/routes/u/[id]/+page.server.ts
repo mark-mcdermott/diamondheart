@@ -1,14 +1,16 @@
 import { error } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import { eq } from 'drizzle-orm';
 import { createDb, users } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, platform }) => {
-	if (!platform?.env?.DATABASE_URL) {
+	const databaseUrl = platform?.env?.DATABASE_URL || env.DATABASE_URL;
+	if (!databaseUrl) {
 		error(500, 'Database not configured');
 	}
 
-	const db = createDb(platform.env.DATABASE_URL);
+	const db = createDb(databaseUrl);
 
 	const [profileUser] = await db
 		.select({

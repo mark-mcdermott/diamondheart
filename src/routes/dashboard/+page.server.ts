@@ -1,4 +1,5 @@
 import { redirect, fail } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import { createDb, trackerCategories, trackerMetrics, trackerEntries, trackerGoals } from '$lib/server/db';
 import { desc, eq, and, gte, lte } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
@@ -9,7 +10,7 @@ export const load: PageServerLoad = async ({ platform, locals }) => {
 		redirect(302, '/login');
 	}
 
-	const databaseUrl = platform?.env?.DATABASE_URL;
+	const databaseUrl = platform?.env?.DATABASE_URL || env.DATABASE_URL;
 
 	if (!databaseUrl) {
 		return { categories: [], todayEntries: [], recentEntries: [], metrics: [], goals: [], monthEntries: [] };
@@ -77,7 +78,7 @@ export const actions: Actions = {
 			return fail(401, { error: 'Unauthorized' });
 		}
 
-		const databaseUrl = platform?.env?.DATABASE_URL;
+		const databaseUrl = platform?.env?.DATABASE_URL || env.DATABASE_URL;
 		if (!databaseUrl) {
 			return fail(500, { error: 'Database not configured' });
 		}

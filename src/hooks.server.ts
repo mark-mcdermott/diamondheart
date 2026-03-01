@@ -1,9 +1,10 @@
 import { createLucia } from '$lib/server/auth';
 import { createDb } from '$lib/server/db';
+import { env } from '$env/dynamic/private';
 import type { Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
-	const databaseUrl = event.platform?.env?.DATABASE_URL;
+	const databaseUrl = event.platform?.env?.DATABASE_URL || env.DATABASE_URL;
 
 	if (!databaseUrl) {
 		event.locals.user = null;

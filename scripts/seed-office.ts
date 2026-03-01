@@ -3,6 +3,7 @@ import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { generateId } from 'lucia';
 import { users } from '../src/lib/server/db/schema';
+import { hashPassword } from '../src/lib/server/password';
 
 if (!process.env.DATABASE_URL) {
 	throw new Error('DATABASE_URL environment variable is required');
@@ -10,10 +11,6 @@ if (!process.env.DATABASE_URL) {
 
 const sql = neon(process.env.DATABASE_URL);
 const db = drizzle(sql);
-
-// The Office characters - all passwords are "dundermifflin"
-// Hash generated with PBKDF2 (same as auth module uses)
-const passwordHash = 'pbkdf2:100000:dGVzdHNhbHQxMjM0NQ==:8K+HkFqJzLxL5Kk5mL5nFQ==';
 
 const officeCharacters = [
 	{ name: 'Michael Scott', email: 'michael.scott@dundermifflin.com' },
@@ -43,6 +40,8 @@ async function seed() {
 	console.log('Password for all users: dundermifflin');
 	console.log('');
 
+	const passwordHash = await hashPassword('dundermifflin');
+
 	for (const character of officeCharacters) {
 		const id = generateId(15);
 		await db.insert(users).values({
@@ -50,7 +49,10 @@ async function seed() {
 			email: character.email,
 			passwordHash,
 			name: character.name
-		}).onConflictDoNothing();
+		}).onConflictDoUpdate({
+			target: users.email,
+			set: { passwordHash }
+		});
 		console.log(`Created user: ${character.name} (${character.email})`);
 	}
 

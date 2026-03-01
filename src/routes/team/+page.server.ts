@@ -1,9 +1,10 @@
 import { createDb, users } from '$lib/server/db';
+import { env } from '$env/dynamic/private';
 import { asc } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ platform }) => {
-	const databaseUrl = platform?.env?.DATABASE_URL;
+	const databaseUrl = platform?.env?.DATABASE_URL || env.DATABASE_URL;
 
 	if (!databaseUrl) {
 		return { users: [] };

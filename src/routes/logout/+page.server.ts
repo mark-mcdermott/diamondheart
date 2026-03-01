@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import { createLucia } from '$lib/server/auth';
 import { createDb } from '$lib/server/db';
 import type { Actions } from './$types';
@@ -9,7 +10,7 @@ export const actions: Actions = {
 			redirect(302, '/');
 		}
 
-		const databaseUrl = platform?.env?.DATABASE_URL;
+		const databaseUrl = platform?.env?.DATABASE_URL || env.DATABASE_URL;
 		if (!databaseUrl) {
 			redirect(302, '/');
 		}

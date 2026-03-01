@@ -1,4 +1,5 @@
 import { json, error } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import { eq } from 'drizzle-orm';
 import { createStripe, generateId } from '$lib/server/stripe';
 import { createDb, orders } from '$lib/server/db';
@@ -6,8 +7,8 @@ import { getMerchProductById, getMerchProductVariant } from '$lib/data/merch';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, locals, platform, url }) => {
-	const stripeSecretKey = platform?.env?.STRIPE_SECRET_KEY;
-	const databaseUrl = platform?.env?.DATABASE_URL;
+	const stripeSecretKey = platform?.env?.STRIPE_SECRET_KEY || env.STRIPE_SECRET_KEY;
+	const databaseUrl = platform?.env?.DATABASE_URL || env.DATABASE_URL;
 
 	if (!stripeSecretKey || !databaseUrl) {
 		error(500, 'Stripe not configured');

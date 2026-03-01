@@ -1,4 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import { eq } from 'drizzle-orm';
 import { createLucia } from '$lib/server/auth';
 import { createDb, users } from '$lib/server/db';
@@ -27,7 +28,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Password is required' });
 		}
 
-		const databaseUrl = platform?.env?.DATABASE_URL;
+		const databaseUrl = platform?.env?.DATABASE_URL || env.DATABASE_URL;
 		if (!databaseUrl) {
 			return fail(500, { error: 'Database not configured' });
 		}
