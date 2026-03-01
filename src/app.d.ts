@@ -12,6 +12,8 @@ declare global {
 		interface Platform {
 			env?: {
 				DATABASE_URL?: string;
+				R2_AVATARS?: R2Bucket;
+				R2_PUBLIC_URL?: string;
 			};
 		}
 	}

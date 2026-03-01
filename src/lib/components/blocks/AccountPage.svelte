@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { Card, Button, Input, Label } from '$lib/components/ui';
-	import { User, Lock, Mail, ArrowLeft } from 'lucide-svelte';
+	import { User, Lock, Mail, ArrowLeft, Camera } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	interface AccountUser {
 		id: string;
 		email: string;
 		name?: string | null;
+		avatarUrl?: string | null;
 	}
 
 	interface Props {
@@ -31,6 +32,37 @@
 		showPasswordSection = true,
 		class: className = ''
 	}: Props = $props();
+
+	let fileInput = $state<HTMLInputElement>(null!);
+	let avatarPreview = $state<string | null>(null);
+	let avatarDataUrl = $state('');
+
+	function handleFileSelect(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+
+		if (!file.type.startsWith('image/')) {
+			toast.error('Please select an image file');
+			return;
+		}
+
+		if (file.size > 1024 * 1024) {
+			toast.error('Image must be less than 1MB');
+			return;
+		}
+
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			const result = e.target?.result as string;
+			avatarPreview = result;
+			avatarDataUrl = result;
+		};
+		reader.readAsDataURL(file);
+	}
+
+	const displayAvatar = $derived(avatarPreview || user?.avatarUrl);
+	const avatarLetter = $derived(user?.email ? user.email.charAt(0).toUpperCase() : 'U');
 </script>
 
 <div class="max-w-4xl mx-auto px-6 py-12 {className}">
@@ -76,6 +108,8 @@
 						return async ({ result, update }) => {
 							if (result.type === 'success') {
 								toast.success('Profile updated successfully');
+								avatarPreview = null;
+								avatarDataUrl = '';
 								await update();
 							} else if (result.type === 'failure') {
 								toast.error((result.data as { error?: string })?.error || 'Failed to update profile');
@@ -89,6 +123,34 @@
 								{form.error}
 							</div>
 						{/if}
+
+						<!-- Avatar Upload -->
+						<div class="flex justify-center">
+							<button
+								type="button"
+								onclick={() => fileInput.click()}
+								class="relative group w-20 h-20 rounded-full overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+							>
+								{#if displayAvatar}
+									<img src={displayAvatar} alt="User avatar" class="w-full h-full object-cover" />
+								{:else}
+									<div class="w-full h-full bg-muted flex items-center justify-center text-muted-foreground text-2xl font-medium">
+										{avatarLetter}
+									</div>
+								{/if}
+								<div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+									<Camera class="w-6 h-6 text-white" />
+								</div>
+							</button>
+							<input
+								bind:this={fileInput}
+								type="file"
+								accept="image/*"
+								class="hidden"
+								onchange={handleFileSelect}
+							/>
+						</div>
+						<input type="hidden" name="avatarUpload" value={avatarDataUrl} />
 
 						<div class="space-y-2">
 							<Label.Root for="name">Display Name</Label.Root>

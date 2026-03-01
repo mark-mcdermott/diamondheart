@@ -1,4 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { eq } from 'drizzle-orm';
 import { createDb, users } from '$lib/server/db';
@@ -13,7 +14,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		user: {
 			id: locals.user.id,
 			email: locals.user.email,
-			name: locals.user.name
+			name: locals.user.name,
+			avatarUrl: locals.user.avatarUrl
 		}
 	};
 };
@@ -34,19 +36,55 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const name = formData.get('name') as string;
 		const email = formData.get('email') as string;
+		const avatarUpload = formData.get('avatarUpload') as string;
 
 		if (!email || !email.includes('@')) {
 			return fail(400, { error: 'Valid email is required' });
 		}
 
+		// Handle avatar upload
+		let avatarUrl: string | null | undefined = undefined;
+		if (avatarUpload && avatarUpload.startsWith('data:image/')) {
+			const matches = avatarUpload.match(/^data:image\/(\w+);base64,(.+)$/);
+			if (matches) {
+				const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+				const base64Data = matches[2];
+				const binaryData = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+				const filename = `${crypto.randomUUID()}.${ext}`;
+
+				if (!dev && platform?.env?.R2_AVATARS) {
+					try {
+						await platform.env.R2_AVATARS.put(filename, binaryData, {
+							httpMetadata: {
+								contentType: `image/${matches[1]}`
+							}
+						});
+						const publicUrl = platform.env.R2_PUBLIC_URL || env.R2_PUBLIC_URL;
+						avatarUrl = `${publicUrl}/${filename}`;
+					} catch (e) {
+						console.error('R2 upload failed:', e);
+						avatarUrl = avatarUpload;
+					}
+				} else {
+					// Fallback to base64 (local dev or R2 not available)
+					avatarUrl = avatarUpload;
+				}
+			}
+		}
+
 		try {
+			const updateData: Record<string, unknown> = {
+				name: name?.trim() || null,
+				email: email.toLowerCase().trim(),
+				updatedAt: new Date()
+			};
+			if (avatarUrl !== undefined) {
+				updateData.avatarUrl = avatarUrl;
+			}
+
 			await db
 				.update(users)
-				.set({
-					name: name?.trim() || null,
-					email: email.toLowerCase().trim(),
-					updatedAt: new Date()
-				})
+				.set(updateData)
 				.where(eq(users.id, locals.user.id));
 
 			return { success: true };
