@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui';
-	import { Plus, Trash2, X, ArrowLeft, Pencil } from 'lucide-svelte';
+	import { Plus, Trash2, X, ArrowLeft, Pencil, GripVertical, Eye, EyeOff } from 'lucide-svelte';
 
 	let { data } = $props();
 
@@ -26,6 +26,77 @@
 
 	let rows = $state<MetricRow[]>([]);
 	let saving = $state(false);
+
+	// Drag-and-drop state for existing metrics
+	let orderedMetrics = $state<typeof data.metrics>([]);
+	let dragIndex = $state<number | null>(null);
+	let dropTargetIndex = $state<number | null>(null);
+
+	$effect(() => {
+		orderedMetrics = [...data.metrics];
+	});
+
+	function handleDragStart(e: DragEvent, index: number) {
+		dragIndex = index;
+		if (e.dataTransfer) {
+			e.dataTransfer.effectAllowed = 'move';
+		}
+	}
+
+	function handleDragOver(e: DragEvent, index: number) {
+		e.preventDefault();
+		if (e.dataTransfer) {
+			e.dataTransfer.dropEffect = 'move';
+		}
+		dropTargetIndex = index;
+	}
+
+	function handleDragLeave() {
+		dropTargetIndex = null;
+	}
+
+	function handleDrop(e: DragEvent, index: number) {
+		e.preventDefault();
+		if (dragIndex === null || dragIndex === index) {
+			dragIndex = null;
+			dropTargetIndex = null;
+			return;
+		}
+
+		const updated = [...orderedMetrics];
+		const [moved] = updated.splice(dragIndex, 1);
+		updated.splice(index, 0, moved);
+		orderedMetrics = updated;
+		dragIndex = null;
+		dropTargetIndex = null;
+
+		// Persist new order
+		const ids = orderedMetrics.map((m) => m.id);
+		const formData = new FormData();
+		formData.set('ids', JSON.stringify(ids));
+		fetch('?/reorder', {
+			method: 'POST',
+			body: formData
+		});
+	}
+
+	function handleDragEnd() {
+		dragIndex = null;
+		dropTargetIndex = null;
+	}
+
+	function toggleHidden(metricId: string) {
+		const metric = orderedMetrics.find((m) => m.id === metricId);
+		if (metric) {
+			metric.hidden = !metric.hidden;
+		}
+		const formData = new FormData();
+		formData.set('metricId', metricId);
+		fetch('?/toggleHidden', {
+			method: 'POST',
+			body: formData
+		});
+	}
 
 	function addRow() {
 		rows.push({
@@ -94,13 +165,15 @@
 	</div>
 
 	<!-- Existing Metrics -->
-	{#if data.metrics.length > 0}
+	{#if orderedMetrics.length > 0}
 		<div class="mb-8">
 			<h2 class="text-lg font-medium mb-4">Existing Metrics</h2>
 			<div class="border border-border rounded-lg overflow-hidden">
 				<table class="w-full">
 					<thead class="bg-muted/50">
 						<tr>
+							<th class="w-10"></th>
+							<th class="w-10"></th>
 							<th class="text-left px-4 py-3 text-sm font-medium">Name</th>
 							<th class="text-left px-4 py-3 text-sm font-medium">Type</th>
 							<th class="text-left px-4 py-3 text-sm font-medium">Unit</th>
@@ -108,10 +181,39 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each data.metrics as metric}
-							<tr class="border-t border-border">
+						{#each orderedMetrics as metric, i (metric.id)}
+							<tr
+								class="border-t border-border transition-opacity"
+								class:opacity-50={dragIndex === i}
+								class:border-t-primary={dropTargetIndex === i && dragIndex !== null && dragIndex !== i}
+								draggable="true"
+								ondragstart={(e) => handleDragStart(e, i)}
+								ondragover={(e) => handleDragOver(e, i)}
+								ondragleave={handleDragLeave}
+								ondrop={(e) => handleDrop(e, i)}
+								ondragend={handleDragEnd}
+							>
+								<td class="pl-3 py-3">
+									<span class="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing">
+										<GripVertical class="w-4 h-4" />
+									</span>
+								</td>
+								<td class="px-1 py-3">
+									<button
+										type="button"
+										onclick={() => toggleHidden(metric.id)}
+										class="text-muted-foreground hover:text-foreground cursor-pointer"
+										title={metric.hidden ? 'Hidden from dashboard' : 'Visible on dashboard'}
+									>
+										{#if metric.hidden}
+											<EyeOff class="w-4 h-4" />
+										{:else}
+											<Eye class="w-4 h-4" />
+										{/if}
+									</button>
+								</td>
 								<td class="px-4 py-3">
-									<a href="/metrics/{metric.id}" class="hover:underline">{metric.name}</a>
+									<a href="/metrics/{metric.id}" class="hover:underline" class:text-muted-foreground={metric.hidden}>{metric.name}</a>
 								</td>
 								<td class="px-4 py-3 text-muted-foreground">{metric.valueType}</td>
 								<td class="px-4 py-3 text-muted-foreground">{metric.unit || '-'}</td>

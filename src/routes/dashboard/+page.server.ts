@@ -30,7 +30,7 @@ export const load: PageServerLoad = async ({ platform, locals }) => {
 	const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
 
 	const categories = await db.select().from(trackerCategories).orderBy(trackerCategories.sortOrder);
-	const metrics = await db.select().from(trackerMetrics).where(eq(trackerMetrics.archived, false));
+	const metrics = await db.select().from(trackerMetrics).where(and(eq(trackerMetrics.archived, false), eq(trackerMetrics.hidden, false))).orderBy(trackerMetrics.sortOrder);
 
 	const todayEntries = await db
 		.select({

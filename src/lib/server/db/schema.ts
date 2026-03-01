@@ -54,6 +54,7 @@ export const trackerMetrics = pgTable('tracker_metrics', {
 	icon: text('icon'),
 	color: text('color'),
 	sortOrder: text('sort_order').notNull().default('0'),
+	hidden: boolean('hidden').notNull().default(false),
 	archived: boolean('archived').notNull().default(false),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
