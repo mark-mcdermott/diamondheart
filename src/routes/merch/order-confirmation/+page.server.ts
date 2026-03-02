@@ -43,6 +43,9 @@ export const load: PageServerLoad = async ({ url, platform }) => {
 			order = dbOrder;
 		}
 
+		type OrderItem = { name: string; color: string; size: string; quantity: number; price: number };
+		const items = (order?.items ?? []) as OrderItem[];
+
 		return {
 			orderNumber: orderId || session.id.slice(-8).toUpperCase(),
 			email: session.customer_details?.email || session.customer_email || '',
@@ -58,7 +61,7 @@ export const load: PageServerLoad = async ({ url, platform }) => {
 						country: session.shipping_details.address.country
 					}
 				: null,
-			items: order?.items || []
+			items
 		};
 	} catch (err) {
 		console.error('Error retrieving order:', err);

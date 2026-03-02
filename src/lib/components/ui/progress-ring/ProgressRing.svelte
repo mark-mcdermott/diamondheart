@@ -24,10 +24,10 @@
 		...restProps
 	}: Props = $props();
 
-	const radius = (size - strokeWidth) / 2;
-	const circumference = radius * 2 * Math.PI;
-	const clampedValue = Math.min(100, Math.max(0, value));
-	const offset = circumference - (clampedValue / 100) * circumference;
+	const radius = $derived((size - strokeWidth) / 2);
+	const circumference = $derived(radius * 2 * Math.PI);
+	const clampedValue = $derived(Math.min(100, Math.max(0, value)));
+	const offset = $derived(circumference - (clampedValue / 100) * circumference);
 </script>
 
 <div

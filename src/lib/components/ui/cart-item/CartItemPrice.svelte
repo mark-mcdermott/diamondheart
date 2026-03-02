@@ -16,7 +16,7 @@
 		return (num / 100).toFixed(2);
 	}
 
-	const lineTotal = Number(price) * quantity;
+	const lineTotal = $derived(Number(price) * quantity);
 </script>
 
 <span

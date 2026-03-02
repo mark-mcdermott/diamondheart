@@ -11,8 +11,8 @@
 
 	let { class: className, value, goal, color = '#3b82f6', ...restProps }: Props = $props();
 
-	const percentage = Math.min(100, Math.round((value / goal) * 100));
-	const isComplete = percentage >= 100;
+	const percentage = $derived(Math.min(100, Math.round((value / goal) * 100)));
+	const isComplete = $derived(percentage >= 100);
 </script>
 
 <div

@@ -13,7 +13,7 @@
 
 	interface Props {
 		user: AccountUser | null;
-		form?: { error?: string; success?: boolean } | null;
+		form?: { error?: string; passwordError?: string; success?: boolean } | null;
 		backHref?: string | null;
 		backLabel?: string;
 		loginHref?: string;
@@ -191,24 +191,43 @@
 						</Card.Title>
 						<Card.Description>Manage your password and security settings</Card.Description>
 					</Card.Header>
-					<Card.Content class="space-y-4">
-						<div class="space-y-2">
-							<Label.Root for="current-password">Current Password</Label.Root>
-							<Input.Root id="current-password" type="password" placeholder="••••••••" disabled />
-						</div>
-						<div class="space-y-2">
-							<Label.Root for="new-password">New Password</Label.Root>
-							<Input.Root id="new-password" type="password" placeholder="••••••••" disabled />
-						</div>
-						<div class="space-y-2">
-							<Label.Root for="confirm-password">Confirm New Password</Label.Root>
-							<Input.Root id="confirm-password" type="password" placeholder="••••••••" disabled />
-						</div>
-					</Card.Content>
-					<Card.Footer>
-						<Button.Root disabled>Update Password</Button.Root>
-						<p class="text-xs text-muted-foreground ml-3">Coming soon</p>
-					</Card.Footer>
+					<form
+						method="POST"
+						action="?/changePassword"
+						use:enhance={() => {
+							return async ({ result, update }) => {
+								if (result.type === 'success') {
+									toast.success('Password updated successfully');
+									await update({ reset: true });
+								} else if (result.type === 'failure') {
+									toast.error((result.data as { error?: string })?.error || 'Failed to update password');
+								}
+							};
+						}}
+					>
+						<Card.Content class="space-y-4">
+							{#if form?.passwordError}
+								<div class="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm">
+									{form.passwordError}
+								</div>
+							{/if}
+							<div class="space-y-2">
+								<Label.Root for="current-password">Current Password</Label.Root>
+								<Input.Root id="current-password" name="currentPassword" type="password" placeholder="••••••••" required />
+							</div>
+							<div class="space-y-2">
+								<Label.Root for="new-password">New Password</Label.Root>
+								<Input.Root id="new-password" name="newPassword" type="password" placeholder="••••••••" required />
+							</div>
+							<div class="space-y-2">
+								<Label.Root for="confirm-password">Confirm New Password</Label.Root>
+								<Input.Root id="confirm-password" name="confirmPassword" type="password" placeholder="••••••••" required />
+							</div>
+						</Card.Content>
+						<Card.Footer>
+							<Button.Root type="submit">Update Password</Button.Root>
+						</Card.Footer>
+					</form>
 				</Card.Root>
 			{/if}
 

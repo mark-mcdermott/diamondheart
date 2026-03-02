@@ -14,6 +14,9 @@ declare global {
 				DATABASE_URL?: string;
 				R2_AVATARS?: R2Bucket;
 				R2_PUBLIC_URL?: string;
+				STRIPE_SECRET_KEY?: string;
+				STRIPE_WEBHOOK_SECRET?: string;
+				USDA_API_KEY?: string;
 			};
 		}
 	}

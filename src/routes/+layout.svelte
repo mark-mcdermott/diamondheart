@@ -3,7 +3,7 @@
 	import { Nav, Footer } from '$lib/components/blocks';
 	import { onNavigate } from '$app/navigation';
 	import type { NavLink, AvatarConfig } from '$lib/components/blocks';
-	import { User, Settings, LogOut } from 'lucide-svelte';
+	import { User, Settings, LogOut, Dumbbell, Apple } from 'lucide-svelte';
 
 	let { children, data } = $props();
 
@@ -12,6 +12,8 @@
 
 	const navLinks = $derived<NavLink[]>([
 		{ href: isLoggedIn ? '/dashboard' : '/', label: isLoggedIn ? 'Dashboard' : 'Home' },
+		{ href: '/workout', label: 'Workout', icon: Dumbbell, requiresAuth: true },
+		{ href: '/food', label: 'Food', icon: Apple, requiresAuth: true },
 		{ href: '/login', label: 'Log In', hideWhenAuth: true, testId: 'nav-login' },
 		{ href: '/merch', label: 'Merch' }
 	]);

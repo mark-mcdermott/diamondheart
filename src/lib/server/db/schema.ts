@@ -116,3 +116,165 @@ export const orders = pgTable('orders', {
 
 export type Order = typeof orders.$inferSelect;
 export type NewOrder = typeof orders.$inferInsert;
+
+
+// Contact form submissions
+export const contactSubmissions = pgTable('contact_submissions', {
+	id: text('id').primaryKey(),
+	name: text('name').notNull(),
+	email: text('email').notNull(),
+	message: text('message').notNull(),
+	status: text('status').notNull().default('new'),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type ContactSubmission = typeof contactSubmissions.$inferSelect;
+
+
+// ============================================
+// Weightlifting / Strength Training
+// ============================================
+
+// Exercise library
+export const exercises = pgTable('exercises', {
+	id: text('id').primaryKey(),
+	name: text('name').notNull(),
+	muscleGroup: text('muscle_group').notNull(),
+	equipment: text('equipment'),
+	isCustom: boolean('is_custom').notNull().default(false),
+	userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Workouts
+export const workouts = pgTable('workouts', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	name: text('name'),
+	date: timestamp('date', { withTimezone: true }).notNull(),
+	duration: integer('duration'),
+	notes: text('notes'),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Workout sets
+export const workoutSets = pgTable('workout_sets', {
+	id: text('id').primaryKey(),
+	workoutId: text('workout_id').notNull().references(() => workouts.id, { onDelete: 'cascade' }),
+	exerciseId: text('exercise_id').notNull().references(() => exercises.id, { onDelete: 'cascade' }),
+	setNumber: integer('set_number').notNull(),
+	reps: integer('reps').notNull(),
+	weight: integer('weight').notNull(),
+	unit: text('unit').notNull().default('lbs'),
+	type: text('type').notNull().default('regular'),
+	notes: text('notes'),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Personal records (auto-calculated)
+export const personalRecords = pgTable('personal_records', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	exerciseId: text('exercise_id').notNull().references(() => exercises.id, { onDelete: 'cascade' }),
+	repCount: integer('rep_count').notNull(),
+	weight: integer('weight').notNull(),
+	unit: text('unit').notNull().default('lbs'),
+	date: timestamp('date', { withTimezone: true }).notNull(),
+	setId: text('set_id').references(() => workoutSets.id, { onDelete: 'set null' }),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type Exercise = typeof exercises.$inferSelect;
+export type Workout = typeof workouts.$inferSelect;
+export type WorkoutSet = typeof workoutSets.$inferSelect;
+export type PersonalRecord = typeof personalRecords.$inferSelect;
+
+
+// ============================================
+// Nutrition / Food Tracking
+// ============================================
+
+// Food log (per meal)
+export const foodLog = pgTable('food_log', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	date: timestamp('date', { withTimezone: true }).notNull(),
+	mealType: text('meal_type').notNull()
+});
+
+// Food log items
+export const foodLogItems = pgTable('food_log_items', {
+	id: text('id').primaryKey(),
+	foodLogId: text('food_log_id').notNull().references(() => foodLog.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	fdcId: text('fdc_id'),
+	servingSize: integer('serving_size').notNull().default(100),
+	servingUnit: text('serving_unit').notNull().default('g'),
+	calories: integer('calories').notNull().default(0),
+	protein: integer('protein').notNull().default(0),
+	carbs: integer('carbs').notNull().default(0),
+	fat: integer('fat').notNull().default(0),
+	quantity: integer('quantity').notNull().default(1),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Custom foods (user-created)
+export const customFoods = pgTable('custom_foods', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	calories: integer('calories').notNull().default(0),
+	protein: integer('protein').notNull().default(0),
+	carbs: integer('carbs').notNull().default(0),
+	fat: integer('fat').notNull().default(0),
+	servingSize: integer('serving_size').notNull().default(100),
+	servingUnit: text('serving_unit').notNull().default('g'),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Favorite foods (starred individual foods for quick access)
+export const favoriteFoods = pgTable('favorite_foods', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	fdcId: text('fdc_id'),
+	customFoodId: text('custom_food_id').references(() => customFoods.id, { onDelete: 'cascade' }),
+	servingSize: integer('serving_size').notNull().default(100),
+	servingUnit: text('serving_unit').notNull().default('g'),
+	calories: integer('calories').notNull().default(0),
+	protein: integer('protein').notNull().default(0),
+	carbs: integer('carbs').notNull().default(0),
+	fat: integer('fat').notNull().default(0),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Favorite meals (starred meal combos — a group of foods logged together)
+export const favoriteMeals = pgTable('favorite_meals', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Items within a favorite meal
+export const favoriteMealItems = pgTable('favorite_meal_items', {
+	id: text('id').primaryKey(),
+	favoriteMealId: text('favorite_meal_id').notNull().references(() => favoriteMeals.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	fdcId: text('fdc_id'),
+	servingSize: integer('serving_size').notNull().default(100),
+	servingUnit: text('serving_unit').notNull().default('g'),
+	calories: integer('calories').notNull().default(0),
+	protein: integer('protein').notNull().default(0),
+	carbs: integer('carbs').notNull().default(0),
+	fat: integer('fat').notNull().default(0),
+	quantity: integer('quantity').notNull().default(1)
+});
+
+export type FoodLog = typeof foodLog.$inferSelect;
+export type FoodLogItem = typeof foodLogItems.$inferSelect;
+export type CustomFood = typeof customFoods.$inferSelect;
+export type FavoriteFood = typeof favoriteFoods.$inferSelect;
+export type FavoriteMeal = typeof favoriteMeals.$inferSelect;
+export type FavoriteMealItem = typeof favoriteMealItems.$inferSelect;

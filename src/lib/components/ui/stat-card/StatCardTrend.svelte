@@ -11,9 +11,9 @@
 
 	let { class: className, value, label = 'vs last week', ...restProps }: Props = $props();
 
-	const isPositive = value > 0;
-	const isNegative = value < 0;
-	const isNeutral = value === 0;
+	const isPositive = $derived(value > 0);
+	const isNegative = $derived(value < 0);
+	const isNeutral = $derived(value === 0);
 </script>
 
 <div

@@ -16,7 +16,7 @@
 		return (num / 100).toFixed(2);
 	}
 
-	const hasDiscount = compareAtPrice && Number(compareAtPrice) > Number(price);
+	const hasDiscount = $derived(compareAtPrice && Number(compareAtPrice) > Number(price));
 </script>
 
 <div
@@ -29,7 +29,7 @@
 	</span>
 	{#if hasDiscount}
 		<span class="text-muted-foreground line-through text-sm">
-			{currency}{formatPrice(compareAtPrice)}
+			{currency}{formatPrice(compareAtPrice!)}
 		</span>
 	{/if}
 </div>

@@ -3,6 +3,7 @@ import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { eq } from 'drizzle-orm';
 import { createDb, users } from '$lib/server/db';
+import { verifyPassword, hashPassword } from '$lib/server/password';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -94,5 +95,59 @@ export const actions: Actions = {
 			}
 			return fail(500, { error: 'Failed to update profile' });
 		}
+	},
+
+	changePassword: async ({ request, locals, platform }) => {
+		if (!locals.user) {
+			return fail(401, { passwordError: 'Not authenticated' });
+		}
+
+		const databaseUrl = platform?.env?.DATABASE_URL || env.DATABASE_URL;
+		if (!databaseUrl) {
+			return fail(500, { passwordError: 'Database not configured' });
+		}
+
+		const formData = await request.formData();
+		const currentPassword = formData.get('currentPassword') as string;
+		const newPassword = formData.get('newPassword') as string;
+		const confirmPassword = formData.get('confirmPassword') as string;
+
+		if (!currentPassword || !newPassword || !confirmPassword) {
+			return fail(400, { passwordError: 'All fields are required' });
+		}
+
+		if (newPassword.length < 8) {
+			return fail(400, { passwordError: 'New password must be at least 8 characters' });
+		}
+
+		if (newPassword !== confirmPassword) {
+			return fail(400, { passwordError: 'New passwords do not match' });
+		}
+
+		const db = createDb(databaseUrl);
+
+		const user = await db
+			.select({ passwordHash: users.passwordHash })
+			.from(users)
+			.where(eq(users.id, locals.user.id))
+			.then((r) => r[0]);
+
+		if (!user) {
+			return fail(404, { passwordError: 'User not found' });
+		}
+
+		const isValid = await verifyPassword(user.passwordHash, currentPassword);
+		if (!isValid) {
+			return fail(400, { passwordError: 'Current password is incorrect' });
+		}
+
+		const newHash = await hashPassword(newPassword);
+
+		await db
+			.update(users)
+			.set({ passwordHash: newHash, updatedAt: new Date() })
+			.where(eq(users.id, locals.user.id));
+
+		return { success: true };
 	}
 };
