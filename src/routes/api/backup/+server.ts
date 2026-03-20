@@ -8,8 +8,11 @@ export const GET: RequestHandler = async ({ platform, request }) => {
 	const secret = request.headers.get('x-backup-secret');
 	const expectedSecret = platform?.env?.BACKUP_SECRET;
 
-	if (!expectedSecret || secret !== expectedSecret) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
+	if (!expectedSecret) {
+		return json({ error: 'BACKUP_SECRET not configured on server' }, { status: 500 });
+	}
+	if (secret !== expectedSecret) {
+		return json({ error: 'Unauthorized — invalid backup secret' }, { status: 401 });
 	}
 
 	const databaseUrl = platform?.env?.DATABASE_URL;

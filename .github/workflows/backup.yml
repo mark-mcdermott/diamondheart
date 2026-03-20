@@ -12,13 +12,15 @@ jobs:
     steps:
       - name: Trigger backup
         run: |
-          response=$(curl -sf -w "\n%{http_code}" \
+          site_url="${{ secrets.SITE_URL }}"
+          site_url="${site_url%/}"
+          response=$(curl -s --max-time 120 -w "\n%{http_code}" \
             -H "x-backup-secret: ${{ secrets.BACKUP_SECRET }}" \
-            "${{ secrets.SITE_URL }}/api/backup")
+            "${site_url}/api/backup")
           http_code=$(echo "$response" | tail -1)
           body=$(echo "$response" | head -n -1)
           echo "$body"
           if [ "$http_code" != "200" ]; then
-            echo "Backup failed with status $http_code"
+            echo "::error::Backup failed with status $http_code"
             exit 1
           fi
