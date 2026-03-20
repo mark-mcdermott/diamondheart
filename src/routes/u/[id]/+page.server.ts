@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
-import { eq } from 'drizzle-orm';
-import { createDb, users } from '$lib/server/db';
+import { eq, sql } from 'drizzle-orm';
+import { createDb, users, workouts, workoutSets, foodLog } from '$lib/server/db';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, platform }) => {
@@ -17,6 +17,7 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 			id: users.id,
 			email: users.email,
 			name: users.name,
+			avatarUrl: users.avatarUrl,
 			createdAt: users.createdAt
 		})
 		.from(users)
@@ -27,5 +28,29 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 		error(404, 'User not found');
 	}
 
-	return { profileUser };
+	// Public stats
+	const [workoutCount] = await db
+		.select({ count: sql<number>`count(*)` })
+		.from(workouts)
+		.where(eq(workouts.userId, params.id));
+
+	const [setCount] = await db
+		.select({ count: sql<number>`count(*)` })
+		.from(workoutSets)
+		.innerJoin(workouts, eq(workoutSets.workoutId, workouts.id))
+		.where(eq(workouts.userId, params.id));
+
+	const [mealCount] = await db
+		.select({ count: sql<number>`count(*)` })
+		.from(foodLog)
+		.where(eq(foodLog.userId, params.id));
+
+	return {
+		profileUser,
+		stats: {
+			workouts: Number(workoutCount?.count ?? 0),
+			sets: Number(setCount?.count ?? 0),
+			meals: Number(mealCount?.count ?? 0)
+		}
+	};
 };

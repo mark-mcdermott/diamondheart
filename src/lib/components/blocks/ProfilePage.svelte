@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Card } from '$lib/components/ui';
-	import { User, Calendar, ArrowLeft } from 'lucide-svelte';
+	import { User, Calendar, ArrowLeft, Dumbbell, Apple, Activity } from 'lucide-svelte';
 
 	interface ProfileUser {
 		id: string;
@@ -10,9 +10,16 @@
 		createdAt?: Date | string | null;
 	}
 
+	interface Stats {
+		workouts: number;
+		sets: number;
+		meals: number;
+	}
+
 	interface Props {
 		user: ProfileUser;
 		currentUserId?: string | null;
+		stats?: Stats | null;
 		backHref?: string | null;
 		backLabel?: string;
 		settingsHref?: string;
@@ -22,6 +29,7 @@
 	let {
 		user,
 		currentUserId = null,
+		stats = null,
 		backHref = '/',
 		backLabel = 'Back to Home',
 		settingsHref = '/account',
@@ -72,20 +80,39 @@
 				</div>
 			</div>
 		</Card.Header>
-		<Card.Content class="space-y-4">
-			{#if isOwnProfile}
+		<Card.Content class="space-y-6">
+			{#if memberSince}
 				<div class="flex items-center gap-3 text-muted-foreground">
+					<Calendar class="w-5 h-5" />
+					<span>Member since {memberSince}</span>
+				</div>
+			{/if}
+
+			{#if stats}
+				<div class="grid grid-cols-3 gap-4 pt-2">
+					<div class="text-center border border-border rounded-lg p-4">
+						<Dumbbell class="w-5 h-5 text-blue-600 mx-auto mb-2" />
+						<p class="text-2xl font-bold">{stats.workouts}</p>
+						<p class="text-xs text-muted-foreground">Workouts</p>
+					</div>
+					<div class="text-center border border-border rounded-lg p-4">
+						<Activity class="w-5 h-5 text-green-600 mx-auto mb-2" />
+						<p class="text-2xl font-bold">{stats.sets}</p>
+						<p class="text-xs text-muted-foreground">Sets Logged</p>
+					</div>
+					<div class="text-center border border-border rounded-lg p-4">
+						<Apple class="w-5 h-5 text-amber-600 mx-auto mb-2" />
+						<p class="text-2xl font-bold">{stats.meals}</p>
+						<p class="text-xs text-muted-foreground">Meals Logged</p>
+					</div>
+				</div>
+			{/if}
+
+			{#if isOwnProfile}
+				<div class="flex items-center gap-3 text-muted-foreground pt-2">
 					<User class="w-5 h-5" />
 					<span>ID: {user.id}</span>
 				</div>
-				{#if memberSince}
-					<div class="flex items-center gap-3 text-muted-foreground">
-						<Calendar class="w-5 h-5" />
-						<span>Member since {memberSince}</span>
-					</div>
-				{/if}
-			{:else}
-				<p class="text-muted-foreground">Profile information is private.</p>
 			{/if}
 		</Card.Content>
 		{#if isOwnProfile && settingsHref}

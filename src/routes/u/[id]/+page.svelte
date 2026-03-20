@@ -12,4 +12,5 @@
 <ProfilePage
 	user={data.profileUser}
 	currentUserId={data.user?.id}
+	stats={data.stats}
 />
