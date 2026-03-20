@@ -1,0 +1,24 @@
+name: Nightly Database Backup
+
+on:
+  schedule:
+    # 3:00 AM UTC daily
+    - cron: '0 3 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger backup
+        run: |
+          response=$(curl -sf -w "\n%{http_code}" \
+            -H "x-backup-secret: ${{ secrets.BACKUP_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/backup")
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+          echo "$body"
+          if [ "$http_code" != "200" ]; then
+            echo "Backup failed with status $http_code"
+            exit 1
+          fi
