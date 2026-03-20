@@ -2,6 +2,7 @@ import { error, json } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { eq } from 'drizzle-orm';
 import { createStripe } from '$lib/server/stripe';
+import { createPrintfulClient } from '$lib/server/printful';
 import { createDb, orders } from '$lib/server/db';
 import type { RequestHandler } from './$types';
 
@@ -63,9 +64,50 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				})
 				.where(eq(orders.id, orderId));
 
-			// TODO: Trigger Printful order creation here when Printful sync variant IDs are configured
-			// const order = await db.select().from(orders).where(eq(orders.id, orderId)).then(r => r[0]);
-			// if (order) await createPrintfulOrder(order);
+			// Trigger Printful order creation if API key is configured
+			const printfulApiKey = platform?.env?.PRINTFUL_API_KEY || env.PRINTFUL_API_KEY;
+			if (printfulApiKey) {
+				try {
+					const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
+					if (order) {
+						const items = (order.items as Array<{ printfulSyncVariantId?: string; quantity: number }>)
+							.filter(item => item.printfulSyncVariantId)
+							.map(item => ({
+								sync_variant_id: item.printfulSyncVariantId!,
+								quantity: item.quantity
+							}));
+
+						if (items.length > 0 && shippingAddress) {
+							const printful = createPrintfulClient(printfulApiKey);
+							const pfOrder = await printful.createOrder(
+								orderId,
+								{
+									name: shippingAddress.name || '',
+									address1: shippingAddress.line1 || '',
+									address2: shippingAddress.line2 || undefined,
+									city: shippingAddress.city || '',
+									state_code: shippingAddress.state || undefined,
+									country_code: shippingAddress.country || 'US',
+									zip: shippingAddress.postal_code || '',
+									email: order.email
+								},
+								items,
+								{ subtotal: order.subtotal, shipping: order.shipping, total: order.total }
+							);
+
+							await printful.confirmOrder(pfOrder.id);
+
+							await db
+								.update(orders)
+								.set({ printfulOrderId: String(pfOrder.id), status: 'processing', updatedAt: new Date() })
+								.where(eq(orders.id, orderId));
+						}
+					}
+				} catch (err) {
+					console.error('Printful order creation failed:', err);
+					// Don't fail the webhook — payment was successful, Printful can be retried
+				}
+			}
 
 			break;
 		}

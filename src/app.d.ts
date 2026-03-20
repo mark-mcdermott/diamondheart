@@ -17,6 +17,7 @@ declare global {
 				STRIPE_SECRET_KEY?: string;
 				STRIPE_WEBHOOK_SECRET?: string;
 				USDA_API_KEY?: string;
+				PRINTFUL_API_KEY?: string;
 			};
 		}
 	}
