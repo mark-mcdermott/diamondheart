@@ -6,3 +6,7 @@ pages_build_output_dir = ".svelte-kit/cloudflare"
 [[r2_buckets]]
 binding = "R2_AVATARS"
 bucket_name = "ortholinear"
+
+[[r2_buckets]]
+binding = "R2_BACKUPS"
+bucket_name = "ortholinear-backups"

@@ -12,12 +12,14 @@ declare global {
 		interface Platform {
 			env?: {
 				DATABASE_URL?: string;
-				R2_AVATARS?: R2Bucket;
+				R2_AVATARS?: import('$lib/server/backup').R2Bucket;
+				R2_BACKUPS?: import('$lib/server/backup').R2Bucket;
 				R2_PUBLIC_URL?: string;
 				STRIPE_SECRET_KEY?: string;
 				STRIPE_WEBHOOK_SECRET?: string;
 				USDA_API_KEY?: string;
 				PRINTFUL_API_KEY?: string;
+				BACKUP_SECRET?: string;
 			};
 		}
 	}
