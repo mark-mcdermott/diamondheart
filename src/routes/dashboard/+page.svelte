@@ -21,26 +21,42 @@
 	let { data } = $props();
 
 	// Auto-sync HealthKit if connected and stale (> 1 hour)
+	// + schedule reminders for today
 	onMount(async () => {
-		if (!data.healthkitConnection || data.healthkitConnection.status !== 'active') return;
+		// HealthKit auto-sync
+		if (data.healthkitConnection?.status === 'active') {
+			const lastSync = data.healthkitConnection.lastSyncAt ? new Date(data.healthkitConnection.lastSyncAt).getTime() : 0;
+			if (Date.now() - lastSync >= 3600000) {
+				try {
+					const { isHealthKitAvailable, queryHealthKitData } = await import('$lib/healthkit');
+					if (isHealthKitAvailable()) {
+						const today = new Date().toISOString().split('T')[0];
+						const payload = await queryHealthKitData(today, today);
+						await fetch('/api/integrations/healthkit/sync', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify(payload)
+						});
+					}
+				} catch {
+					// Silent fail
+				}
+			}
+		}
 
-		const lastSync = data.healthkitConnection.lastSyncAt ? new Date(data.healthkitConnection.lastSyncAt).getTime() : 0;
-		if (Date.now() - lastSync < 3600000) return;
-
+		// Schedule today's reminders
 		try {
-			const { isHealthKitAvailable, queryHealthKitData } = await import('$lib/healthkit');
-			if (!isHealthKitAvailable()) return;
-
-			const today = new Date().toISOString().split('T')[0];
-			const payload = await queryHealthKitData(today, today);
-
-			await fetch('/api/integrations/healthkit/sync', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload)
-			});
+			const { hasNotificationPermission, scheduleReminders } = await import('$lib/notifications');
+			if (hasNotificationPermission()) {
+				const res = await fetch('/api/reminders');
+				if (res.ok) {
+					const reminders = await res.json();
+					const active = reminders.filter((r: { enabled: boolean }) => r.enabled);
+					await scheduleReminders(active);
+				}
+			}
 		} catch {
-			// Silent fail — auto-sync is best-effort
+			// Silent fail
 		}
 	});
 

@@ -315,3 +315,24 @@ export const integrationSyncLog = pgTable('integration_sync_log', {
 
 export type IntegrationConnection = typeof integrationConnections.$inferSelect;
 export type IntegrationSyncLog = typeof integrationSyncLog.$inferSelect;
+
+
+// ============================================
+// Reminders / Notifications
+// ============================================
+
+// Reminder schedules — per-user, per-metric notification config
+export const reminderSchedules = pgTable('reminder_schedules', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	metricId: text('metric_id').references(() => trackerMetrics.id, { onDelete: 'cascade' }),
+	label: text('label').notNull(), // display name, e.g. "Log water" or custom
+	time: text('time').notNull(), // 'HH:MM' in 24h format
+	days: jsonb('days').notNull(), // [0,1,2,3,4,5,6] — 0=Sun, 6=Sat
+	timezone: text('timezone').notNull().default('America/Chicago'),
+	enabled: boolean('enabled').notNull().default(true),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type ReminderSchedule = typeof reminderSchedules.$inferSelect;
