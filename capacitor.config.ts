@@ -6,6 +6,7 @@ const isDev = true;
 const config: CapacitorConfig = {
 	appId: 'com.ortholinear.tracker',
 	appName: 'Ortholinear',
+	webDir: 'build',
 	server: isDev
 		? { url: 'http://localhost:5173', cleartext: true }
 		: { url: 'https://ortholinear.app' },

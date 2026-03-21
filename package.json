@@ -16,8 +16,9 @@
 		"db:seed-exercises": "npx tsx scripts/seed-exercises.ts",
 		"db:seed-custom-foods": "npx tsx scripts/seed-custom-foods.ts",
 		"db:restore": "npx tsx scripts/restore-db.ts",
-		"ios:open": "npx cap open ios",
-		"ios:sync": "npx cap sync ios",
+		"ios:build": "CAPACITOR=1 vite build && npx cap sync ios",
+		"ios:dev": "npx cap open ios",
+		"ios:sync": "CAPACITOR=1 vite build && npx cap sync ios",
 		"tauri": "tauri",
 		"tauri:dev": "tauri dev",
 		"tauri:build": "tauri build"
