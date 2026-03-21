@@ -204,7 +204,7 @@
 						</Button.Root>
 					</div>
 				{:else}
-					<Button.Root href="/api/integrations/oura/authorize" class="cursor-pointer">
+					<Button.Root onclick={() => { window.location.href = '/api/integrations/oura/authorize'; }} class="cursor-pointer">
 						<ExternalLink class="w-4 h-4 mr-2" />
 						Connect Oura Ring
 					</Button.Root>
