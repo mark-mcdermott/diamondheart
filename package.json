@@ -32,6 +32,7 @@
 	"dependencies": {
 		"@capacitor/core": "^8.0.0",
 		"@capacitor/ios": "^8.0.0",
+		"@capgo/capacitor-health": "^8.4.1",
 		"@lucia-auth/adapter-drizzle": "^1.1.0",
 		"@neondatabase/serverless": "^0.10.4",
 		"@tauri-apps/api": "^2.10.1",
