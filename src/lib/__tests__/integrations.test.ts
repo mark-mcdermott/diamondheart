@@ -45,7 +45,7 @@ describe('integrations page server', () => {
 			locals: { user: { id: 'user-1' } }
 		} as never);
 
-		expect(result).toEqual({ connections: [] });
+		expect(result).toEqual({ connections: [], ouraConfigured: false });
 	});
 
 	it('returns connections for authenticated user', async () => {

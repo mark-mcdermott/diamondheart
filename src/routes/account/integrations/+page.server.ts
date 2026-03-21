@@ -10,8 +10,10 @@ export const load: PageServerLoad = async ({ platform, locals }) => {
 	}
 
 	const databaseUrl = platform?.env?.DATABASE_URL || env.DATABASE_URL;
+	const ouraConfigured = !!(platform?.env?.OURA_CLIENT_ID || env.OURA_CLIENT_ID);
+
 	if (!databaseUrl) {
-		return { connections: [] };
+		return { connections: [], ouraConfigured };
 	}
 
 	const db = createDb(databaseUrl);
@@ -28,5 +30,5 @@ export const load: PageServerLoad = async ({ platform, locals }) => {
 		.from(integrationConnections)
 		.where(eq(integrationConnections.userId, locals.user.id));
 
-	return { connections };
+	return { connections, ouraConfigured };
 };

@@ -1,4 +1,4 @@
-import { redirect } from '@sveltejs/kit';
+import { redirect, error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types';
 
@@ -9,7 +9,7 @@ export const GET: RequestHandler = async ({ platform, locals, url }) => {
 
 	const clientId = platform?.env?.OURA_CLIENT_ID || env.OURA_CLIENT_ID;
 	if (!clientId) {
-		redirect(302, '/account/integrations?error=oura_not_configured');
+		error(500, 'Oura integration not configured');
 	}
 
 	const redirectUri = `${url.origin}/api/integrations/oura/callback`;

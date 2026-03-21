@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
 	import { Card, Button } from '$lib/components/ui';
 	import { ArrowLeft, RefreshCw, Unplug, ExternalLink, Heart, Watch } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
@@ -14,14 +12,6 @@
 	const healthkitConnection = $derived(data.connections.find((c: Connection) => c.service === 'healthkit'));
 
 	let syncing = $state<string | null>(null);
-
-	// Show error from redirect query params
-	onMount(() => {
-		const error = $page.url.searchParams.get('error');
-		if (error === 'oura_not_configured') {
-			toast.error('Oura integration is not configured. Set OURA_CLIENT_ID and OURA_CLIENT_SECRET environment variables.');
-		}
-	});
 
 	function isOuraConnected() {
 		return ouraConnection?.status === 'active';
@@ -203,11 +193,15 @@
 							Disconnect
 						</Button.Root>
 					</div>
-				{:else}
+				{:else if data.ouraConfigured}
 					<Button.Root onclick={() => { window.location.href = '/api/integrations/oura/authorize'; }} class="cursor-pointer">
 						<ExternalLink class="w-4 h-4 mr-2" />
 						Connect Oura Ring
 					</Button.Root>
+				{:else}
+					<p class="text-sm text-muted-foreground">
+						Not configured. Set <code class="px-1 py-0.5 bg-muted rounded text-xs">OURA_CLIENT_ID</code> and <code class="px-1 py-0.5 bg-muted rounded text-xs">OURA_CLIENT_SECRET</code> environment variables.
+					</p>
 				{/if}
 			</Card.Content>
 		</Card.Root>
