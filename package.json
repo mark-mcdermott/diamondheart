@@ -13,7 +13,8 @@
 		"test:api": "vitest run src/lib/__tests__/stripe-webhook.test.ts src/lib/__tests__/printful-webhook.test.ts src/lib/__tests__/food-search.test.ts src/lib/__tests__/backup.test.ts",
 		"test:actions": "vitest run src/lib/__tests__/food-actions.test.ts src/lib/__tests__/metrics-actions.test.ts src/lib/__tests__/workout-actions.test.ts src/lib/__tests__/contact.test.ts",
 		"test:unit": "vitest run src/lib/__tests__/utils.test.ts src/lib/__tests__/merch.test.ts src/lib/__tests__/printful.test.ts",
-		"test:regression": "npm run test:auth && npm run test:api && npm run test:actions && npm run test:unit",
+		"test:biometric": "vitest run src/lib/__tests__/biometrics.test.ts src/lib/__tests__/oura-sync.test.ts src/lib/__tests__/oura-oauth.test.ts src/lib/__tests__/healthkit-sync.test.ts src/lib/__tests__/integrations.test.ts",
+		"test:regression": "npm run test:auth && npm run test:api && npm run test:actions && npm run test:unit && npm run test:biometric",
 		"db:generate": "drizzle-kit generate",
 		"db:push": "drizzle-kit push --force",
 		"db:studio": "drizzle-kit studio",
@@ -31,6 +32,7 @@
 	"dependencies": {
 		"@capacitor/core": "^8.0.0",
 		"@capacitor/ios": "^8.0.0",
+		"@capgo/capacitor-health": "^8.4.1",
 		"@lucia-auth/adapter-drizzle": "^1.1.0",
 		"@neondatabase/serverless": "^0.10.4",
 		"@tauri-apps/api": "^2.10.1",

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { Button, ProgressRing } from '$lib/components/ui';
 	import {
@@ -18,6 +19,30 @@
 		Clock
 	} from 'lucide-svelte';
 	let { data } = $props();
+
+	// Auto-sync HealthKit if connected and stale (> 1 hour)
+	onMount(async () => {
+		if (!data.healthkitConnection || data.healthkitConnection.status !== 'active') return;
+
+		const lastSync = data.healthkitConnection.lastSyncAt ? new Date(data.healthkitConnection.lastSyncAt).getTime() : 0;
+		if (Date.now() - lastSync < 3600000) return;
+
+		try {
+			const { isHealthKitAvailable, queryHealthKitData } = await import('$lib/healthkit');
+			if (!isHealthKitAvailable()) return;
+
+			const today = new Date().toISOString().split('T')[0];
+			const payload = await queryHealthKitData(today, today);
+
+			await fetch('/api/integrations/healthkit/sync', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload)
+			});
+		} catch {
+			// Silent fail — auto-sync is best-effort
+		}
+	});
 
 	// ---------- Types ----------
 

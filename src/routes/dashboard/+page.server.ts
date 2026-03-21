@@ -1,6 +1,6 @@
 import { redirect, fail } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
-import { createDb, trackerCategories, trackerMetrics, trackerEntries, trackerGoals } from '$lib/server/db';
+import { createDb, trackerCategories, trackerMetrics, trackerEntries, trackerGoals, integrationConnections } from '$lib/server/db';
 import { desc, eq, and, gte, lte } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 
@@ -13,7 +13,7 @@ export const load: PageServerLoad = async ({ platform, locals }) => {
 	const databaseUrl = platform?.env?.DATABASE_URL || env.DATABASE_URL;
 
 	if (!databaseUrl) {
-		return { categories: [], todayEntries: [], recentEntries: [], metrics: [], goals: [], monthEntries: [] };
+		return { categories: [] as typeof trackerCategories.$inferSelect[], todayEntries: [] as { id: string; metricId: string; value: string; date: Date }[], recentEntries: [] as { id: string; metricId: string; value: string; date: Date }[], metrics: [] as typeof trackerMetrics.$inferSelect[], goals: [] as typeof trackerGoals.$inferSelect[], monthEntries: [] as { metricId: string; date: Date }[], healthkitConnection: null as { status: string; lastSyncAt: Date | null } | null };
 	}
 
 	const db = createDb(databaseUrl);
@@ -65,7 +65,13 @@ export const load: PageServerLoad = async ({ platform, locals }) => {
 
 	const goals = await db.select().from(trackerGoals).where(eq(trackerGoals.active, true));
 
-	return { categories, metrics, todayEntries, recentEntries, goals, monthEntries };
+	// Check for active HealthKit connection (for auto-sync on mount)
+	const [healthkitConnection] = await db
+		.select({ status: integrationConnections.status, lastSyncAt: integrationConnections.lastSyncAt })
+		.from(integrationConnections)
+		.where(and(eq(integrationConnections.userId, locals.user.id), eq(integrationConnections.service, 'healthkit')));
+
+	return { categories, metrics, todayEntries, recentEntries, goals, monthEntries, healthkitConnection: healthkitConnection ?? null };
 };
 
 function generateId() {

@@ -278,3 +278,40 @@ export type CustomFood = typeof customFoods.$inferSelect;
 export type FavoriteFood = typeof favoriteFoods.$inferSelect;
 export type FavoriteMeal = typeof favoriteMeals.$inferSelect;
 export type FavoriteMealItem = typeof favoriteMealItems.$inferSelect;
+
+
+// ============================================
+// Biometric Integrations
+// ============================================
+
+// Integration connections (Oura OAuth tokens, HealthKit status)
+export const integrationConnections = pgTable('integration_connections', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	service: text('service').notNull(), // 'oura' | 'healthkit'
+	accessToken: text('access_token'),
+	refreshToken: text('refresh_token'),
+	tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true }),
+	scopes: text('scopes'),
+	status: text('status').notNull().default('active'), // 'active' | 'disconnected' | 'error'
+	lastSyncAt: timestamp('last_sync_at', { withTimezone: true }),
+	lastSyncError: text('last_sync_error'),
+	metadata: jsonb('metadata'),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Integration sync log (idempotency — prevents duplicate entries on re-sync)
+export const integrationSyncLog = pgTable('integration_sync_log', {
+	id: text('id').primaryKey(),
+	connectionId: text('connection_id').notNull().references(() => integrationConnections.id, { onDelete: 'cascade' }),
+	syncType: text('sync_type').notNull(), // 'daily' | 'backfill'
+	syncDate: text('sync_date').notNull(), // 'YYYY-MM-DD'
+	entriesCreated: integer('entries_created').notNull().default(0),
+	status: text('status').notNull().default('success'), // 'success' | 'error'
+	errorMessage: text('error_message'),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type IntegrationConnection = typeof integrationConnections.$inferSelect;
+export type IntegrationSyncLog = typeof integrationSyncLog.$inferSelect;
