@@ -31,3 +31,6 @@ ios/App/App.xcodeproj/xcuserdata
 
 # Cloudflare
 .wrangler/
+
+# Tauri
+src-tauri/target/
