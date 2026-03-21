@@ -47,5 +47,7 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Ortholinear reads health data (steps, heart rate, sleep, and more) to display on your dashboard.</string>
 </dict>
 </plist>

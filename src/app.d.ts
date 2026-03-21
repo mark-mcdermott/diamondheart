@@ -20,6 +20,8 @@ declare global {
 				USDA_API_KEY?: string;
 				PRINTFUL_API_KEY?: string;
 				BACKUP_SECRET?: string;
+				OURA_CLIENT_ID?: string;
+				OURA_CLIENT_SECRET?: string;
 			};
 		}
 	}
