@@ -215,19 +215,49 @@ scripts/                # Database seed and restore scripts
 
 ## Roadmap
 
+### Completed
 - [x] User authentication (Lucia + PBKDF2)
 - [x] Custom metric tracking with daily goals
 - [x] Workout logging with PR detection
 - [x] Nutrition tracking with USDA food search
 - [x] Merch store with Stripe + Printful
 - [x] Automated database backups
-- [x] Regression test suite (134 tests)
+- [x] Regression test suite
 - [x] CI pipeline (GitHub Actions)
 - [x] iOS app (Capacitor)
 - [x] Desktop app (Tauri v2)
 - [x] Oura Ring integration (biometric data)
 - [x] Scheduled reminders / notifications
-- [ ] Premium tier features
+
+### Brand / UI Redesign
+- [ ] Cozy/quirky brand identity and mascot character
+- [ ] Zen/wabi-sabi design system (earth tones, organic shapes, hand-drawn icons)
+- [ ] Mascot that reacts to your wellness data (sleepy, energized, calm, etc.)
+- [ ] Mindfulness & wellness features (meditation timer, yoga tracking, mood journaling)
+- [ ] Wellness score (composite of sleep, activity, mindfulness, nutrition)
+- [ ] Apple Watch app (native SwiftUI complication)
+- [ ] iOS home screen widgets (daily progress, streaks, biometrics)
+- [ ] Watch face complications (glanceable metric summaries)
+- [ ] Analytics — trend charts, metric correlations, streaks, weekly reports
+
+### Premium Tier
+- [ ] Stripe subscription checkout (reuse existing Stripe infra)
+- [ ] Premium gating (plan field on users table)
+- [ ] Unlimited integrations (free tier: 1 connected service)
+- [ ] Full history + advanced analytics (free tier: 7-day history)
+- [ ] Data export (CSV/JSON)
+- [ ] On-demand backup + self-service restore
+
+### Tauri / Capacitor Flow & UI Tweaks
+- [ ] Native navigation and transition polish
+- [ ] Platform-specific UX adjustments (iOS, macOS, Windows)
+
+### Cleanroom Components
+- [ ] Evaluate replacing third-party UI components with custom implementations
+
+### Platform Migrations
+- [ ] SvelteKit to Next.js
+- [ ] Cloudflare to Vercel
 
 ## License
 
