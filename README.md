@@ -84,7 +84,7 @@ R2_ACCESS_KEY_ID="..."
 R2_SECRET_ACCESS_KEY="..."
 R2_BACKUP_BUCKET="ortholinear-backups"
 
-# Oura Ring API (Phase 7 - not yet implemented)
+# Oura Ring API
 OURA_CLIENT_ID="..."
 OURA_CLIENT_SECRET="..."
 ```
@@ -225,8 +225,8 @@ scripts/                # Database seed and restore scripts
 - [x] CI pipeline (GitHub Actions)
 - [x] iOS app (Capacitor)
 - [x] Desktop app (Tauri v2)
-- [ ] Oura Ring integration (biometric data)
-- [ ] Scheduled reminders / notifications
+- [x] Oura Ring integration (biometric data)
+- [x] Scheduled reminders / notifications
 - [ ] Premium tier features
 
 ## License

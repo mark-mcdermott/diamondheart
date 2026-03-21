@@ -33,7 +33,8 @@ const ALL_TABLES = [
 	'favorite_meals',
 	'favorite_meal_items',
 	'integration_connections',
-	'integration_sync_log'
+	'integration_sync_log',
+	'reminder_schedules'
 ] as const;
 
 // Tables to skip in backups (ephemeral data)

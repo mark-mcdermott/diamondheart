@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { Card, Button, Input, Label } from '$lib/components/ui';
-	import { User, Lock, Mail, ArrowLeft, Camera, ChevronRight, Heart } from 'lucide-svelte';
+	import { User, Lock, Mail, ArrowLeft, Camera, ChevronRight, Heart, Bell } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	interface AccountUser {
@@ -240,6 +240,22 @@
 							<div>
 								<p class="text-sm font-medium">Integrations</p>
 								<p class="text-xs text-muted-foreground">Connect Oura Ring, Apple Health, and more</p>
+							</div>
+						</div>
+						<ChevronRight class="w-5 h-5 text-muted-foreground" />
+					</Card.Content>
+				</a>
+			</Card.Root>
+
+			<!-- Reminders Link -->
+			<Card.Root>
+				<a href="/account/reminders" class="block">
+					<Card.Content class="flex items-center justify-between py-5">
+						<div class="flex items-center gap-3">
+							<Bell class="w-5 h-5 text-muted-foreground" />
+							<div>
+								<p class="text-sm font-medium">Reminders</p>
+								<p class="text-xs text-muted-foreground">Schedule notifications to log your metrics</p>
 							</div>
 						</div>
 						<ChevronRight class="w-5 h-5 text-muted-foreground" />
