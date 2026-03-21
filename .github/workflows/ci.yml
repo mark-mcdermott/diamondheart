@@ -20,4 +20,4 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: npm run check
-      - run: npm run test
+      - run: npm run test:regression
