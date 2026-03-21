@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import { Sonner } from '$lib/components/ui';
 	import { Nav, Footer } from '$lib/components/blocks';
 	import { onNavigate } from '$app/navigation';
 	import type { NavLink, AvatarConfig } from '$lib/components/blocks';
@@ -74,3 +75,5 @@
 
 	<Footer siteName="Ortholinear" logo={"/images/logo.svg"} maxWidth="max-w-6xl" />
 </div>
+
+<Sonner.Toaster />

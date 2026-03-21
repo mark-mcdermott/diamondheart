@@ -9,10 +9,7 @@ export const GET: RequestHandler = async ({ platform, locals, url }) => {
 
 	const clientId = platform?.env?.OURA_CLIENT_ID || env.OURA_CLIENT_ID;
 	if (!clientId) {
-		return new Response(JSON.stringify({ error: 'Oura integration not configured' }), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		redirect(302, '/account/integrations?error=oura_not_configured');
 	}
 
 	const redirectUri = `${url.origin}/api/integrations/oura/callback`;
