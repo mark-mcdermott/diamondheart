@@ -1,4 +1,3 @@
-// Printful API integration
 interface PrintfulRecipient {
 	name: string;
 	address1: string;
@@ -35,21 +34,26 @@ export class PrintfulClient {
 			headers: {
 				Authorization: `Bearer ${this.apiKey}`,
 				'Content-Type': 'application/json',
-				...options.headers
-			}
+				...options.headers,
+			},
 		});
 		const data = await response.json();
 		if (!response.ok) throw new Error(data.error?.message || `Printful API error: ${response.status}`);
 		return data.result;
 	}
 
-	async createOrder(orderId: string, recipient: PrintfulRecipient, items: PrintfulOrderItem[], retailCosts?: { subtotal: number; shipping: number; total: number }): Promise<PrintfulOrder> {
+	async createOrder(
+		orderId: string,
+		recipient: PrintfulRecipient,
+		items: PrintfulOrderItem[],
+		retailCosts?: { subtotal: number; shipping: number; total: number }
+	): Promise<PrintfulOrder> {
 		const orderData: Record<string, unknown> = { external_id: orderId, recipient, items };
 		if (retailCosts) {
 			orderData.retail_costs = {
 				subtotal: (retailCosts.subtotal / 100).toFixed(2),
 				shipping: (retailCosts.shipping / 100).toFixed(2),
-				total: (retailCosts.total / 100).toFixed(2)
+				total: (retailCosts.total / 100).toFixed(2),
 			};
 		}
 		return this.request<PrintfulOrder>('/orders', { method: 'POST', body: JSON.stringify(orderData) });
@@ -58,8 +62,4 @@ export class PrintfulClient {
 	async confirmOrder(orderId: number): Promise<PrintfulOrder> {
 		return this.request<PrintfulOrder>(`/orders/${orderId}/confirm`, { method: 'POST' });
 	}
-}
-
-export function createPrintfulClient(apiKey: string): PrintfulClient {
-	return new PrintfulClient(apiKey);
 }

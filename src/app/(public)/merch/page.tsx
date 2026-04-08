@@ -1,0 +1,30 @@
+import { products, getProductImage } from "@/lib/data/products";
+import { ProductCard, ProductCardImage, ProductCardName, ProductCardPrice } from "@/components/ui/product-card";
+
+export default function MerchPage() {
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-16">
+      <h1>Merch</h1>
+      <p className="text-muted-foreground mt-2 mb-8">Diamondheart gear, made to order.</p>
+
+      {products.length === 0 ? (
+        <p className="text-muted-foreground">No products available yet. Check back soon.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {products.map((product) => {
+            const firstColor = Object.keys(product.images)[0] || "";
+            const image = getProductImage(product, firstColor);
+
+            return (
+              <ProductCard key={product.id} href={`/merch/${product.slug}`}>
+                <ProductCardImage src={image} alt={product.name} />
+                <ProductCardName>{product.name}</ProductCardName>
+                <ProductCardPrice price={product.price / 100} />
+              </ProductCard>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

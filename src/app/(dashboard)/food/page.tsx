@@ -1,0 +1,74 @@
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
+import { db } from "@/db";
+import { foodLog, foodLogItems } from "@/db/schema";
+import { eq, and, gte, lte } from "drizzle-orm";
+import { FoodClient } from "./food-client";
+
+export default async function FoodPage() {
+  const session = await getCurrentUser();
+  if (!session) redirect("/login");
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const todayLogs = await db
+    .select({
+      logId: foodLog.id,
+      mealType: foodLog.mealType,
+      itemId: foodLogItems.id,
+      itemName: foodLogItems.name,
+      fdcId: foodLogItems.fdcId,
+      servingSize: foodLogItems.servingSize,
+      servingUnit: foodLogItems.servingUnit,
+      calories: foodLogItems.calories,
+      protein: foodLogItems.protein,
+      carbs: foodLogItems.carbs,
+      fat: foodLogItems.fat,
+      quantity: foodLogItems.quantity,
+    })
+    .from(foodLog)
+    .leftJoin(foodLogItems, eq(foodLogItems.foodLogId, foodLog.id))
+    .where(
+      and(
+        eq(foodLog.userId, session.userId),
+        gte(foodLog.date, today),
+        lte(foodLog.date, tomorrow)
+      )
+    );
+
+  const meals: Record<string, Array<{
+    id: string;
+    name: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    quantity: number;
+  }>> = { breakfast: [], lunch: [], dinner: [], snack: [] };
+
+  const totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
+  for (const row of todayLogs) {
+    if (!row.itemId) continue;
+    const item = {
+      id: row.itemId,
+      name: row.itemName!,
+      calories: row.calories!,
+      protein: row.protein!,
+      carbs: row.carbs!,
+      fat: row.fat!,
+      quantity: row.quantity!,
+    };
+    const meal = row.mealType as string;
+    if (meals[meal]) meals[meal].push(item);
+    totals.calories += item.calories * item.quantity;
+    totals.protein += item.protein * item.quantity;
+    totals.carbs += item.carbs * item.quantity;
+    totals.fat += item.fat * item.quantity;
+  }
+
+  return <FoodClient meals={meals} totals={totals} />;
+}
