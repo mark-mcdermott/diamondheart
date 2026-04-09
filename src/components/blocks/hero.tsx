@@ -11,6 +11,7 @@ interface HeroProps {
   logoImage?: string;
   image?: string;
   imageSize?: "sm" | "md" | "lg";
+  backgroundImage?: string;
 }
 
 const imageSizeClass = {
@@ -29,10 +30,14 @@ export function Hero({
   logoImage,
   image,
   imageSize = "md",
+  backgroundImage,
 }: HeroProps) {
   return (
-    <section className="hero flex flex-col items-center justify-center px-4 py-24 text-center sm:py-32">
-      <div className="hero-content flex flex-col items-center">
+    <section
+      className={`hero relative flex flex-col items-center justify-center px-4 py-24 text-center sm:py-32 ${backgroundImage ? "hero-with-bg" : ""}`}
+      style={backgroundImage ? { "--hero-bg-url": `url(${backgroundImage})` } as React.CSSProperties : undefined}
+    >
+      <div className="hero-content relative z-10 flex flex-col items-center">
         {image && (
           <div className="mb-6 flex justify-center">
             <img

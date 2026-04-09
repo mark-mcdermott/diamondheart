@@ -26,9 +26,9 @@ export default async function PublicLayout({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Nav siteName="Diamondheart" links={defaultNavLinks} user={user} showThemeToggle />
+      <Nav siteName="Diamondheart" logo="/logo.png" links={defaultNavLinks} user={user} showThemeToggle />
       <main className="flex-1">{children}</main>
-      <Footer siteName="Diamondheart" />
+      <Footer siteName="Diamondheart" logoImage="/logo.png" />
     </div>
   );
 }
