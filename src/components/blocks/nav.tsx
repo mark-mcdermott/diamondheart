@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { Menu, X, ChevronDown, Github } from "lucide-react";
+import { Menu, X, ChevronDown, Github, Gem, Heart } from "lucide-react";
 import { Sheet, SheetContent, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -57,12 +57,11 @@ export function Nav({
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold no-underline">
-          {isLogoImage ? (
-            <Image src={logo} alt="" width={24} height={24} />
-          ) : logo ? (
-            <span className="text-xl">{logo}</span>
-          ) : null}
+        <Link href="/" className="group flex items-center gap-2 font-semibold no-underline">
+          <span className="flex items-center text-primary transition-colors group-hover:text-primary/90">
+            <Gem className="h-[1.875rem] w-[1.875rem]" />
+            <Heart className="h-[1.875rem] w-[1.875rem]" fill="currentColor" />
+          </span>
           {siteName && <span>{siteName}</span>}
         </Link>
 

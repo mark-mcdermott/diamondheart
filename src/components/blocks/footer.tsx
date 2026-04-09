@@ -17,8 +17,6 @@ export function Footer({ siteName, links = [], logoIcon, logoImage }: FooterProp
     <footer className="border-t border-border bg-background">
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 px-4 py-8 sm:flex-row sm:justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          {logoImage && <img src={logoImage} alt="" className="h-5 w-5" />}
-          {logoIcon && !logoImage && <span>{logoIcon}</span>}
           <span>&copy; {new Date().getFullYear()} {siteName}</span>
         </div>
         {links.length > 0 && (

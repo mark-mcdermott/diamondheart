@@ -147,6 +147,12 @@
 		@apply underline-offset-4 hover:underline;
 	}
 
+	button a,
+	a[data-slot="button"],
+	[data-slot="button"] a {
+		text-decoration: none !important;
+	}
+
 	/* Headings */
 	h1 {
 		@apply font-semibold tracking-tight text-4xl sm:text-5xl;
@@ -169,19 +175,33 @@
 	/* Hero styling */
 	.hero {
 		min-height: 80vh;
+		flex: 1;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 	}
 
 	.hero-with-bg {
-		background-image: linear-gradient(to bottom, hsl(270 20% 99% / 0.55), hsl(270 20% 99% / 0.7)), var(--hero-bg-url);
+		background-image: var(--hero-bg-url);
 		background-size: cover;
 		background-position: center;
+		position: relative;
 	}
 
-	.dark .hero-with-bg {
-		background-image: linear-gradient(to bottom, hsl(270 25% 6% / 0.65), hsl(270 25% 6% / 0.8)), var(--hero-bg-url);
+	.hero-with-bg .hero-content {
+		position: relative;
+		z-index: 1;
+	}
+
+	.hero-with-bg::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: radial-gradient(70% 60%, #fcfcfd, rgba(252, 252, 253, 0.9), rgba(252, 252, 253, 0.5));
+	}
+
+	.dark .hero-with-bg::before {
+		background: radial-gradient(70% 60%, #000, rgba(0, 0, 0, 0.95), rgb(0, 0, 0, 0.85));
 	}
 
 	.hero-content {
@@ -238,6 +258,32 @@
 	.alert-error {
 		@apply border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-200;
 	}
+}
+
+/* Button border */
+[data-slot="button"][data-variant="default"],
+[data-slot="button"][data-variant="outline"] {
+	padding: 1.5rem 2.5rem;
+	font-size: 1rem;
+}
+[data-slot="button"][data-variant="default"] {
+	border: none;
+	border-radius: 14px;
+	background-color: #a57cf4;
+	transition: background-color 0.2s;
+}
+[data-slot="button"][data-variant="default"]:hover {
+	opacity: 0.9;
+}
+[data-slot="button"][data-variant="outline"] {
+	border: none !important;
+	border-radius: 14px;
+	background-color: #fad2e6;
+	color: #6b6b6b;
+	transition: background-color 0.2s, color 0.2s;
+}
+[data-slot="button"][data-variant="outline"]:hover {
+	opacity: 0.9;
 }
 
 /* Utilities */

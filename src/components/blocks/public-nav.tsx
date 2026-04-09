@@ -35,8 +35,6 @@ export function PublicNav({ siteName, logoIcon, logoImage }: PublicNavProps) {
           href="/"
           className="group flex items-center gap-2 font-semibold no-underline"
         >
-          {logoImage && <img src={logoImage} alt="" className="nav-logo-img h-8 w-8 object-contain" />}
-          {logoIcon && !logoImage && <span>{logoIcon}</span>}
           <span>{siteName}</span>
         </Link>
 
