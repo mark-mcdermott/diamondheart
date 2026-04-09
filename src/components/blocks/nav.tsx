@@ -112,7 +112,17 @@ export function Nav({
 
             return null;
           })}
+          {!isLoggedIn && (
+            <Link href="/login" className="text-sm text-muted-foreground transition-colors hover:text-foreground no-underline">
+              Log In
+            </Link>
+          )}
           {showThemeToggle && <ThemeToggle />}
+          {!isLoggedIn && (
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/signup">Sign Up</Link>
+            </Button>
+          )}
           {user && (
             <AvatarMenu
               user={{

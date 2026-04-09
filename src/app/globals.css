@@ -142,7 +142,7 @@
 	}
 
 	h1, h2, h3, h4, h5, h6 {
-		font-family: var(--font-heading, inherit);
+		font-family: 'Poppins', var(--font-heading, inherit);
 		color: var(--app-heading-color);
 	}
 
@@ -280,30 +280,30 @@
 	}
 }
 
-/* Button border */
+/* Button styles */
 [data-slot="button"][data-variant="default"],
-[data-slot="button"][data-variant="outline"] {
-	padding: 1.5rem 2.5rem;
-	font-size: 1rem;
+[data-slot="button"][data-variant="secondary"] {
+	border: none;
+	border-radius: 10px;
+	transition: opacity 0.2s;
+}
+[data-slot="button"][data-variant="default"]:hover,
+[data-slot="button"][data-variant="secondary"]:hover {
+	opacity: 0.9;
 }
 [data-slot="button"][data-variant="default"] {
-	border: none;
-	border-radius: 14px;
 	background-color: #a57cf4;
-	transition: background-color 0.2s;
+	color: #fff;
 }
-[data-slot="button"][data-variant="default"]:hover {
-	opacity: 0.9;
-}
-[data-slot="button"][data-variant="outline"] {
-	border: none !important;
-	border-radius: 14px;
+[data-slot="button"][data-variant="secondary"] {
 	background-color: #fad2e6;
 	color: #6b6b6b;
-	transition: background-color 0.2s, color 0.2s;
 }
-[data-slot="button"][data-variant="outline"]:hover {
-	opacity: 0.9;
+/* Large buttons */
+[data-slot="button"][data-size="lg"] {
+	padding: 1.5rem 2.5rem;
+	font-size: 1rem;
+	border-radius: 14px;
 }
 
 /* Utilities */

@@ -78,7 +78,7 @@ export function Hero({
               </Button>
             )}
             {secondaryCta && (
-              <Button asChild variant="outline" size="lg">
+              <Button asChild variant="secondary" size="lg">
                 <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
               </Button>
             )}
