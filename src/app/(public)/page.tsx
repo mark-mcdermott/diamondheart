@@ -4,7 +4,9 @@ export default function HomePage() {
   return (
     <Hero
       title="Diamondheart"
-      description="Track what matters and build better habits. Workouts, nutrition, custom metrics — all in one place."
+      logoImage="/logo.png"
+      description="Mindful tracking for meditation, wellness, and daily habits."
+      backgroundImage="/background.png"
       primaryCta={{ label: "Get Started", href: "/signup" }}
       secondaryCta={{ label: "Learn More", href: "/about" }}
     />
