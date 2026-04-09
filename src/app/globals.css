@@ -8,40 +8,41 @@
 	--font-logo: 'Geist Variable', system-ui, sans-serif;
 
 	/* Border radius */
-	--app-radius: 0.625rem;
+	--app-radius: 14px;
 	--app-radius-sm: calc(var(--app-radius) - 4px);
 	--app-radius-md: calc(var(--app-radius) - 2px);
 	--app-radius-lg: var(--app-radius);
 	--app-radius-xl: calc(var(--app-radius) + 4px);
 
 	/* Diamondheart skin — amethyst & lotus */
---app-background: var(--color-bg, hsl(270 20% 99%));
-	--app-foreground: var(--color-text, hsl(270 30% 12%));
+	--app-background: #e7ede9;
+	--app-foreground: #73677e;
+	--app-heading-color: #1f1528;
 
-	--app-card: var(--color-card-bg, hsl(0 0% 100%));
-	--app-card-foreground: var(--color-text, hsl(270 30% 12%));
+	--app-card: #fcfcfd;
+	--app-card-foreground: #73677e;
 
-	--app-popover: var(--color-card-bg, hsl(0 0% 100%));
-	--app-popover-foreground: var(--color-text, hsl(270 30% 12%));
+	--app-popover: #fcfcfd;
+	--app-popover-foreground: #73677e;
 
-	--app-primary: var(--color-primary, hsl(270 50% 44%));
-	--app-primary-foreground: hsl(0 0% 100%);
+	--app-primary: #a57cf4;
+	--app-primary-foreground: #fff;
 
-	--app-secondary: hsl(270 25% 95%);
-	--app-secondary-foreground: hsl(270 30% 20%);
+	--app-secondary: #fad2e6;
+	--app-secondary-foreground: #6b6b6b;
 
 	--app-muted: hsl(270 15% 95%);
 	--app-muted-foreground: hsl(270 10% 45%);
 
-	--app-accent: var(--color-accent, hsl(330 55% 55%));
-	--app-accent-foreground: hsl(0 0% 100%);
+	--app-accent: #fa40f2;
+	--app-accent-foreground: #fff;
 
 	--app-destructive: hsl(0 84% 60%);
 	--app-destructive-foreground: hsl(0 0% 98%);
 
 	--app-border: hsl(270 15% 90%);
 	--app-input: hsl(270 15% 90%);
-	--app-ring: var(--color-primary, hsl(270 50% 44%));
+	--app-ring: #a57cf4;
 
 	/* Animations */
 	--app-animate-accordion-down: accordion-down 0.2s ease-out;
@@ -50,33 +51,34 @@
 
 /* Dark mode */
 .dark {
-	--app-background: var(--color-bg, hsl(270 25% 6%));
-	--app-foreground: var(--color-text, hsl(270 15% 93%));
+	--app-background: #0f0b13;
+	--app-foreground: #998fa3;
+	--app-heading-color: #edeaf0;
 
-	--app-card: var(--color-card-bg, hsl(270 20% 10%));
-	--app-card-foreground: var(--color-text, hsl(270 15% 93%));
+	--app-card: #0f0b13;
+	--app-card-foreground: #998fa3;
 
-	--app-popover: var(--color-card-bg, hsl(270 20% 10%));
-	--app-popover-foreground: var(--color-text, hsl(270 15% 93%));
+	--app-popover: #0f0b13;
+	--app-popover-foreground: #998fa3;
 
-	--app-primary: var(--color-primary, hsl(270 55% 65%));
-	--app-primary-foreground: hsl(270 25% 6%);
+	--app-primary: #a57cf4;
+	--app-primary-foreground: #0f0b13;
 
 	--app-secondary: hsl(270 15% 15%);
-	--app-secondary-foreground: hsl(270 15% 93%);
+	--app-secondary-foreground: #edeaf0;
 
 	--app-muted: hsl(270 15% 15%);
 	--app-muted-foreground: hsl(270 10% 60%);
 
-	--app-accent: var(--color-accent, hsl(330 50% 62%));
-	--app-accent-foreground: hsl(270 25% 6%);
+	--app-accent: #fa40f2;
+	--app-accent-foreground: #0f0b13;
 
 	--app-destructive: hsl(0 63% 31%);
 	--app-destructive-foreground: hsl(0 0% 98%);
 
 	--app-border: hsl(270 15% 18%);
 	--app-input: hsl(270 15% 18%);
-	--app-ring: var(--color-primary, hsl(270 55% 65%));
+	--app-ring: #a57cf4;
 }
 
 /* Keyframe animations */
@@ -141,6 +143,7 @@
 
 	h1, h2, h3, h4, h5, h6 {
 		font-family: var(--font-heading, inherit);
+		color: var(--app-heading-color);
 	}
 
 	body {
@@ -148,7 +151,20 @@
 	}
 
 	a {
-		@apply underline-offset-4 hover:underline;
+		@apply text-accent font-bold no-underline;
+	}
+
+	a:hover {
+		opacity: 0.9;
+	}
+
+	header a:hover,
+	footer a:hover {
+		opacity: 0.7;
+	}
+
+	header a {
+		@apply font-normal;
 	}
 
 	button a,
