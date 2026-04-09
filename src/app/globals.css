@@ -289,7 +289,8 @@
 }
 [data-slot="button"][data-variant="default"]:hover,
 [data-slot="button"][data-variant="secondary"]:hover {
-	opacity: 0.9;
+	background-color: #fa40f2;
+	color: #fff;
 }
 [data-slot="button"][data-variant="default"] {
 	background-color: #a57cf4;

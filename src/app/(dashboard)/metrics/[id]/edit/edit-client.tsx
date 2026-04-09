@@ -69,7 +69,7 @@ export function MetricEditClient({ metric }: MetricEditClientProps) {
             id="valueType"
             value={valueType}
             onChange={(e) => setValueType(e.target.value)}
-            className="mt-2 w-full px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+            className="mt-2 w-full px-3 py-2 border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
           >
             {VALUE_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
@@ -107,7 +107,7 @@ export function MetricEditClient({ metric }: MetricEditClientProps) {
             <Save className="w-4 h-4 mr-2" />
             {isPending ? "Saving..." : "Save Changes"}
           </Button>
-          <Button variant="outline" asChild>
+          <Button variant="secondary" asChild>
             <Link href={`/metrics/${metric.id}`}>Cancel</Link>
           </Button>
         </div>

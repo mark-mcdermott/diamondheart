@@ -193,7 +193,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries }: Dashbo
             Log Entry
           </Link>
         </Button>
-        <Button variant="outline" asChild>
+        <Button variant="secondary" asChild>
           <Link href="/metrics">
             <Settings className="w-4 h-4 mr-2" />
             Metrics
@@ -228,7 +228,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries }: Dashbo
                   <Link
                     key={metric.id}
                     href={`/metrics/${metric.id}`}
-                    className="group bg-background border border-border rounded-xl p-5 flex flex-col items-center gap-3 hover:border-muted-foreground transition-colors no-underline"
+                    className="group bg-card rounded-lg p-5 flex flex-col items-center gap-3 hover:opacity-90 transition-opacity no-underline"
                   >
                     <ProgressRing
                       value={progress}
@@ -273,7 +273,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries }: Dashbo
                 return (
                   <div
                     key={metric.id}
-                    className="flex items-center justify-between py-3 px-4 rounded-lg bg-background border border-border"
+                    className="flex items-center justify-between py-3 px-4 rounded-lg bg-card"
                   >
                     <div className="flex items-center gap-3">
                       <MetricIcon className="w-5 h-5 text-muted-foreground" />
