@@ -47,13 +47,17 @@ export function Hero({
             />
           </div>
         )}
-        <h1 className="flex items-center justify-center gap-3 text-4xl font-bold tracking-tight sm:text-6xl">
-          {logoImage && (
-            <img src={logoImage} alt="" className="h-12 w-12 object-contain sm:h-14 sm:w-14" />
-          )}
-          {logoIcon && (
+        {logoImage && (
+          <div className="mb-6 flex justify-center">
+            <img src={logoImage} alt="" className="hero-logo h-48 w-48 object-contain sm:h-56 sm:w-56" />
+          </div>
+        )}
+        {logoIcon && (
+          <div className="mb-6 flex justify-center">
             <span className="text-5xl sm:text-6xl">{logoIcon}</span>
-          )}
+          </div>
+        )}
+        <h1 className="text-4xl font-bold tracking-tight sm:text-6xl" style={{ color: "#fa40f2", textShadow: "2px 2px 3px rgba(0,0,0,0.2)" }}>
           {title}
         </h1>
         {tagline && (
@@ -74,7 +78,7 @@ export function Hero({
               </Button>
             )}
             {secondaryCta && (
-              <Button asChild variant="outline" size="lg">
+              <Button asChild variant="secondary" size="lg">
                 <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
               </Button>
             )}

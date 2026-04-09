@@ -1,49 +1,54 @@
-import { Blurb } from "@/components/blocks/blurb";
-import { Features } from "@/components/blocks/features";
-import { Activity, Flame, Moon, Heart, Bell, BarChart3 } from "lucide-react";
+import { Prose } from "@/components/ui/prose";
 
 export default function AboutPage() {
   return (
-    <div className="py-16">
-      <Blurb
-        title="About Diamondheart"
-        description="A mindful wellness platform for tracking meditation, building daily habits, and nurturing your well-being."
-      />
-      <Features
-        columns={3}
-        features={[
-          {
-            icon: Moon,
-            title: "Meditation Tracking",
-            description: "Log meditation sessions, track streaks, and watch your practice grow over time.",
-          },
-          {
-            icon: Flame,
-            title: "Daily Habits",
-            description: "Build and maintain habits with streak tracking, reminders, and progress visualization.",
-          },
-          {
-            icon: Activity,
-            title: "Custom Metrics",
-            description: "Track any metric that matters to you — mood, sleep, gratitude, or anything else.",
-          },
-          {
-            icon: Heart,
-            title: "Biometric Sync",
-            description: "Connect Oura Ring and Apple HealthKit for automatic health data tracking.",
-          },
-          {
-            icon: Bell,
-            title: "Mindful Reminders",
-            description: "Gentle scheduled reminders to meditate, journal, or check in with yourself.",
-          },
-          {
-            icon: BarChart3,
-            title: "Wellness Insights",
-            description: "See patterns in your practice and well-being with clear, simple charts.",
-          },
-        ]}
-      />
+    <div className="px-4 py-16 sm:py-24">
+      <div className="mx-auto max-w-2xl">
+        <div className="bg-card rounded-2xl border border-border p-8 sm:p-12">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-6xl text-primary" style={{ marginBottom: "2rem" }}>About</h1>
+          <Prose>
+            <p>
+              Diamondheart is a mindful wellness platform built for people who want to
+              deepen their meditation practice, build meaningful daily habits, and take
+              a more intentional approach to their well-being.
+            </p>
+
+            <h2>Why Diamondheart?</h2>
+            <p>
+              Most tracking apps are built around productivity and optimization.
+              Diamondheart is different — it&apos;s built around presence. The goal
+              isn&apos;t to squeeze more out of your day, but to become more aware of
+              how you&apos;re living it.
+            </p>
+
+            <h2>What you can track</h2>
+            <p>
+              Diamondheart supports meditation sessions, daily habits, custom wellness
+              metrics, nutrition, workouts, and biometric data from devices like the
+              Oura Ring and Apple HealthKit. Everything lives in one place, giving you
+              a clear picture of your overall well-being.
+            </p>
+
+            <h2>How it works</h2>
+            <p>
+              Log what matters to you. Set gentle reminders. Watch your streaks grow.
+              Over time, patterns emerge — you&apos;ll start to see how your sleep,
+              movement, meditation, and mood connect. No judgment, no gamification,
+              just honest reflection.
+            </p>
+
+            <h2>Built with care</h2>
+            <p>
+              Diamondheart is designed and built by{" "}
+              <a href="https://markmcdermott.io" target="_blank" rel="noopener noreferrer">
+                Mark McDermott
+              </a>{" "}
+              in Austin, Texas. Your data stays private and secure — that&apos;s not
+              negotiable.
+            </p>
+          </Prose>
+        </div>
+      </div>
     </div>
   );
 }
