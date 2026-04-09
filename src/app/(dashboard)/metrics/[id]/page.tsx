@@ -5,6 +5,7 @@ import { trackerMetrics, trackerEntries } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { ArrowLeft, Pencil } from "lucide-react";
 
 export default async function MetricDetailPage({
@@ -51,7 +52,7 @@ export default async function MetricDetailPage({
             {metric.dailyGoal ?? 1}
           </p>
         </div>
-        <Button variant="outline" asChild>
+        <Button variant="secondary" asChild>
           <Link href={`/metrics/${id}/edit`}>
             <Pencil className="w-4 h-4 mr-2" />
             Edit
@@ -68,51 +69,49 @@ export default async function MetricDetailPage({
         </div>
       ) : (
         <>
-          <div className="border border-border rounded-lg overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium">Date</th>
-                  <th className="text-left px-4 py-3 font-medium">Time</th>
-                  <th className="text-left px-4 py-3 font-medium">Value</th>
-                  <th className="text-left px-4 py-3 font-medium">Notes</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {entries.map((entry) => {
-                  const d = new Date(entry.date);
-                  return (
-                    <tr key={entry.id}>
-                      <td className="px-4 py-3">
-                        {d.toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {d.toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </td>
-                      <td className="px-4 py-3">
-                        {formatValue(entry.value, metric.valueType)}
-                        {metric.unit && (
-                          <span className="text-muted-foreground ml-1">
-                            {metric.unit}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {entry.notes || "-"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>Value</TableHead>
+                <TableHead>Notes</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {entries.map((entry) => {
+                const d = new Date(entry.date);
+                return (
+                  <TableRow key={entry.id}>
+                    <TableCell>
+                      {d.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {d.toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      {formatValue(entry.value, metric.valueType)}
+                      {metric.unit && (
+                        <span className="text-muted-foreground ml-1">
+                          {metric.unit}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {entry.notes || "-"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
           <p className="text-sm text-muted-foreground mt-4">
             {entries.length} {entries.length === 1 ? "entry" : "entries"}
           </p>

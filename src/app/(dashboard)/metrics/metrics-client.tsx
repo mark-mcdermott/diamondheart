@@ -141,7 +141,7 @@ export function MetricsClient({ metrics: initialMetrics }: MetricsClientProps) {
             <Button onClick={handleAdd} disabled={!newName || isPending}>
               {isPending ? "Saving..." : "Save Metric"}
             </Button>
-            <Button variant="outline" onClick={() => setShowAddForm(false)}>
+            <Button variant="secondary" onClick={() => setShowAddForm(false)}>
               Cancel
             </Button>
           </div>
@@ -156,7 +156,7 @@ export function MetricsClient({ metrics: initialMetrics }: MetricsClientProps) {
           </p>
         </div>
       ) : (
-        <div className="border border-border rounded-lg divide-y divide-border">
+        <div className="bg-card border border-border rounded-lg divide-y divide-border">
           {initialMetrics.map((metric) => (
             <div
               key={metric.id}
