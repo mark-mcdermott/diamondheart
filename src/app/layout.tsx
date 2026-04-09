@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Diamondheart",
-  description: "Track what matters and build better habits",
+  description: "Mindful tracking for meditation, wellness, and daily habits",
 };
 
 export default function RootLayout({

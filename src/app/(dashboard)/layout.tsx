@@ -27,6 +27,7 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen flex-col">
       <Nav
         siteName="Diamondheart"
+        logo="/logo.png"
         links={defaultNavLinks}
         user={{ id: user.id, email: user.email, name: user.name }}
         showThemeToggle
@@ -34,7 +35,7 @@ export default async function DashboardLayout({
       <main className="flex-1 px-4 py-6 mx-auto w-full max-w-5xl">
         {children}
       </main>
-      <Footer siteName="Diamondheart" />
+      <Footer siteName="Diamondheart" logoImage="/logo.png" />
     </div>
   );
 }
