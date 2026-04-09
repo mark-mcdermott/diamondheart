@@ -8,40 +8,40 @@
 	--font-logo: 'Geist Variable', system-ui, sans-serif;
 
 	/* Border radius */
-	--app-radius: 0.5rem;
+	--app-radius: 0.625rem;
 	--app-radius-sm: calc(var(--app-radius) - 4px);
 	--app-radius-md: calc(var(--app-radius) - 2px);
 	--app-radius-lg: var(--app-radius);
 	--app-radius-xl: calc(var(--app-radius) + 4px);
 
-	/* Colors - Light mode */
-	--app-background: hsl(0 0% 100%);
-	--app-foreground: hsl(240 10% 3.9%);
+	/* Diamondheart skin — amethyst & lotus */
+	--app-background: hsl(270 20% 99%);
+	--app-foreground: hsl(270 30% 12%);
 
 	--app-card: hsl(0 0% 100%);
-	--app-card-foreground: hsl(240 10% 3.9%);
+	--app-card-foreground: hsl(270 30% 12%);
 
 	--app-popover: hsl(0 0% 100%);
-	--app-popover-foreground: hsl(240 10% 3.9%);
+	--app-popover-foreground: hsl(270 30% 12%);
 
-	--app-primary: hsl(240 5.9% 10%);
-	--app-primary-foreground: hsl(0 0% 98%);
+	--app-primary: hsl(270 50% 44%);
+	--app-primary-foreground: hsl(0 0% 100%);
 
-	--app-secondary: hsl(240 4.8% 95.9%);
-	--app-secondary-foreground: hsl(240 5.9% 10%);
+	--app-secondary: hsl(270 25% 95%);
+	--app-secondary-foreground: hsl(270 30% 20%);
 
-	--app-muted: hsl(240 4.8% 95.9%);
-	--app-muted-foreground: hsl(240 3.8% 46.1%);
+	--app-muted: hsl(270 15% 95%);
+	--app-muted-foreground: hsl(270 10% 45%);
 
-	--app-accent: hsl(240 4.8% 95.9%);
-	--app-accent-foreground: hsl(240 5.9% 10%);
+	--app-accent: hsl(330 55% 55%);
+	--app-accent-foreground: hsl(0 0% 100%);
 
-	--app-destructive: hsl(0 84.2% 60.2%);
+	--app-destructive: hsl(0 84% 60%);
 	--app-destructive-foreground: hsl(0 0% 98%);
 
-	--app-border: hsl(240 5.9% 90%);
-	--app-input: hsl(240 5.9% 90%);
-	--app-ring: hsl(240 5.9% 10%);
+	--app-border: hsl(270 15% 90%);
+	--app-input: hsl(270 15% 90%);
+	--app-ring: hsl(270 50% 44%);
 
 	/* Animations */
 	--app-animate-accordion-down: accordion-down 0.2s ease-out;
@@ -50,33 +50,33 @@
 
 /* Dark mode */
 .dark {
-	--app-background: hsl(240 10% 3.9%);
-	--app-foreground: hsl(0 0% 98%);
+	--app-background: hsl(270 25% 6%);
+	--app-foreground: hsl(270 15% 93%);
 
-	--app-card: hsl(240 10% 3.9%);
-	--app-card-foreground: hsl(0 0% 98%);
+	--app-card: hsl(270 20% 10%);
+	--app-card-foreground: hsl(270 15% 93%);
 
-	--app-popover: hsl(240 10% 3.9%);
-	--app-popover-foreground: hsl(0 0% 98%);
+	--app-popover: hsl(270 20% 10%);
+	--app-popover-foreground: hsl(270 15% 93%);
 
-	--app-primary: hsl(0 0% 98%);
-	--app-primary-foreground: hsl(240 5.9% 10%);
+	--app-primary: hsl(270 55% 65%);
+	--app-primary-foreground: hsl(270 25% 6%);
 
-	--app-secondary: hsl(240 3.7% 15.9%);
-	--app-secondary-foreground: hsl(0 0% 98%);
+	--app-secondary: hsl(270 15% 15%);
+	--app-secondary-foreground: hsl(270 15% 93%);
 
-	--app-muted: hsl(240 3.7% 15.9%);
-	--app-muted-foreground: hsl(240 5% 64.9%);
+	--app-muted: hsl(270 15% 15%);
+	--app-muted-foreground: hsl(270 10% 60%);
 
-	--app-accent: hsl(240 3.7% 15.9%);
-	--app-accent-foreground: hsl(0 0% 98%);
+	--app-accent: hsl(330 50% 62%);
+	--app-accent-foreground: hsl(270 25% 6%);
 
-	--app-destructive: hsl(0 62.8% 30.6%);
+	--app-destructive: hsl(0 63% 31%);
 	--app-destructive-foreground: hsl(0 0% 98%);
 
-	--app-border: hsl(240 3.7% 15.9%);
-	--app-input: hsl(240 3.7% 15.9%);
-	--app-ring: hsl(240 4.9% 83.9%);
+	--app-border: hsl(270 15% 18%);
+	--app-input: hsl(270 15% 18%);
+	--app-ring: hsl(270 55% 65%);
 }
 
 /* Keyframe animations */
@@ -141,21 +141,6 @@
 
 	body {
 		@apply bg-background text-foreground;
-		/* subtle grid background - light mode */
-		background:
-			linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-			linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-			var(--app-background);
-		background-size: 48px 48px;
-	}
-
-	.dark body {
-		/* subtle grid background - dark mode */
-		background:
-			linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-			linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-			var(--app-background);
-		background-size: 48px 48px;
 	}
 
 	a {
@@ -179,6 +164,29 @@
 	h4 {
 		line-height: 1.05;
 		letter-spacing: -0.04em;
+	}
+
+	/* Hero styling */
+	.hero {
+		min-height: 80vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.hero-with-bg {
+		background-image: linear-gradient(to bottom, hsl(270 20% 99% / 0.55), hsl(270 20% 99% / 0.7)), var(--hero-bg-url);
+		background-size: cover;
+		background-position: center;
+	}
+
+	.dark .hero-with-bg {
+		background-image: linear-gradient(to bottom, hsl(270 25% 6% / 0.65), hsl(270 25% 6% / 0.8)), var(--hero-bg-url);
+	}
+
+	.hero-content {
+		width: 100%;
+		max-width: 36rem;
 	}
 }
 
