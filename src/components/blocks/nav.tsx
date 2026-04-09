@@ -58,7 +58,7 @@ export function Nav({
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
         <Link href="/" className="group flex items-center gap-2 font-semibold no-underline">
-          <span className="flex items-center text-primary transition-colors group-hover:text-primary/90">
+          <span className="flex items-center transition-colors" style={{ color: "#fa40f2", filter: "drop-shadow(rgba(0,0,0,0.2) 1px 1px 2px)" }}>
             <Gem className="h-[1.875rem] w-[1.875rem]" />
             <Heart className="h-[1.875rem] w-[1.875rem]" fill="currentColor" />
           </span>

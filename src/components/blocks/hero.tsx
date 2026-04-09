@@ -57,7 +57,7 @@ export function Hero({
             <span className="text-5xl sm:text-6xl">{logoIcon}</span>
           </div>
         )}
-        <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
+        <h1 className="text-4xl font-bold tracking-tight sm:text-6xl" style={{ color: "#fa40f2", textShadow: "2px 2px 3px rgba(0,0,0,0.2)" }}>
           {title}
         </h1>
         {tagline && (

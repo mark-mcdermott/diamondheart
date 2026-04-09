@@ -15,16 +15,16 @@
 	--app-radius-xl: calc(var(--app-radius) + 4px);
 
 	/* Diamondheart skin — amethyst & lotus */
-	--app-background: hsl(270 20% 99%);
-	--app-foreground: hsl(270 30% 12%);
+--app-background: var(--color-bg, hsl(270 20% 99%));
+	--app-foreground: var(--color-text, hsl(270 30% 12%));
 
-	--app-card: hsl(0 0% 100%);
-	--app-card-foreground: hsl(270 30% 12%);
+	--app-card: var(--color-card-bg, hsl(0 0% 100%));
+	--app-card-foreground: var(--color-text, hsl(270 30% 12%));
 
-	--app-popover: hsl(0 0% 100%);
-	--app-popover-foreground: hsl(270 30% 12%);
+	--app-popover: var(--color-card-bg, hsl(0 0% 100%));
+	--app-popover-foreground: var(--color-text, hsl(270 30% 12%));
 
-	--app-primary: hsl(270 50% 44%);
+	--app-primary: var(--color-primary, hsl(270 50% 44%));
 	--app-primary-foreground: hsl(0 0% 100%);
 
 	--app-secondary: hsl(270 25% 95%);
@@ -33,7 +33,7 @@
 	--app-muted: hsl(270 15% 95%);
 	--app-muted-foreground: hsl(270 10% 45%);
 
-	--app-accent: hsl(330 55% 55%);
+	--app-accent: var(--color-accent, hsl(330 55% 55%));
 	--app-accent-foreground: hsl(0 0% 100%);
 
 	--app-destructive: hsl(0 84% 60%);
@@ -41,7 +41,7 @@
 
 	--app-border: hsl(270 15% 90%);
 	--app-input: hsl(270 15% 90%);
-	--app-ring: hsl(270 50% 44%);
+	--app-ring: var(--color-primary, hsl(270 50% 44%));
 
 	/* Animations */
 	--app-animate-accordion-down: accordion-down 0.2s ease-out;
@@ -50,16 +50,16 @@
 
 /* Dark mode */
 .dark {
-	--app-background: hsl(270 25% 6%);
-	--app-foreground: hsl(270 15% 93%);
+	--app-background: var(--color-bg, hsl(270 25% 6%));
+	--app-foreground: var(--color-text, hsl(270 15% 93%));
 
-	--app-card: hsl(270 20% 10%);
-	--app-card-foreground: hsl(270 15% 93%);
+	--app-card: var(--color-card-bg, hsl(270 20% 10%));
+	--app-card-foreground: var(--color-text, hsl(270 15% 93%));
 
-	--app-popover: hsl(270 20% 10%);
-	--app-popover-foreground: hsl(270 15% 93%);
+	--app-popover: var(--color-card-bg, hsl(270 20% 10%));
+	--app-popover-foreground: var(--color-text, hsl(270 15% 93%));
 
-	--app-primary: hsl(270 55% 65%);
+	--app-primary: var(--color-primary, hsl(270 55% 65%));
 	--app-primary-foreground: hsl(270 25% 6%);
 
 	--app-secondary: hsl(270 15% 15%);
@@ -68,7 +68,7 @@
 	--app-muted: hsl(270 15% 15%);
 	--app-muted-foreground: hsl(270 10% 60%);
 
-	--app-accent: hsl(330 50% 62%);
+	--app-accent: var(--color-accent, hsl(330 50% 62%));
 	--app-accent-foreground: hsl(270 25% 6%);
 
 	--app-destructive: hsl(0 63% 31%);
@@ -76,7 +76,7 @@
 
 	--app-border: hsl(270 15% 18%);
 	--app-input: hsl(270 15% 18%);
-	--app-ring: hsl(270 55% 65%);
+	--app-ring: var(--color-primary, hsl(270 55% 65%));
 }
 
 /* Keyframe animations */
@@ -135,8 +135,12 @@
 	}
 
 	html {
-		font-family: 'Inter', system-ui, sans-serif;
+		font-family: var(--font-body, 'Inter'), system-ui, sans-serif;
 		@apply antialiased;
+	}
+
+	h1, h2, h3, h4, h5, h6 {
+		font-family: var(--font-heading, inherit);
 	}
 
 	body {
@@ -155,7 +159,7 @@
 
 	/* Headings */
 	h1 {
-		@apply font-semibold tracking-tight text-4xl sm:text-5xl;
+		@apply font-semibold tracking-tight text-4xl sm:text-5xl text-primary;
 		line-height: 1.05;
 		letter-spacing: -0.04em;
 	}
