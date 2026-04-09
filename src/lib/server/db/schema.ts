@@ -11,7 +11,7 @@ export const users = pgTable('users', {
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
 
-// Sessions table for Lucia
+// Sessions table (kept for backward compatibility with SvelteKit version)
 export const sessions = pgTable('sessions', {
 	id: text('id').primaryKey(),
 	userId: text('user_id')
@@ -249,7 +249,7 @@ export const favoriteFoods = pgTable('favorite_foods', {
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
-// Favorite meals (starred meal combos — a group of foods logged together)
+// Favorite meals (starred meal combos)
 export const favoriteMeals = pgTable('favorite_meals', {
 	id: text('id').primaryKey(),
 	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -288,12 +288,12 @@ export type FavoriteMealItem = typeof favoriteMealItems.$inferSelect;
 export const integrationConnections = pgTable('integration_connections', {
 	id: text('id').primaryKey(),
 	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-	service: text('service').notNull(), // 'oura' | 'healthkit'
+	service: text('service').notNull(),
 	accessToken: text('access_token'),
 	refreshToken: text('refresh_token'),
 	tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true }),
 	scopes: text('scopes'),
-	status: text('status').notNull().default('active'), // 'active' | 'disconnected' | 'error'
+	status: text('status').notNull().default('active'),
 	lastSyncAt: timestamp('last_sync_at', { withTimezone: true }),
 	lastSyncError: text('last_sync_error'),
 	metadata: jsonb('metadata'),
@@ -301,14 +301,14 @@ export const integrationConnections = pgTable('integration_connections', {
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
 
-// Integration sync log (idempotency — prevents duplicate entries on re-sync)
+// Integration sync log
 export const integrationSyncLog = pgTable('integration_sync_log', {
 	id: text('id').primaryKey(),
 	connectionId: text('connection_id').notNull().references(() => integrationConnections.id, { onDelete: 'cascade' }),
-	syncType: text('sync_type').notNull(), // 'daily' | 'backfill'
-	syncDate: text('sync_date').notNull(), // 'YYYY-MM-DD'
+	syncType: text('sync_type').notNull(),
+	syncDate: text('sync_date').notNull(),
 	entriesCreated: integer('entries_created').notNull().default(0),
-	status: text('status').notNull().default('success'), // 'success' | 'error'
+	status: text('status').notNull().default('success'),
 	errorMessage: text('error_message'),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
@@ -321,14 +321,14 @@ export type IntegrationSyncLog = typeof integrationSyncLog.$inferSelect;
 // Reminders / Notifications
 // ============================================
 
-// Reminder schedules — per-user, per-metric notification config
+// Reminder schedules
 export const reminderSchedules = pgTable('reminder_schedules', {
 	id: text('id').primaryKey(),
 	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
 	metricId: text('metric_id').references(() => trackerMetrics.id, { onDelete: 'cascade' }),
-	label: text('label').notNull(), // display name, e.g. "Log water" or custom
-	time: text('time').notNull(), // 'HH:MM' in 24h format
-	days: jsonb('days').notNull(), // [0,1,2,3,4,5,6] — 0=Sun, 6=Sat
+	label: text('label').notNull(),
+	time: text('time').notNull(),
+	days: jsonb('days').notNull(),
 	timezone: text('timezone').notNull().default('America/Chicago'),
 	enabled: boolean('enabled').notNull().default(true),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

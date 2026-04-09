@@ -1,0 +1,244 @@
+@import 'tailwindcss';
+
+/* Exclude markdown files from Tailwind content scanning */
+@source not "../**/*.md";
+
+/* CSS Variables */
+:root {
+	--font-logo: 'Geist Variable', system-ui, sans-serif;
+
+	/* Border radius */
+	--app-radius: 0.5rem;
+	--app-radius-sm: calc(var(--app-radius) - 4px);
+	--app-radius-md: calc(var(--app-radius) - 2px);
+	--app-radius-lg: var(--app-radius);
+	--app-radius-xl: calc(var(--app-radius) + 4px);
+
+	/* Colors - Light mode */
+	--app-background: hsl(0 0% 100%);
+	--app-foreground: hsl(240 10% 3.9%);
+
+	--app-card: hsl(0 0% 100%);
+	--app-card-foreground: hsl(240 10% 3.9%);
+
+	--app-popover: hsl(0 0% 100%);
+	--app-popover-foreground: hsl(240 10% 3.9%);
+
+	--app-primary: hsl(240 5.9% 10%);
+	--app-primary-foreground: hsl(0 0% 98%);
+
+	--app-secondary: hsl(240 4.8% 95.9%);
+	--app-secondary-foreground: hsl(240 5.9% 10%);
+
+	--app-muted: hsl(240 4.8% 95.9%);
+	--app-muted-foreground: hsl(240 3.8% 46.1%);
+
+	--app-accent: hsl(240 4.8% 95.9%);
+	--app-accent-foreground: hsl(240 5.9% 10%);
+
+	--app-destructive: hsl(0 84.2% 60.2%);
+	--app-destructive-foreground: hsl(0 0% 98%);
+
+	--app-border: hsl(240 5.9% 90%);
+	--app-input: hsl(240 5.9% 90%);
+	--app-ring: hsl(240 5.9% 10%);
+
+	/* Animations */
+	--app-animate-accordion-down: accordion-down 0.2s ease-out;
+	--app-animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+/* Dark mode */
+.dark {
+	--app-background: hsl(240 10% 3.9%);
+	--app-foreground: hsl(0 0% 98%);
+
+	--app-card: hsl(240 10% 3.9%);
+	--app-card-foreground: hsl(0 0% 98%);
+
+	--app-popover: hsl(240 10% 3.9%);
+	--app-popover-foreground: hsl(0 0% 98%);
+
+	--app-primary: hsl(0 0% 98%);
+	--app-primary-foreground: hsl(240 5.9% 10%);
+
+	--app-secondary: hsl(240 3.7% 15.9%);
+	--app-secondary-foreground: hsl(0 0% 98%);
+
+	--app-muted: hsl(240 3.7% 15.9%);
+	--app-muted-foreground: hsl(240 5% 64.9%);
+
+	--app-accent: hsl(240 3.7% 15.9%);
+	--app-accent-foreground: hsl(0 0% 98%);
+
+	--app-destructive: hsl(0 62.8% 30.6%);
+	--app-destructive-foreground: hsl(0 0% 98%);
+
+	--app-border: hsl(240 3.7% 15.9%);
+	--app-input: hsl(240 3.7% 15.9%);
+	--app-ring: hsl(240 4.9% 83.9%);
+}
+
+/* Keyframe animations */
+@keyframes accordion-down {
+	from {
+		height: 0;
+	}
+	to {
+		height: var(--radix-accordion-content-height);
+	}
+}
+
+@keyframes accordion-up {
+	from {
+		height: var(--radix-accordion-content-height);
+	}
+	to {
+		height: 0;
+	}
+}
+
+/* Tailwind v4 theme - reference CSS variables */
+@theme inline {
+	--color-background: var(--app-background);
+	--color-foreground: var(--app-foreground);
+	--color-primary: var(--app-primary);
+	--color-primary-foreground: var(--app-primary-foreground);
+	--color-secondary: var(--app-secondary);
+	--color-secondary-foreground: var(--app-secondary-foreground);
+	--color-muted: var(--app-muted);
+	--color-muted-foreground: var(--app-muted-foreground);
+	--color-accent: var(--app-accent);
+	--color-accent-foreground: var(--app-accent-foreground);
+	--color-destructive: var(--app-destructive);
+	--color-destructive-foreground: var(--app-destructive-foreground);
+	--color-border: var(--app-border);
+	--color-input: var(--app-input);
+	--color-ring: var(--app-ring);
+	--color-card: var(--app-card);
+	--color-card-foreground: var(--app-card-foreground);
+	--color-popover: var(--app-popover);
+	--color-popover-foreground: var(--app-popover-foreground);
+	--radius: var(--app-radius);
+	--radius-sm: var(--app-radius-sm);
+	--radius-md: var(--app-radius-md);
+	--radius-lg: var(--app-radius-lg);
+	--radius-xl: var(--app-radius-xl);
+	--animate-accordion-down: var(--app-animate-accordion-down);
+	--animate-accordion-up: var(--app-animate-accordion-up);
+}
+
+/* Base styles */
+@layer base {
+	* {
+		@apply border-border;
+	}
+
+	html {
+		font-family: 'Inter', system-ui, sans-serif;
+		@apply antialiased;
+	}
+
+	body {
+		@apply bg-background text-foreground;
+		/* subtle grid background - light mode */
+		background:
+			linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+			linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+			var(--app-background);
+		background-size: 48px 48px;
+	}
+
+	.dark body {
+		/* subtle grid background - dark mode */
+		background:
+			linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+			linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+			var(--app-background);
+		background-size: 48px 48px;
+	}
+
+	a {
+		@apply underline-offset-4 hover:underline;
+	}
+
+	/* Headings */
+	h1 {
+		@apply font-semibold tracking-tight text-4xl sm:text-5xl;
+		line-height: 1.05;
+		letter-spacing: -0.04em;
+	}
+
+	h2 {
+		@apply font-semibold tracking-tight text-2xl mb-4;
+		line-height: 1.05;
+		letter-spacing: -0.04em;
+	}
+
+	h3,
+	h4 {
+		line-height: 1.05;
+		letter-spacing: -0.04em;
+	}
+}
+
+/* Components */
+@layer components {
+	.card {
+		@apply bg-background border border-border rounded-2xl shadow-sm p-8 sm:p-12;
+	}
+
+	/* Buttons */
+	.btn {
+		@apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition border border-border hover:border-foreground/50 no-underline;
+	}
+
+	.btn-dark {
+		@apply bg-primary text-primary-foreground hover:bg-primary/90 hover:border-primary/90;
+	}
+
+	.btn-light {
+		@apply bg-transparent text-foreground hover:border-foreground/50;
+	}
+
+	/* Form controls */
+	.form-input,
+	.form-textarea,
+	.form-select {
+		@apply bg-background border border-input rounded-lg px-3 py-2 text-sm shadow-sm;
+	}
+
+	.form-input:focus,
+	.form-textarea:focus,
+	.form-select:focus {
+		@apply outline-none ring-2 ring-ring;
+	}
+
+	.form-hint {
+		@apply text-xs text-muted-foreground;
+	}
+
+	/* Alerts */
+	.alert {
+		@apply rounded-lg border px-3 py-2 text-sm shadow-sm;
+	}
+
+	.alert-success {
+		@apply border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200;
+	}
+
+	.alert-error {
+		@apply border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-200;
+	}
+}
+
+/* Utilities */
+@layer utilities {
+	.font-logo {
+		font-family: var(--font-logo);
+	}
+
+	.tracking-hero {
+		letter-spacing: 0.05em;
+	}
+}
