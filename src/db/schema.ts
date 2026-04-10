@@ -27,6 +27,8 @@ export {
   meditationStyles,
   meditationPresets,
   userNavItems,
+  notifications,
+  userPreferences,
   type User,
   type NewUser,
   type Session,
@@ -57,4 +59,6 @@ export {
   type MeditationStyle,
   type MeditationPreset,
   type UserNavItem,
+  type Notification,
+  type UserPreferences,
 } from "../lib/server/db/schema";
