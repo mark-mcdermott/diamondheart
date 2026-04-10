@@ -1,6 +1,19 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { users, trackerCategories, trackerMetrics, userNavItems } from "../src/lib/server/db/schema";
+import {
+  users,
+  trackerCategories,
+  trackerMetrics,
+  userNavItems,
+  financialAccounts,
+  financialCategories,
+  financialTransactions,
+  financialBudgets,
+  financialInvestments,
+  financialProperties,
+  financialRetirementPlans,
+  financialSnapshots,
+} from "../src/lib/server/db/schema";
 import { hash } from "bcryptjs";
 import { randomUUID, randomBytes } from "crypto";
 import { readFileSync, writeFileSync } from "fs";
@@ -222,6 +235,7 @@ async function seed() {
     { label: "Appointments",  href: "/appointments",   itemType: "tracking_section", sortOrder: 6, visible: true,  locked: false },
     { label: "Entertainment", href: "/entertainment",  itemType: "tracking_section", sortOrder: 7, visible: true,  locked: false },
     { label: "Workout",       href: "/workout",        itemType: "tracking_section", sortOrder: 8, visible: false, locked: false },
+    { label: "Finances",      href: "/finances",       itemType: "tracking_section", sortOrder: 9, visible: true,  locked: false },
   ];
 
   let navCount = 0;
@@ -241,6 +255,141 @@ async function seed() {
     }
   }
   console.log(`  ${navCount} nav items (${defaultNavItems.length} per user)`);
+
+  // --- Financial data (for first 3 users: admin, mark, test user) ---
+  await db.delete(financialSnapshots);
+  await db.delete(financialTransactions);
+  await db.delete(financialBudgets);
+  await db.delete(financialInvestments);
+  await db.delete(financialProperties);
+  await db.delete(financialRetirementPlans);
+  await db.delete(financialCategories);
+  await db.delete(financialAccounts);
+  console.log("\nCleared financial data.");
+
+  const financeUserIds = userIds.slice(0, 3); // admin, mark, test user
+
+  for (const userId of financeUserIds) {
+    // Default categories
+    const catIds: Record<string, string> = {};
+    const defaultFinCats = [
+      { name: "Salary", slug: "salary", type: "income", icon: "briefcase" },
+      { name: "Freelance", slug: "freelance", type: "income", icon: "laptop" },
+      { name: "Dividends", slug: "dividends", type: "income", icon: "trending-up" },
+      { name: "Housing", slug: "housing", type: "expense", icon: "home" },
+      { name: "Groceries", slug: "groceries", type: "expense", icon: "shopping-cart" },
+      { name: "Transportation", slug: "transportation", type: "expense", icon: "car" },
+      { name: "Utilities", slug: "utilities", type: "expense", icon: "zap" },
+      { name: "Dining Out", slug: "dining-out", type: "expense", icon: "utensils" },
+      { name: "Entertainment", slug: "entertainment", type: "expense", icon: "film" },
+      { name: "Subscriptions", slug: "subscriptions", type: "expense", icon: "repeat" },
+      { name: "Savings", slug: "savings", type: "transfer", icon: "piggy-bank" },
+    ];
+    for (let i = 0; i < defaultFinCats.length; i++) {
+      const c = defaultFinCats[i];
+      const id = randomUUID();
+      catIds[c.slug] = id;
+      await db.insert(financialCategories).values({
+        id, userId, name: c.name, slug: c.slug, type: c.type, icon: c.icon, isDefault: true, sortOrder: i,
+      });
+    }
+
+    // Accounts
+    const checkingId = randomUUID();
+    const savingsId = randomUUID();
+    const creditId = randomUUID();
+    const investmentId = randomUUID();
+
+    await db.insert(financialAccounts).values([
+      { id: checkingId, userId, name: "Main Checking", accountType: "checking", institution: "Chase", balanceCents: 485032, currency: "USD" },
+      { id: savingsId, userId, name: "Emergency Fund", accountType: "savings", institution: "Marcus", balanceCents: 2150000, currency: "USD" },
+      { id: creditId, userId, name: "Visa Rewards", accountType: "credit_card", institution: "Chase", balanceCents: -142567, currency: "USD" },
+      { id: investmentId, userId, name: "Brokerage", accountType: "investment", institution: "Fidelity", balanceCents: 0, currency: "USD" },
+    ]);
+
+    // Sample transactions (last 30 days)
+    const txData = [
+      { acct: checkingId, cat: "salary", type: "income", amount: 650000, desc: "Paycheck", merchant: "Employer", daysAgo: 1 },
+      { acct: checkingId, cat: "salary", type: "income", amount: 650000, desc: "Paycheck", merchant: "Employer", daysAgo: 15 },
+      { acct: checkingId, cat: "housing", type: "expense", amount: -195000, desc: "Rent", merchant: "Property Mgmt", daysAgo: 2 },
+      { acct: creditId, cat: "groceries", type: "expense", amount: -15234, desc: "Weekly groceries", merchant: "HEB", daysAgo: 3 },
+      { acct: creditId, cat: "groceries", type: "expense", amount: -8750, desc: "Groceries", merchant: "Trader Joes", daysAgo: 10 },
+      { acct: creditId, cat: "dining-out", type: "expense", amount: -4599, desc: "Dinner", merchant: "Uchi", daysAgo: 5 },
+      { acct: creditId, cat: "dining-out", type: "expense", amount: -2345, desc: "Lunch", merchant: "Chipotle", daysAgo: 8 },
+      { acct: creditId, cat: "transportation", type: "expense", amount: -5500, desc: "Gas", merchant: "Shell", daysAgo: 7 },
+      { acct: creditId, cat: "utilities", type: "expense", amount: -18500, desc: "Electric bill", merchant: "Austin Energy", daysAgo: 12 },
+      { acct: creditId, cat: "subscriptions", type: "expense", amount: -1599, desc: "Netflix", merchant: "Netflix", daysAgo: 14 },
+      { acct: creditId, cat: "subscriptions", type: "expense", amount: -1099, desc: "Spotify", merchant: "Spotify", daysAgo: 14 },
+      { acct: creditId, cat: "entertainment", type: "expense", amount: -3200, desc: "Movie tickets", merchant: "AMC", daysAgo: 9 },
+      { acct: checkingId, cat: "savings", type: "transfer", amount: -50000, desc: "Monthly savings", merchant: null, daysAgo: 2 },
+    ];
+
+    for (const tx of txData) {
+      const d = new Date();
+      d.setDate(d.getDate() - tx.daysAgo);
+      await db.insert(financialTransactions).values({
+        id: randomUUID(), userId, accountId: tx.acct, categoryId: catIds[tx.cat], type: tx.type,
+        amountCents: tx.amount, description: tx.desc, merchant: tx.merchant, date: d, importSource: "manual",
+      });
+    }
+
+    // Budgets
+    const budgetData = [
+      { cat: "housing", amount: 200000 },
+      { cat: "groceries", amount: 40000 },
+      { cat: "dining-out", amount: 20000 },
+      { cat: "transportation", amount: 15000 },
+      { cat: "utilities", amount: 25000 },
+      { cat: "entertainment", amount: 15000 },
+      { cat: "subscriptions", amount: 5000 },
+    ];
+    for (const b of budgetData) {
+      await db.insert(financialBudgets).values({
+        id: randomUUID(), userId, categoryId: catIds[b.cat], amountCents: b.amount, period: "monthly",
+      });
+    }
+
+    // Investments
+    await db.insert(financialInvestments).values([
+      { id: randomUUID(), userId, accountId: investmentId, symbol: "VTI", name: "Vanguard Total Stock Market ETF", investmentType: "etf", shares: "45.5", costBasisCents: 850000, currentPriceCents: 26800 },
+      { id: randomUUID(), userId, accountId: investmentId, symbol: "AAPL", name: "Apple Inc.", investmentType: "stock", shares: "20", costBasisCents: 320000, currentPriceCents: 19500 },
+      { id: randomUUID(), userId, accountId: null, symbol: "COMP", name: "Company RSU Grant", investmentType: "rsu", shares: "100", costBasisCents: 0, currentPriceCents: 15000, grantDate: new Date("2024-01-15"), vestingDate: new Date("2025-01-15") },
+      { id: randomUUID(), userId, accountId: null, symbol: "COMP", name: "Company ISO Grant", investmentType: "iso", shares: "200", costBasisCents: 0, currentPriceCents: 15000, strikePriceCents: 8000, grantDate: new Date("2023-06-01"), expirationDate: new Date("2033-06-01") },
+    ]);
+
+    // Property
+    await db.insert(financialProperties).values({
+      id: randomUUID(), userId, name: "Primary Residence", address: "123 Main St, Austin, TX",
+      purchasePriceCents: 42500000, currentValueCents: 51000000, purchaseDate: new Date("2021-03-15"),
+      mortgageBalanceCents: 33500000, mortgageRatePercent: "6.25", mortgageMonthlyPaymentCents: 245000,
+      propertyType: "primary",
+    });
+
+    // Retirement plans
+    await db.insert(financialRetirementPlans).values([
+      {
+        id: randomUUID(), userId, name: "Company 401(k)", planType: "401k", institution: "Fidelity",
+        balanceCents: 18500000, employerMatch: "100% up to 6%", contributionYtdCents: 780000,
+        contributionLimitCents: 2350000, monthlyContributionCents: 195000, expectedReturnPercent: "7",
+        targetRetirementAge: 60,
+      },
+      {
+        id: randomUUID(), userId, name: "Roth IRA", planType: "roth_ira", institution: "Vanguard",
+        balanceCents: 6200000, contributionYtdCents: 350000, contributionLimitCents: 700000,
+        monthlyContributionCents: 58333, expectedReturnPercent: "7", targetRetirementAge: 60,
+      },
+    ]);
+
+    // Net worth snapshot
+    const totalAssets = 485032 + 2150000 + (45.5 * 26800 + 20 * 19500 + 100 * 15000 + 200 * 15000) + 51000000 + 18500000 + 6200000;
+    const totalLiabilities = 142567 + 33500000;
+    await db.insert(financialSnapshots).values({
+      id: randomUUID(), userId, date: new Date(), netWorthCents: Math.round(totalAssets - totalLiabilities),
+      totalAssetsCents: Math.round(totalAssets), totalLiabilitiesCents: Math.round(totalLiabilities),
+      breakdown: { checking: 485032, savings: 2150000, credit_card: -142567, investments: Math.round(45.5 * 26800 + 20 * 19500 + 100 * 15000 + 200 * 15000), property_equity: 51000000 - 33500000, retirement: 18500000 + 6200000 },
+    });
+  }
+  console.log(`  Financial data seeded for ${financeUserIds.length} users`);
 
   // --- Write credentials to .secrets ---
   const secretsPath = resolve(import.meta.dirname, "../.secrets");

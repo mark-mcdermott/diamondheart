@@ -8,8 +8,8 @@ import {
 } from "@/lib/nav-utils";
 
 describe("nav item defaults", () => {
-  it("has 9 default nav items", () => {
-    expect(DEFAULT_NAV_ITEMS).toHaveLength(9);
+  it("has 10 default nav items", () => {
+    expect(DEFAULT_NAV_ITEMS).toHaveLength(10);
   });
 
   it("Dashboard is first, locked, and visible", () => {
@@ -33,11 +33,11 @@ describe("nav item defaults", () => {
     expect(locked[0].label).toBe("Dashboard");
   });
 
-  it("has 2 builtin items and 7 tracking_section items", () => {
+  it("has 2 builtin items and 8 tracking_section items", () => {
     const builtins = DEFAULT_NAV_ITEMS.filter((i) => i.itemType === "builtin");
     const sections = DEFAULT_NAV_ITEMS.filter((i) => i.itemType === "tracking_section");
     expect(builtins).toHaveLength(2);
-    expect(sections).toHaveLength(7);
+    expect(sections).toHaveLength(8);
   });
 
   it("Workout starts hidden", () => {
@@ -53,8 +53,8 @@ describe("nav item defaults", () => {
 });
 
 describe("TRACKING_SECTIONS", () => {
-  it("has 7 tracking sections", () => {
-    expect(TRACKING_SECTIONS).toHaveLength(7);
+  it("has 8 tracking sections", () => {
+    expect(TRACKING_SECTIONS).toHaveLength(8);
   });
 
   it("each section has key, label, href, and description", () => {
@@ -76,9 +76,9 @@ describe("TRACKING_SECTIONS", () => {
 });
 
 describe("buildDefaultNavItems", () => {
-  it("returns 9 items with deterministic IDs", () => {
+  it("returns 10 items with deterministic IDs", () => {
     const items = buildDefaultNavItems("user-123");
-    expect(items).toHaveLength(9);
+    expect(items).toHaveLength(10);
     expect(items[0].id).toBe("default-user-123-dashboard");
     expect(items[1].id).toBe("default-user-123-metrics");
   });

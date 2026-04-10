@@ -12,6 +12,7 @@ export const DEFAULT_NAV_ITEMS = [
   { label: "Appointments",  href: "/appointments",   itemType: "tracking_section", sortOrder: 6, visible: true,  locked: false },
   { label: "Entertainment", href: "/entertainment",  itemType: "tracking_section", sortOrder: 7, visible: true,  locked: false },
   { label: "Workout",       href: "/workout",        itemType: "tracking_section", sortOrder: 8, visible: false, locked: false },
+  { label: "Finances",      href: "/finances",       itemType: "tracking_section", sortOrder: 9, visible: true,  locked: false },
 ];
 
 // Section keys for tracking systems (used by Metrics page toggles)
@@ -23,6 +24,7 @@ export const TRACKING_SECTIONS = [
   { key: "appointments",  label: "Appointments",  href: "/appointments",   description: "Doctor visits and scheduled events" },
   { key: "entertainment", label: "Entertainment", href: "/entertainment",  description: "Shows, movies, books, and games" },
   { key: "workout",       label: "Workout",       href: "/workout",        description: "Strength training and exercise logging" },
+  { key: "finances",      label: "Finances",      href: "/finances",       description: "Spending, budgets, investments, and net worth" },
 ];
 
 /**
