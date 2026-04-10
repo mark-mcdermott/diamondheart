@@ -9,6 +9,7 @@ import {
 } from "@/db/schema";
 import { eq, and, gte, lt, lte, desc, sql } from "drizzle-orm";
 import { DashboardClient } from "./dashboard-client";
+import { getUserPreferences } from "@/app/actions/preferences";
 
 export default async function DashboardPage() {
   const session = await getCurrentUser();
@@ -124,6 +125,8 @@ export default async function DashboardPage() {
     }
   }
 
+  const prefs = await getUserPreferences(session.userId);
+
   return (
     <DashboardClient
       metrics={metrics}
@@ -138,6 +141,7 @@ export default async function DashboardPage() {
       foodTotals={foodTotals}
       mealSummaries={mealSummaries}
       sparklines={sparklines}
+      dashboardSections={prefs.dashboardSections}
     />
   );
 }

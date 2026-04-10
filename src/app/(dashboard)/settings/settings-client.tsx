@@ -11,6 +11,7 @@ import { toggleNetflixUI, toggleSiteName } from "@/app/actions/preferences";
 import type { UserNavItem } from "@/db/schema";
 import { ArrowLeft, GripVertical, Lock, Download } from "lucide-react";
 import { PushToggle } from "@/components/blocks/push-toggle";
+import { DashboardSections } from "./dashboard-sections";
 import {
   DndContext,
   closestCenter,
@@ -33,6 +34,7 @@ interface SettingsClientProps {
   navItems: UserNavItem[];
   useNetflixUI: boolean;
   showSiteName: boolean;
+  dashboardSections: string[];
 }
 
 function SortableNavItem({
@@ -109,7 +111,7 @@ function SortableNavItem({
   );
 }
 
-export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSiteName: initialShowSiteName }: SettingsClientProps) {
+export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSiteName: initialShowSiteName, dashboardSections }: SettingsClientProps) {
   const [netflixUI, setNetflixUI] = useState(useNetflixUI);
   const [siteName, setSiteName] = useState(initialShowSiteName);
   const [isPending, startTransition] = useTransition();
@@ -323,6 +325,20 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
             </a>
           ))}
         </div>
+      </section>
+
+      {/* Dashboard Section */}
+      <section className="mb-10">
+        <h3
+          className="text-lg font-semibold mb-4"
+          style={{ color: "var(--app-heading-color)" }}
+        >
+          Dashboard
+        </h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Choose which sections appear on your dashboard and drag to reorder.
+        </p>
+        <DashboardSections activeSections={dashboardSections} />
       </section>
 
       {/* Navbar Section */}

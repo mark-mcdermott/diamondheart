@@ -523,6 +523,7 @@ export const userPreferences = pgTable('user_preferences', {
 	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
 	useNetflixUI: boolean('use_netflix_ui').notNull().default(false),
 	showSiteName: boolean('show_site_name').notNull().default(true),
+	dashboardSections: jsonb('dashboard_sections'), // ordered list of visible section keys
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });

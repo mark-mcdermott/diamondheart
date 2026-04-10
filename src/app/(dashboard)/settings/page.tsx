@@ -13,5 +13,12 @@ export default async function SettingsPage() {
     getUserPreferences(session.userId),
   ]);
 
-  return <SettingsClient navItems={navItems} useNetflixUI={prefs.useNetflixUI} showSiteName={prefs.showSiteName} />;
+  return (
+    <SettingsClient
+      navItems={navItems}
+      useNetflixUI={prefs.useNetflixUI}
+      showSiteName={prefs.showSiteName}
+      dashboardSections={prefs.dashboardSections}
+    />
+  );
 }
