@@ -24,6 +24,8 @@ export {
   medicalLogs,
   entertainmentItems,
   meditationSessions,
+  meditationStyles,
+  meditationPresets,
   type User,
   type NewUser,
   type Session,
@@ -51,4 +53,6 @@ export {
   type MedicalLog,
   type EntertainmentItem,
   type MeditationSession,
+  type MeditationStyle,
+  type MeditationPreset,
 } from "../lib/server/db/schema";

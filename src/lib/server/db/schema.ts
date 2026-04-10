@@ -409,10 +409,32 @@ export const meditationSessions = pgTable('meditation_sessions', {
 	id: text('id').primaryKey(),
 	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
 	duration: integer('duration').notNull(), // seconds
-	type: text('type').notNull().default('silent'), // silent, guided, breathing, body-scan
+	type: text('type').notNull().default('guided'), // guided, breathing
 	notes: text('notes'),
 	date: timestamp('date', { withTimezone: true }).notNull(),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
 export type MeditationSession = typeof meditationSessions.$inferSelect;
+
+export const meditationStyles = pgTable('meditation_styles', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	label: text('label').notNull(),
+	iconName: text('icon_name').notNull().default('Brain'),
+	sortOrder: integer('sort_order').notNull().default(0),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type MeditationStyle = typeof meditationStyles.$inferSelect;
+
+export const meditationPresets = pgTable('meditation_presets', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	label: text('label').notNull(),
+	seconds: integer('seconds').notNull(),
+	sortOrder: integer('sort_order').notNull().default(0),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type MeditationPreset = typeof meditationPresets.$inferSelect;
