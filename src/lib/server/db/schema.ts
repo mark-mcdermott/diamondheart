@@ -381,6 +381,29 @@ export type MedicalLog = typeof medicalLogs.$inferSelect;
 
 
 // ============================================
+// Appointments
+// ============================================
+
+export const appointments = pgTable('appointments', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  appointmentType: text('appointment_type').notNull().default('doctor'),
+  provider: text('provider'),
+  location: text('location'),
+  date: timestamp('date', { withTimezone: true }).notNull(),
+  durationMinutes: integer('duration_minutes'),
+  status: text('status').notNull().default('upcoming'),
+  notes: text('notes'),
+  followUp: text('follow_up'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type Appointment = typeof appointments.$inferSelect;
+
+
+// ============================================
 // Entertainment
 // ============================================
 
