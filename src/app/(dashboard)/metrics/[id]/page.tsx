@@ -5,8 +5,8 @@ import { trackerMetrics, trackerEntries } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { EntriesTable } from "./entries-table";
+import { ArrowLeft } from "lucide-react";
 
 export default async function MetricDetailPage({
   params,
@@ -47,75 +47,26 @@ export default async function MetricDetailPage({
         <div className="flex-1">
           <h2>{metric.name}</h2>
           <p className="text-muted-foreground mt-1">
-            {metric.valueType}
-            {metric.unit ? ` (${metric.unit})` : ""} &middot; Daily goal:{" "}
-            {metric.dailyGoal ?? 1}
+            Daily goal: {metric.dailyGoal ?? 1}{metric.unit ? ` ${metric.unit}` : ""}
           </p>
         </div>
-        <Button variant="secondary" asChild>
-          <Link href={`/metrics/${id}/edit`}>
-            <Pencil className="w-4 h-4 mr-2" />
-            Edit
-          </Link>
-        </Button>
       </div>
 
-      {entries.length === 0 ? (
-        <div className="border border-dashed border-border rounded-lg p-8 text-center">
-          <p className="text-muted-foreground mb-4">No entries recorded yet.</p>
-          <Button asChild>
-            <Link href="/entry">Log Entry</Link>
-          </Button>
-        </div>
-      ) : (
-        <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Value</TableHead>
-                <TableHead>Notes</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {entries.map((entry) => {
-                const d = new Date(entry.date);
-                return (
-                  <TableRow key={entry.id}>
-                    <TableCell>
-                      {d.toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {d.toLocaleTimeString("en-US", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      {formatValue(entry.value, metric.valueType)}
-                      {metric.unit && (
-                        <span className="text-muted-foreground ml-1">
-                          {metric.unit}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {entry.notes || "-"}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-          <p className="text-sm text-muted-foreground mt-4">
-            {entries.length} {entries.length === 1 ? "entry" : "entries"}
-          </p>
-        </>
+      <EntriesTable
+        metricId={metric.id}
+        entries={entries.map((e) => ({
+          id: e.id,
+          value: e.value,
+          notes: e.notes,
+          date: e.date.toISOString(),
+        }))}
+        valueType={metric.valueType}
+        unit={metric.unit}
+      />
+      {entries.length > 0 && (
+        <p className="text-sm text-muted-foreground mt-4">
+          {entries.length} {entries.length === 1 ? "entry" : "entries"}
+        </p>
       )}
     </div>
   );

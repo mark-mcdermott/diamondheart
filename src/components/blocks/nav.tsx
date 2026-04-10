@@ -56,15 +56,10 @@ export function Nav({
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+      <div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-4">
         <Link href="/" className="group flex items-center gap-2 font-semibold no-underline">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="361 189 74 42" className="h-7 w-auto" style={{ filter: "drop-shadow(rgba(0,0,0,0.2) 1px 1px 2px)" }}>
-            <path fill="#f549dc" d="M383.75,222.41l4.93-16.02h0c-.13-.71-.2-1.44-.2-2.21h0c0-.46.02-.91.07-1.35h0l-2.97-7.13h3.57c.56,0,1.09.27,1.43.71l.28.37c.7-.99,1.53-1.87,2.48-2.63-1.01-1.26-2.56-2.01-4.18-2.01h-6.22s0,0-.01,0h-5.35s-.01,0-.02,0h-6.22c-1.68,0-3.28.8-4.28,2.14l-5.34,7.12c-1.42,1.9-1.44,4.46-.04,6.36l14.24,19.58c.34.47.75.88,1.22,1.22.92.66,2,1.01,3.11,1.01.29,0,.58-.02.87-.07,1.41-.23,2.65-1,3.47-2.15l9.01-12.39c-.83-.88-1.63-1.82-2.35-2.83l-7.48,10.28ZM378.75,195.7h2.97l2.97,7.13h-8.91l2.97-7.13ZM369.89,196.41c.33-.45.87-.72,1.43-.72h3.57l-2.97,7.13h-6.83l4.81-6.41ZM365.06,206.39h6.72l4.93,16.02-11.65-16.02ZM380.23,221.72l-4.72-15.33h9.43l-4.72,15.33Z"/>
-            <path fill="#f549dc" d="M395.4,206.39h-6.72c.4,2.15,1.35,4.04,2.55,5.73l4.17-5.73Z"/>
-            <path fill="#f549dc" d="M395.38,202.83l-4.54-6.05c-1.24,1.75-2.06,3.82-2.29,6.05h6.83Z"/>
-            <path fill="#f549dc" d="M428.56,194.45c-5.16-4.51-12.97-4.28-17.84.39-2.44-2.31-5.7-3.61-9.1-3.61,0,0,0,0,0,0-3.14,0-6.03,1.1-8.3,2.92.03.04.07.08.1.13l5.35,7.13c1.42,1.9,1.44,4.46.04,6.37l-5.23,7.19c.52.55,1.05,1.09,1.57,1.6,0,0,.02.02.02.02l11.1,10.57c.15.16.32.32.49.47,1.14.98,2.55,1.46,3.96,1.46,1.66,0,3.31-.67,4.5-1.97l11.06-10.52s.02-.02.02-.02c3.23-3.17,6.67-7.01,6.67-12.37.02-3.72-1.59-7.27-4.41-9.74Z"/>
-          </svg>
-          {siteName && <span>{siteName}</span>}
+          <img src="/logo.png" alt="Diamondheart" className="h-[3.8rem] w-auto my-1" />
+          <span style={{ color: "var(--app-heading-color)" }}>Diamondheart</span>
         </Link>
 
         {/* Desktop nav */}

@@ -26,6 +26,7 @@ export function MetricEditClient({ metric }: MetricEditClientProps) {
   const [valueType, setValueType] = useState(metric.valueType);
   const [unit, setUnit] = useState(metric.unit || "");
   const [dailyGoal, setDailyGoal] = useState(String(metric.dailyGoal ?? 1));
+  const [counter, setCounter] = useState(metric.counter);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit() {
@@ -35,6 +36,7 @@ export function MetricEditClient({ metric }: MetricEditClientProps) {
       fd.set("valueType", valueType);
       fd.set("unit", unit);
       fd.set("dailyGoal", dailyGoal);
+      fd.set("counter", String(counter));
       await updateMetric(metric.id, fd);
     });
   }
@@ -100,6 +102,19 @@ export function MetricEditClient({ metric }: MetricEditClientProps) {
             onChange={(e) => setDailyGoal(e.target.value)}
             className="mt-2"
           />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="counter"
+            checked={counter}
+            onChange={(e) => setCounter(e.target.checked)}
+            className="w-5 h-5 rounded border-border cursor-pointer"
+          />
+          <Label htmlFor="counter" className="cursor-pointer">
+            Counter (tap + to add 1 each time)
+          </Label>
         </div>
 
         <div className="flex gap-3 pt-4">

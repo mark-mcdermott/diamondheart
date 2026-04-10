@@ -5,6 +5,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Diamondheart",
   description: "Mindful tracking for meditation, wellness, and daily habits",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

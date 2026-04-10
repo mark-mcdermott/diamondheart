@@ -106,7 +106,7 @@ function SortableMetricRow({
       <div className="flex-1 min-w-0">
         <Link
           href={`/metrics/${metric.id}`}
-          className="text-sm font-medium hover:underline"
+          className="text-sm font-medium hover:underline" style={{ color: "var(--app-heading-color)" }}
         >
           {metric.name}
         </Link>

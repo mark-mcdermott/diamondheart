@@ -67,6 +67,8 @@ export async function createEntry(formData: FormData): Promise<void> {
     date,
   });
 
+  revalidatePath("/dashboard");
+  revalidatePath("/metrics");
   redirect("/dashboard");
 }
 
@@ -160,6 +162,7 @@ export async function updateMetric(
   const valueType = formData.get("valueType") as string;
   const unit = formData.get("unit") as string;
   const dailyGoalStr = formData.get("dailyGoal") as string;
+  const counterStr = formData.get("counter") as string;
   const fieldsJson = formData.get("fields") as string;
 
   if (!name || !valueType) {
@@ -184,6 +187,7 @@ export async function updateMetric(
       valueType,
       unit: unit || null,
       dailyGoal,
+      counter: counterStr === "true",
       fields,
       updatedAt: new Date(),
     })
@@ -253,6 +257,42 @@ export async function reorderMetrics(formData: FormData): Promise<ActionResult> 
       .set({ sortOrder: String(i) })
       .where(eq(trackerMetrics.id, ids[i]));
   }
+
+  revalidatePath("/metrics");
+  return { success: true };
+}
+
+export async function deleteEntry(formData: FormData): Promise<ActionResult> {
+  const session = await getCurrentUser();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  const entryId = formData.get("entryId") as string;
+  if (!entryId) return { success: false, error: "Entry ID is required" };
+
+  await db.delete(trackerEntries).where(eq(trackerEntries.id, entryId));
+
+  revalidatePath("/metrics");
+  return { success: true };
+}
+
+export async function updateEntry(formData: FormData): Promise<ActionResult> {
+  const session = await getCurrentUser();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  const entryId = formData.get("entryId") as string;
+  const value = formData.get("value") as string;
+  const notes = formData.get("notes") as string | null;
+
+  if (!entryId) return { success: false, error: "Entry ID is required" };
+
+  await db
+    .update(trackerEntries)
+    .set({
+      value: value || "done",
+      notes: notes || null,
+      updatedAt: new Date(),
+    })
+    .where(eq(trackerEntries.id, entryId));
 
   revalidatePath("/metrics");
   return { success: true };
