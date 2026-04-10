@@ -14,8 +14,8 @@ interface FeatureGridProps {
 }
 
 const colsClass = {
-  2: "md:w-1/2",
-  3: "xl:w-1/3 md:w-1/2",
+  2: "sm:grid-cols-2",
+  3: "sm:grid-cols-2 xl:grid-cols-3",
 };
 
 export function FeatureGrid({
@@ -28,31 +28,29 @@ export function FeatureGrid({
     <section className="border-t border-border">
       <div className="mx-auto max-w-5xl px-5 py-24">
         {(title || description) && (
-          <div className="flex flex-wrap w-full mb-20 flex-col items-center text-center">
+          <div className="flex flex-col items-center text-center mb-16">
             {title && (
-              <h1 className="sm:text-3xl text-2xl font-medium mb-2">
+              <h2 className="font-display sm:text-3xl text-2xl mb-3" style={{ fontWeight: 500 }}>
                 {title}
-              </h1>
+              </h2>
             )}
             {description && (
-              <p className="lg:w-1/2 w-full leading-relaxed text-base">
+              <p className="lg:w-1/2 w-full leading-relaxed text-sm text-muted-foreground">
                 {description}
               </p>
             )}
           </div>
         )}
-        <div className="flex flex-wrap -m-4">
+        <div className={`grid grid-cols-1 ${colsClass[columns]} gap-4 stagger-children`}>
           {features.map((feature) => (
-            <div key={feature.title} className={`${colsClass[columns]} p-4`}>
-              <div className="bg-card p-6 rounded-lg">
-                <div className="w-10 h-10 inline-flex items-center justify-center rounded-full bg-secondary text-accent mb-4">
-                  <feature.icon className="w-6 h-6" />
-                </div>
-                <h2 className="text-lg font-medium mb-2">{feature.title}</h2>
-                <p className="leading-relaxed text-base">
-                  {feature.description}
-                </p>
+            <div key={feature.title} className="bg-card rounded-2xl border border-border p-6 card-texture transition-all duration-300 hover:border-primary/30">
+              <div className="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-primary/10 text-primary mb-4">
+                <feature.icon className="w-5 h-5" strokeWidth={1.8} />
               </div>
+              <h3 className="text-base font-semibold mb-2">{feature.title}</h3>
+              <p className="leading-relaxed text-sm text-muted-foreground">
+                {feature.description}
+              </p>
             </div>
           ))}
         </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface FeatureCard {
@@ -20,52 +21,38 @@ export function FeatureCards({ title, subtitle, features }: FeatureCardsProps) {
     <section className="border-t border-border">
       <div className="mx-auto max-w-5xl px-5 py-24">
         {(title || subtitle) && (
-          <div className="flex flex-col text-center w-full mb-20">
+          <div className="flex flex-col text-center w-full mb-16">
             {subtitle && (
-              <h2 className="text-xs text-accent tracking-widest font-medium uppercase mb-1">
+              <p className="text-xs text-primary tracking-widest font-medium uppercase mb-3" style={{ letterSpacing: "0.12em" }}>
                 {subtitle}
-              </h2>
+              </p>
             )}
             {title && (
-              <h1 className="sm:text-3xl text-2xl font-medium">{title}</h1>
+              <h2 className="font-display sm:text-3xl text-2xl" style={{ fontWeight: 500 }}>{title}</h2>
             )}
           </div>
         )}
-        <div className="flex flex-wrap -m-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger-children">
           {features.map((feature) => (
-            <div key={feature.title} className="p-4 md:w-1/3">
-              <div className="flex rounded-lg h-full bg-card p-8 flex-col">
-                <div className="flex items-center mb-3">
-                  <div className="w-8 h-8 mr-3 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground flex-shrink-0">
-                    <feature.icon className="w-5 h-5" />
-                  </div>
-                  <h2 className="text-lg font-medium">{feature.title}</h2>
+            <div key={feature.title} className="bg-card rounded-2xl border border-border p-7 card-texture transition-all duration-300 hover:border-primary/30 hover:shadow-md">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-primary/10 text-primary flex-shrink-0">
+                  <feature.icon className="w-5 h-5" strokeWidth={1.8} />
                 </div>
-                <div className="flex-grow">
-                  <p className="leading-relaxed text-base">
-                    {feature.description}
-                  </p>
-                  {feature.href && (
-                    <Link
-                      href={feature.href}
-                      className="mt-3 text-accent inline-flex items-center"
-                    >
-                      {feature.linkLabel || "Learn More"}
-                      <svg
-                        fill="none"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        className="w-4 h-4 ml-2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  )}
-                </div>
+                <h3 className="text-base font-semibold">{feature.title}</h3>
               </div>
+              <p className="leading-relaxed text-sm text-muted-foreground mb-4">
+                {feature.description}
+              </p>
+              {feature.href && (
+                <Link
+                  href={feature.href}
+                  className="text-sm text-primary font-medium inline-flex items-center gap-1 hover:gap-2 transition-all duration-200 no-underline"
+                >
+                  {feature.linkLabel || "Learn More"}
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              )}
             </div>
           ))}
         </div>

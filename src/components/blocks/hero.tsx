@@ -39,39 +39,55 @@ export function Hero({
     >
       <div className="hero-content relative z-10 flex flex-col items-center">
         {image && (
-          <div className="mb-6 flex justify-center">
+          <div className="mb-8 flex justify-center" style={{ animation: "fade-in-up 0.8s var(--ease-settle) backwards", animationDelay: "100ms" }}>
             <img
               src={image}
               alt=""
-              className={`hero-image ${imageSizeClass[imageSize]} object-contain`}
+              className={`hero-image ${imageSizeClass[imageSize]} object-contain drop-shadow-lg`}
             />
           </div>
         )}
         {logoImage && (
-          <div className="mb-6 flex justify-center">
-            <img src={logoImage} alt="" className="hero-logo h-48 w-48 object-contain sm:h-56 sm:w-56" />
+          <div className="mb-8 flex justify-center" style={{ animation: "fade-in-up 0.8s var(--ease-settle) backwards", animationDelay: "100ms" }}>
+            <img src={logoImage} alt="" className="hero-logo h-48 w-48 object-contain sm:h-56 sm:w-56 drop-shadow-lg" />
           </div>
         )}
         {logoIcon && (
-          <div className="mb-6 flex justify-center">
+          <div className="mb-8 flex justify-center" style={{ animation: "fade-in-up 0.8s var(--ease-settle) backwards", animationDelay: "100ms" }}>
             <span className="text-5xl sm:text-6xl">{logoIcon}</span>
           </div>
         )}
-        <h1 className="text-4xl font-bold tracking-tight sm:text-6xl" style={{ color: "#fa40f2", textShadow: "2px 2px 3px rgba(0,0,0,0.2)" }}>
+        <h1
+          className="font-display text-4xl font-semibold tracking-tight sm:text-6xl"
+          style={{
+            color: "var(--app-heading-color)",
+            animation: "fade-in-up 0.8s var(--ease-settle) backwards",
+            animationDelay: "250ms",
+          }}
+        >
           {title}
         </h1>
         {tagline && (
-          <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
+          <p
+            className="mt-5 max-w-2xl text-lg text-muted-foreground"
+            style={{ animation: "fade-in-up 0.8s var(--ease-settle) backwards", animationDelay: "350ms" }}
+          >
             {tagline}
           </p>
         )}
         {description && (
-          <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
+          <p
+            className="mt-5 max-w-md text-lg text-muted-foreground leading-relaxed"
+            style={{ animation: "fade-in-up 0.8s var(--ease-settle) backwards", animationDelay: "350ms" }}
+          >
             {description}
           </p>
         )}
         {(primaryCta || secondaryCta) && (
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <div
+            className="mt-10 flex flex-wrap items-center justify-center gap-4"
+            style={{ animation: "fade-in-up 0.8s var(--ease-settle) backwards", animationDelay: "500ms" }}
+          >
             {primaryCta && (
               <Button asChild size="lg">
                 <Link href={primaryCta.href}>{primaryCta.label}</Link>

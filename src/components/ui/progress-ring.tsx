@@ -11,8 +11,8 @@ export function ProgressRing({
   value,
   size = 80,
   strokeWidth = 8,
-  color = "#3b82f6",
-  trackColor = "#e4e4e7",
+  color = "var(--app-primary)",
+  trackColor = "var(--app-secondary)",
   children,
 }: ProgressRingProps) {
   const radius = (size - strokeWidth) / 2;
@@ -40,7 +40,9 @@ export function ProgressRing({
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className="transition-all duration-500 ease-out"
+          style={{
+            transition: "stroke-dashoffset 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), stroke 0.5s ease",
+          }}
         />
       </svg>
       {children && (
