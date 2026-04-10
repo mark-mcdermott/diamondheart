@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +51,8 @@ function RatingStars({ rating, onRate }: { rating: number | null; onRate?: (r: n
     </div>
   );
 }
+
+const EntertainmentChart = lazy(() => import("./entertainment-chart").then((m) => ({ default: m.EntertainmentChart })));
 
 export function EntertainmentClient({ items }: EntertainmentClientProps) {
   const [isPending, startTransition] = useTransition();
@@ -122,6 +124,11 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
 
   return (
     <>
+      {/* Chart */}
+      <Suspense fallback={<div className="h-48 bg-card border border-border rounded-lg animate-pulse mb-8" />}>
+        <EntertainmentChart />
+      </Suspense>
+
       {/* Type tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
         {TYPES.map((t) => {
