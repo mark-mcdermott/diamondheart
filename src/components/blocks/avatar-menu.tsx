@@ -56,6 +56,9 @@ export function AvatarMenu({ user }: AvatarMenuProps) {
         <DropdownMenuItem onClick={() => router.push("/orders")} className="cursor-pointer">
           Orders
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer">
+          Settings
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
           Sign out

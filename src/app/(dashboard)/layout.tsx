@@ -5,7 +5,8 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { Nav } from "@/components/blocks/nav";
 import { Footer } from "@/components/blocks/footer";
-import { defaultNavLinks } from "@/lib/config/nav";
+import { getNavItems } from "@/app/actions/nav";
+import type { NavLink } from "@/components/blocks/nav";
 
 export default async function DashboardLayout({
   children,
@@ -23,12 +24,23 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/login");
 
+  const navItems = await getNavItems(session.userId);
+
+  // Convert user nav items to NavLink format
+  const links: NavLink[] = navItems
+    .filter((item) => item.visible)
+    .map((item) => ({
+      label: item.label,
+      href: item.href,
+      requiresAuth: true,
+    }));
+
   return (
     <div className="flex min-h-screen flex-col">
       <Nav
         siteName="Diamondheart"
         logo="/logo.png"
-        links={defaultNavLinks}
+        links={links}
         user={{ id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl }}
         showThemeToggle
       />
