@@ -32,7 +32,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={cycle}
-      className="theme-toggle flex items-center justify-center w-8 h-8 rounded-[8px] transition-opacity hover:opacity-70 cursor-pointer"
+      className="theme-toggle flex items-center justify-center w-8 h-8 rounded-[8px] text-foreground transition-colors hover:text-black dark:hover:text-white cursor-pointer"
       title={`Theme: ${mounted ? theme : "system"}`}
       aria-label={label}
     >

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Menu, X, ChevronDown, Github } from "lucide-react";
 import { Sheet, SheetContent, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ export function Nav({
   showThemeToggle = true,
 }: NavProps) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const isLoggedIn = !!user;
   const isLogoImage = logo && (logo.startsWith("/") || logo.startsWith("http") || logo.endsWith(".svg"));
 
@@ -66,9 +68,10 @@ export function Nav({
         <nav className="hidden items-center gap-4 md:flex">
           {visibleLinks.map((link, i) => {
             if (link.children) {
+              const isChildActive = link.children.some((child) => pathname === child.href || pathname.startsWith(child.href + "/"));
               return (
                 <DropdownMenu key={link.label || i}>
-                  <DropdownMenuTrigger className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer">
+                  <DropdownMenuTrigger className={`flex items-center gap-1 text-sm ${isChildActive ? "font-bold" : "font-medium"} text-foreground transition-colors hover:text-black dark:hover:text-white cursor-pointer px-2 py-1.5 -mx-2 rounded-md`}>
                     {link.label}
                     <ChevronDown className="h-3 w-3" />
                   </DropdownMenuTrigger>
@@ -87,18 +90,19 @@ export function Nav({
 
             if (link.icon === "github" && link.href) {
               return (
-                <a key="github" href={link.href} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+                <a key="github" href={link.href} target="_blank" rel="noopener noreferrer" className="text-foreground hover:text-black dark:hover:text-white px-2 py-1.5 -mx-2 rounded-md">
                   <Github className="h-5 w-5" />
                 </a>
               );
             }
 
             if (link.href) {
+              const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground no-underline"
+                  className={`text-sm ${isActive ? "font-bold" : "font-medium"} text-foreground transition-colors hover:text-black dark:hover:text-white no-underline px-2 py-1.5 -mx-2 rounded-md`}
                 >
                   {link.label}
                 </Link>
@@ -108,11 +112,10 @@ export function Nav({
             return null;
           })}
           {!isLoggedIn && (
-            <Link href="/login" className="text-sm text-muted-foreground transition-colors hover:text-foreground no-underline">
+            <Link href="/login" className="text-sm font-medium text-foreground transition-colors hover:text-black dark:hover:text-white no-underline px-2 py-1.5 -mx-2 rounded-md">
               Log In
             </Link>
           )}
-          {showThemeToggle && <ThemeToggle />}
           {!isLoggedIn && (
             <Button asChild variant="secondary" size="sm">
               <Link href="/signup">Sign Up</Link>
@@ -127,6 +130,7 @@ export function Nav({
               }}
             />
           )}
+          {showThemeToggle && <ThemeToggle />}
         </nav>
 
         {/* Mobile nav */}
@@ -160,7 +164,7 @@ export function Nav({
                   if (link.children) {
                     return (
                       <div key={link.label || i} className="py-2 px-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
                           {link.label}
                         </span>
                         <div className="flex flex-col gap-0.5 mt-2">
