@@ -9,7 +9,7 @@ import {
 } from "@/app/actions/nav";
 import { toggleNetflixUI, toggleSiteName } from "@/app/actions/preferences";
 import type { UserNavItem } from "@/db/schema";
-import { ArrowLeft, GripVertical, Lock } from "lucide-react";
+import { ArrowLeft, GripVertical, Lock, Download } from "lucide-react";
 import { PushToggle } from "@/components/blocks/push-toggle";
 import {
   DndContext,
@@ -287,6 +287,41 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
         </h3>
         <div className="bg-card border border-border rounded-lg px-4">
           <PushToggle />
+        </div>
+      </section>
+
+      {/* Export Section */}
+      <section className="mb-10">
+        <h3
+          className="text-lg font-semibold mb-4"
+          style={{ color: "var(--app-heading-color)" }}
+        >
+          Export Data
+        </h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Download your data as CSV files.
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {[
+            { type: "metrics", label: "Metrics" },
+            { type: "food", label: "Food" },
+            { type: "meditation", label: "Meditation" },
+            { type: "medical", label: "Medical" },
+            { type: "workouts", label: "Workouts" },
+            { type: "entertainment", label: "Entertainment" },
+            { type: "tracking", label: "Tracking" },
+            { type: "appointments", label: "Appointments" },
+          ].map((item) => (
+            <a
+              key={item.type}
+              href={`/api/export?type=${item.type}`}
+              download
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-card border border-border rounded-lg hover:bg-muted transition-colors no-underline text-foreground"
+            >
+              <Download className="w-4 h-4 text-primary" />
+              {item.label}
+            </a>
+          ))}
         </div>
       </section>
 
