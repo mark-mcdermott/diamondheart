@@ -17,9 +17,10 @@ interface AvatarMenuProps {
     email: string;
     avatarUrl?: string | null;
   };
+  notificationCount?: number;
 }
 
-export function AvatarMenu({ user }: AvatarMenuProps) {
+export function AvatarMenu({ user, notificationCount = 0 }: AvatarMenuProps) {
   const router = useRouter();
   const initials = user.displayName
     .split(" ")
@@ -36,10 +37,17 @@ export function AvatarMenu({ user }: AvatarMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-2 outline-none transition-colors hover:text-black dark:hover:text-white cursor-pointer">
-        <Avatar key={user.avatarUrl ?? "no-avatar"} className="h-8 w-8">
-          {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.displayName} />}
-          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-        </Avatar>
+        <span className="relative">
+          <Avatar key={user.avatarUrl ?? "no-avatar"} className="h-8 w-8">
+            {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.displayName} />}
+            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+          </Avatar>
+          {notificationCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              {notificationCount > 9 ? "9+" : notificationCount}
+            </span>
+          )}
+        </span>
         <span className="hidden text-sm font-medium lg:inline">
           {user.displayName}
         </span>
