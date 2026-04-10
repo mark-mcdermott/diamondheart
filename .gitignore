@@ -39,3 +39,7 @@ next-env.d.ts
 # testing
 test-results/
 playwright-report/
+
+# mobile/desktop builds
+ios/
+src-tauri/target/
