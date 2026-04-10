@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "./theme-provider";
 import { ServiceWorkerRegister } from "@/components/blocks/sw-register";
 import { PWADetector } from "@/components/blocks/pwa-detector";
+import { PWAInstallPrompt } from "@/components/blocks/pwa-install-prompt";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -47,6 +48,7 @@ export default function RootLayout({
           {children}
           <ServiceWorkerRegister />
           <PWADetector />
+          <PWAInstallPrompt />
         </ThemeProvider>
       </body>
     </html>
