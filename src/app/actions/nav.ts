@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { userNavItems, trackerCategories } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
@@ -157,12 +157,6 @@ export async function toggleCategoryInNav(formData: FormData): Promise<ActionRes
       .limit(1);
 
     if (!category) return { success: false, error: "Category not found" };
-
-    // Get max sort order
-    const [maxSort] = await db
-      .select({ max: sql<number>`COALESCE(MAX(${userNavItems.sortOrder}), -1)` })
-      .from(userNavItems)
-      .where(eq(userNavItems.userId, session.userId));
 
     // Find the position: after last visible item
     const allItems = await db
