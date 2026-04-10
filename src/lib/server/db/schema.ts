@@ -338,3 +338,81 @@ export const reminderSchedules = pgTable('reminder_schedules', {
 });
 
 export type ReminderSchedule = typeof reminderSchedules.$inferSelect;
+
+
+// ============================================
+// Tracking (Collections & Misc)
+// ============================================
+
+export const trackingItems = pgTable('tracking_items', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	category: text('category'),
+	count: integer('count').notNull().default(0),
+	unit: text('unit'),
+	icon: text('icon'),
+	notes: text('notes'),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type TrackingItem = typeof trackingItems.$inferSelect;
+
+
+// ============================================
+// Medical
+// ============================================
+
+export const medicalLogs = pgTable('medical_logs', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	type: text('type').notNull(), // bathroom, symptom, medication, doctor, sick
+	subtype: text('subtype'), // pee, poop, headache, etc.
+	severity: integer('severity'), // 1-5
+	notes: text('notes'),
+	date: timestamp('date', { withTimezone: true }).notNull(),
+	endDate: timestamp('end_date', { withTimezone: true }),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type MedicalLog = typeof medicalLogs.$inferSelect;
+
+
+// ============================================
+// Entertainment
+// ============================================
+
+export const entertainmentItems = pgTable('entertainment_items', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	type: text('type').notNull(), // show, movie, book, music, podcast, game
+	title: text('title').notNull(),
+	creator: text('creator'), // author, director, artist, etc.
+	status: text('status').notNull().default('completed'), // watching, reading, listening, completed, dropped, queued
+	rating: integer('rating'), // 1-5
+	notes: text('notes'),
+	startDate: timestamp('start_date', { withTimezone: true }),
+	endDate: timestamp('end_date', { withTimezone: true }),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type EntertainmentItem = typeof entertainmentItems.$inferSelect;
+
+
+// ============================================
+// Meditation Sessions
+// ============================================
+
+export const meditationSessions = pgTable('meditation_sessions', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	duration: integer('duration').notNull(), // seconds
+	type: text('type').notNull().default('silent'), // silent, guided, breathing, body-scan
+	notes: text('notes'),
+	date: timestamp('date', { withTimezone: true }).notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type MeditationSession = typeof meditationSessions.$inferSelect;
