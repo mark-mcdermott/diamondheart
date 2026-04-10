@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { getMeditationStyles, getMeditationPresets } from "@/app/actions/meditation";
+import { getMeditationStyles, getMeditationPresets, seedMeditationDefaults } from "@/app/actions/meditation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { MeditateEditClient } from "./edit-client";
@@ -9,10 +9,18 @@ export default async function MeditateEditPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
 
-  const [styles, presets] = await Promise.all([
+  let [styles, presets] = await Promise.all([
     getMeditationStyles(session.userId),
     getMeditationPresets(session.userId),
   ]);
+
+  if (styles.length === 0 || presets.length === 0) {
+    await seedMeditationDefaults(session.userId, styles.length === 0, presets.length === 0);
+    [styles, presets] = await Promise.all([
+      getMeditationStyles(session.userId),
+      getMeditationPresets(session.userId),
+    ]);
+  }
 
   return (
     <div className="max-w-3xl mx-auto">

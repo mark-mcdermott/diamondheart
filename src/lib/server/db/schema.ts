@@ -421,7 +421,7 @@ export const meditationStyles = pgTable('meditation_styles', {
 	id: text('id').primaryKey(),
 	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
 	label: text('label').notNull(),
-	iconName: text('icon_name').notNull().default('Brain'),
+	iconName: text('icon_name').notNull().default('brain'),
 	sortOrder: integer('sort_order').notNull().default(0),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });

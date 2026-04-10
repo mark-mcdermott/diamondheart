@@ -62,6 +62,26 @@ export async function deleteMeditationSession(formData: FormData): Promise<Resul
   return { success: true };
 }
 
+// --- Seed Defaults ---
+
+export async function seedMeditationDefaults(userId: string, seedStyles: boolean, seedPresets: boolean) {
+  if (seedStyles) {
+    await db.insert(meditationStyles).values([
+      { id: crypto.randomUUID(), userId, label: "Guided", iconName: "brain", sortOrder: 0 },
+      { id: crypto.randomUUID(), userId, label: "Breathing", iconName: "wind", sortOrder: 1 },
+    ]);
+  }
+  if (seedPresets) {
+    await db.insert(meditationPresets).values([
+      { id: crypto.randomUUID(), userId, label: "5 min", seconds: 300, sortOrder: 0 },
+      { id: crypto.randomUUID(), userId, label: "10 min", seconds: 600, sortOrder: 1 },
+      { id: crypto.randomUUID(), userId, label: "15 min", seconds: 900, sortOrder: 2 },
+      { id: crypto.randomUUID(), userId, label: "20 min", seconds: 1200, sortOrder: 3 },
+      { id: crypto.randomUUID(), userId, label: "30 min", seconds: 1800, sortOrder: 4 },
+    ]);
+  }
+}
+
 // --- Styles ---
 
 export async function getMeditationStyles(userId: string) {
@@ -75,7 +95,7 @@ export async function addMeditationStyle(formData: FormData): Promise<Result> {
   if (!session) return { success: false, error: "Unauthorized" };
 
   const label = (formData.get("label") as string)?.trim();
-  const iconName = (formData.get("iconName") as string)?.trim() || "Brain";
+  const iconName = (formData.get("iconName") as string)?.trim() || "brain";
   if (!label) return { success: false, error: "Label is required" };
 
   const existing = await db.select().from(meditationStyles)
@@ -100,7 +120,7 @@ export async function updateMeditationStyle(formData: FormData): Promise<Result>
 
   const styleId = formData.get("styleId") as string;
   const label = (formData.get("label") as string)?.trim();
-  const iconName = (formData.get("iconName") as string)?.trim() || "Brain";
+  const iconName = (formData.get("iconName") as string)?.trim() || "brain";
   if (!label) return { success: false, error: "Label is required" };
 
   await db.update(meditationStyles)
