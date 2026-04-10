@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { DEFAULT_NAV_ITEMS, buildDefaultNavItems, hasDuplicates } from "@/lib/nav-utils";
 
 describe("nav item defaults", () => {
-  it("has 6 default nav items", () => {
-    expect(DEFAULT_NAV_ITEMS).toHaveLength(6);
+  it("has 7 default nav items", () => {
+    expect(DEFAULT_NAV_ITEMS).toHaveLength(7);
   });
 
   it("Dashboard is first, locked, and visible", () => {
@@ -44,9 +44,9 @@ describe("nav item defaults", () => {
 });
 
 describe("buildDefaultNavItems", () => {
-  it("returns 6 items with deterministic IDs", () => {
+  it("returns 7 items with deterministic IDs", () => {
     const items = buildDefaultNavItems("user-123");
-    expect(items).toHaveLength(6);
+    expect(items).toHaveLength(7);
     expect(items[0].id).toBe("default-user-123-dashboard");
     expect(items[1].id).toBe("default-user-123-meditate");
   });

@@ -7,7 +7,8 @@ export const DEFAULT_NAV_ITEMS = [
   { label: "Food",          href: "/food",           itemType: "builtin", sortOrder: 2, visible: true,  locked: false },
   { label: "Tracking",      href: "/tracking",       itemType: "builtin", sortOrder: 3, visible: true,  locked: false },
   { label: "Medical",       href: "/medical",        itemType: "builtin", sortOrder: 4, visible: true,  locked: false },
-  { label: "Entertainment", href: "/entertainment",  itemType: "builtin", sortOrder: 5, visible: true,  locked: false },
+  { label: "Appointments",  href: "/appointments",   itemType: "builtin", sortOrder: 5, visible: true,  locked: false },
+  { label: "Entertainment", href: "/entertainment",  itemType: "builtin", sortOrder: 6, visible: true,  locked: false },
 ];
 
 /**
