@@ -528,3 +528,145 @@ export const userPreferences = pgTable('user_preferences', {
 });
 
 export type UserPreferences = typeof userPreferences.$inferSelect;
+
+
+// ============================================
+// Financial Tracking
+// ============================================
+
+// Financial accounts (checking, savings, credit card, investment, 401k, property, loan)
+export const financialAccounts = pgTable('financial_accounts', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	accountType: text('account_type').notNull(), // checking, savings, credit_card, investment, retirement_401k, retirement_ira, property, loan, other
+	institution: text('institution'),
+	balanceCents: integer('balance_cents').notNull().default(0), // current balance in cents (negative for debts)
+	currency: text('currency').notNull().default('USD'),
+	notes: text('notes'),
+	archived: boolean('archived').notNull().default(false),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Financial transaction categories (income, groceries, rent, utilities, etc.)
+export const financialCategories = pgTable('financial_categories', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	slug: text('slug').notNull(),
+	type: text('type').notNull().default('expense'), // income, expense, transfer
+	icon: text('icon'),
+	color: text('color'),
+	sortOrder: integer('sort_order').notNull().default(0),
+	isDefault: boolean('is_default').notNull().default(false),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Financial transactions (income, expenses, transfers)
+export const financialTransactions = pgTable('financial_transactions', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	accountId: text('account_id').notNull().references(() => financialAccounts.id, { onDelete: 'cascade' }),
+	categoryId: text('category_id').references(() => financialCategories.id, { onDelete: 'set null' }),
+	type: text('type').notNull(), // income, expense, transfer
+	amountCents: integer('amount_cents').notNull(), // positive = income/deposit, negative = expense/withdrawal
+	description: text('description').notNull(),
+	merchant: text('merchant'),
+	date: timestamp('date', { withTimezone: true }).notNull(),
+	notes: text('notes'),
+	isRecurring: boolean('is_recurring').notNull().default(false),
+	importSource: text('import_source'), // manual, csv, api
+	importId: text('import_id'), // dedup key for imports
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Monthly budgets per category
+export const financialBudgets = pgTable('financial_budgets', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	categoryId: text('category_id').notNull().references(() => financialCategories.id, { onDelete: 'cascade' }),
+	amountCents: integer('amount_cents').notNull(), // monthly limit in cents
+	period: text('period').notNull().default('monthly'), // monthly, weekly, yearly
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Investment holdings (stocks, RSUs, ISOs, ETFs, crypto)
+export const financialInvestments = pgTable('financial_investments', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	accountId: text('account_id').references(() => financialAccounts.id, { onDelete: 'set null' }),
+	symbol: text('symbol').notNull(),
+	name: text('name').notNull(),
+	investmentType: text('investment_type').notNull(), // stock, etf, mutual_fund, rsu, iso, nso, espp, crypto, bond, other
+	shares: text('shares').notNull().default('0'), // text for fractional shares
+	costBasisCents: integer('cost_basis_cents').notNull().default(0), // total cost basis in cents
+	currentPriceCents: integer('current_price_cents').notNull().default(0), // per-share price in cents
+	vestingDate: timestamp('vesting_date', { withTimezone: true }),
+	expirationDate: timestamp('expiration_date', { withTimezone: true }),
+	strikePriceCents: integer('strike_price_cents'), // for options (ISO/NSO)
+	grantDate: timestamp('grant_date', { withTimezone: true }),
+	notes: text('notes'),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Real estate / property tracking
+export const financialProperties = pgTable('financial_properties', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(), // "Primary Residence", "Rental #1"
+	address: text('address'),
+	purchasePriceCents: integer('purchase_price_cents').notNull().default(0),
+	currentValueCents: integer('current_value_cents').notNull().default(0),
+	purchaseDate: timestamp('purchase_date', { withTimezone: true }),
+	mortgageBalanceCents: integer('mortgage_balance_cents').notNull().default(0),
+	mortgageRatePercent: text('mortgage_rate_percent'), // text for decimal precision
+	mortgageMonthlyPaymentCents: integer('mortgage_monthly_payment_cents'),
+	propertyType: text('property_type').notNull().default('primary'), // primary, rental, vacation, commercial
+	notes: text('notes'),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Retirement plan tracking (401k, IRA, Roth IRA, etc.)
+export const financialRetirementPlans = pgTable('financial_retirement_plans', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(), // "Company 401k", "Roth IRA"
+	planType: text('plan_type').notNull(), // 401k, roth_401k, traditional_ira, roth_ira, sep_ira, simple_ira, 403b, 457b, pension
+	institution: text('institution'),
+	balanceCents: integer('balance_cents').notNull().default(0),
+	employerMatch: text('employer_match'), // e.g. "100% up to 6%"
+	contributionYtdCents: integer('contribution_ytd_cents').notNull().default(0),
+	contributionLimitCents: integer('contribution_limit_cents'), // annual limit
+	targetRetirementAge: integer('target_retirement_age'),
+	monthlyContributionCents: integer('monthly_contribution_cents'),
+	expectedReturnPercent: text('expected_return_percent'), // annual return rate for projections
+	notes: text('notes'),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// Net worth snapshots (monthly or manual)
+export const financialSnapshots = pgTable('financial_snapshots', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	date: timestamp('date', { withTimezone: true }).notNull(),
+	netWorthCents: integer('net_worth_cents').notNull(),
+	totalAssetsCents: integer('total_assets_cents').notNull(),
+	totalLiabilitiesCents: integer('total_liabilities_cents').notNull(),
+	breakdown: jsonb('breakdown'), // { checking: 5000, savings: 10000, investments: 50000, ... }
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type FinancialAccount = typeof financialAccounts.$inferSelect;
+export type FinancialCategory = typeof financialCategories.$inferSelect;
+export type FinancialTransaction = typeof financialTransactions.$inferSelect;
+export type FinancialBudget = typeof financialBudgets.$inferSelect;
+export type FinancialInvestment = typeof financialInvestments.$inferSelect;
+export type FinancialProperty = typeof financialProperties.$inferSelect;
+export type FinancialRetirementPlan = typeof financialRetirementPlans.$inferSelect;
+export type FinancialSnapshot = typeof financialSnapshots.$inferSelect;
