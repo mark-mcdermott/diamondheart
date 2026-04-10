@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "./theme-provider";
+import { ServiceWorkerRegister } from "@/components/blocks/sw-register";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -43,6 +44,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <ServiceWorkerRegister />
         </ThemeProvider>
       </body>
     </html>
