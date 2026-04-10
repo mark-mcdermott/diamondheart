@@ -98,6 +98,9 @@ function SortableNavItem({
         {item.itemType === "metric_category" && (
           <span className="text-xs text-muted-foreground ml-2">(metric section)</span>
         )}
+        {item.itemType === "tracking_section" && (
+          <span className="text-xs text-muted-foreground ml-2">(tracking)</span>
+        )}
       </div>
 
       <span className="text-xs text-muted-foreground">{item.href}</span>

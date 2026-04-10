@@ -1,14 +1,28 @@
 import type { UserNavItem } from "@/db/schema";
 
 // Default nav items — the canonical list
+// "builtin" items are core app pages. "tracking_section" items are toggleable tracking systems.
 export const DEFAULT_NAV_ITEMS = [
-  { label: "Dashboard",     href: "/dashboard",      itemType: "builtin", sortOrder: 0, visible: true,  locked: true },
-  { label: "Meditate",      href: "/meditate",       itemType: "builtin", sortOrder: 1, visible: true,  locked: false },
-  { label: "Food",          href: "/food",           itemType: "builtin", sortOrder: 2, visible: true,  locked: false },
-  { label: "Tracking",      href: "/tracking",       itemType: "builtin", sortOrder: 3, visible: true,  locked: false },
-  { label: "Medical",       href: "/medical",        itemType: "builtin", sortOrder: 4, visible: true,  locked: false },
-  { label: "Appointments",  href: "/appointments",   itemType: "builtin", sortOrder: 5, visible: true,  locked: false },
-  { label: "Entertainment", href: "/entertainment",  itemType: "builtin", sortOrder: 6, visible: true,  locked: false },
+  { label: "Dashboard",     href: "/dashboard",      itemType: "builtin",          sortOrder: 0, visible: true,  locked: true },
+  { label: "Metrics",       href: "/metrics",        itemType: "builtin",          sortOrder: 1, visible: true,  locked: false },
+  { label: "Meditate",      href: "/meditate",       itemType: "tracking_section", sortOrder: 2, visible: true,  locked: false },
+  { label: "Food",          href: "/food",           itemType: "tracking_section", sortOrder: 3, visible: true,  locked: false },
+  { label: "Tracking",      href: "/tracking",       itemType: "tracking_section", sortOrder: 4, visible: true,  locked: false },
+  { label: "Medical",       href: "/medical",        itemType: "tracking_section", sortOrder: 5, visible: true,  locked: false },
+  { label: "Appointments",  href: "/appointments",   itemType: "tracking_section", sortOrder: 6, visible: true,  locked: false },
+  { label: "Entertainment", href: "/entertainment",  itemType: "tracking_section", sortOrder: 7, visible: true,  locked: false },
+  { label: "Workout",       href: "/workout",        itemType: "tracking_section", sortOrder: 8, visible: false, locked: false },
+];
+
+// Section keys for tracking systems (used by Metrics page toggles)
+export const TRACKING_SECTIONS = [
+  { key: "meditate",      label: "Meditate",      href: "/meditate",       description: "Meditation timer and session history" },
+  { key: "food",          label: "Food",          href: "/food",           description: "Nutrition tracking with meals and macros" },
+  { key: "tracking",      label: "Tracking",      href: "/tracking",       description: "Collections, hobbies, and misc counters" },
+  { key: "medical",       label: "Medical",       href: "/medical",        description: "Health, symptoms, and medications" },
+  { key: "appointments",  label: "Appointments",  href: "/appointments",   description: "Doctor visits and scheduled events" },
+  { key: "entertainment", label: "Entertainment", href: "/entertainment",  description: "Shows, movies, books, and games" },
+  { key: "workout",       label: "Workout",       href: "/workout",        description: "Strength training and exercise logging" },
 ];
 
 /**
@@ -47,4 +61,20 @@ export function hasDuplicates(
     seen.add(key);
   }
   return false;
+}
+
+/**
+ * Check if nav items are old-format (pre-tracking-section migration).
+ * Old format: has builtin items for /food, /meditate, etc. but no /metrics builtin.
+ */
+export function needsMigration(
+  items: { href: string; itemType: string }[]
+): boolean {
+  const hasMetricsBuiltin = items.some(
+    (i) => i.itemType === "builtin" && i.href === "/metrics"
+  );
+  const hasOldBuiltin = items.some(
+    (i) => i.itemType === "builtin" && ["/food", "/meditate", "/tracking", "/medical", "/appointments", "/entertainment"].includes(i.href)
+  );
+  return !hasMetricsBuiltin && hasOldBuiltin;
 }
