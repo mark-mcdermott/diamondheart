@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Bell, Check, Trash2, Film, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Card } from "@/components/ui/card";
 import {
   markAsRead,
@@ -117,10 +118,11 @@ export function NotificationsClient({
 
       {/* Notification list */}
       {notifications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <Bell className="h-12 w-12 mb-4" />
-          <p className="text-lg font-medium">No notifications yet</p>
-        </div>
+        <EmptyState
+          icon={Bell}
+          title="All caught up"
+          description="You have no notifications right now."
+        />
       ) : (
         <div className="space-y-2">
           {notifications.map((notification) => (

@@ -60,37 +60,37 @@
 /* Dark mode */
 .dark {
 	--app-background: #1A1614;
-	--app-foreground: #9A8E82;
-	--app-heading-color: #E8E0D6;
+	--app-foreground: #A89E94;
+	--app-heading-color: #EDE6DD;
 
-	--app-card: #242019;
-	--app-card-foreground: #9A8E82;
+	--app-card: #221E18;
+	--app-card-foreground: #A89E94;
 
-	--app-popover: #242019;
-	--app-popover-foreground: #9A8E82;
+	--app-popover: #221E18;
+	--app-popover-foreground: #A89E94;
 
 	--app-primary: #D4764A;
-	--app-primary-foreground: #1A1614;
+	--app-primary-foreground: #FFFBF7;
 
-	--app-secondary: #2E2A22;
-	--app-secondary-foreground: #E8E0D6;
+	--app-secondary: #2C2720;
+	--app-secondary-foreground: #EDE6DD;
 
-	--app-muted: #2E2A22;
+	--app-muted: #2C2720;
 	--app-muted-foreground: #8A7E74;
 
 	--app-accent: #D4764A;
-	--app-accent-foreground: #1A1614;
+	--app-accent-foreground: #FFFBF7;
 
 	--app-destructive: hsl(0 63% 31%);
 	--app-destructive-foreground: hsl(0 0% 98%);
 
-	--app-border: #3A352D;
-	--app-input: #3A352D;
+	--app-border: #362F28;
+	--app-input: #362F28;
 	--app-ring: #D4764A;
 
 	--app-success: #7AAD79;
-	--app-success-foreground: #1A1614;
-	--app-surface-warm: #2E2A22;
+	--app-success-foreground: #FFFBF7;
+	--app-surface-warm: #2C2720;
 }
 
 /* Keyframe animations */
@@ -462,4 +462,12 @@
 	background-repeat: repeat;
 	background-size: 128px 128px;
 	pointer-events: none;
+}
+
+/* Reduce noise texture in dark mode */
+.dark body {
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
+}
+.dark .card-texture::after {
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 128 128' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.01'/%3E%3C/svg%3E");
 }

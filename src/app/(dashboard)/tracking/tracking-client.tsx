@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { addTrackingItem, updateTrackingCount, updateTrackingItem, deleteTrackingItem } from "@/app/actions/tracking";
 import type { TrackingItem } from "@/db/schema";
@@ -110,9 +111,10 @@ export function TrackingClient({ items }: TrackingClientProps) {
       </div>
 
       {items.length === 0 ? (
-        <div className="border border-dashed border-border rounded-lg p-12 text-center">
-          <p className="text-muted-foreground mb-4">No items tracked yet.</p>
-        </div>
+        <EmptyState
+          title="No items tracked yet"
+          description="Start adding items to track your collections, hobbies, and more."
+        />
       ) : (
         <div className="space-y-8">
           {Array.from(categories.entries()).map(([cat, catItems]) => (
