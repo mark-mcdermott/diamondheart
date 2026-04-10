@@ -4,16 +4,14 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ProgressRing } from "@/components/ui/progress-ring";
-import { quickLog, createEntry } from "@/app/actions/tracker";
+import { quickLog } from "@/app/actions/tracker";
 import type { TrackerMetric } from "@/db/schema";
 import {
   Plus,
   Settings,
   Check,
-  CheckCheck,
   Flame,
   Beef,
   Wheat,
@@ -32,6 +30,7 @@ import {
   Apple,
   Footprints,
   Clock,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 
@@ -81,35 +80,6 @@ function getMetricIcon(metric: TrackerMetric, index: number): LucideIcon {
   return iconMap[metric.slug] ?? fallbackIcons[index % fallbackIcons.length];
 }
 
-// Color mapping
-const colorHexMap: Record<string, string> = {
-  blue: "#3b82f6",
-  green: "#22c55e",
-  purple: "#a855f7",
-  amber: "#f59e0b",
-  rose: "#f43f5e",
-  cyan: "#06b6d4",
-  indigo: "#6366f1",
-  emerald: "#10b981",
-  red: "#ef4444",
-  orange: "#f97316",
-  yellow: "#eab308",
-  teal: "#14b8a6",
-  pink: "#ec4899",
-};
-
-const defaultColorCycle = [
-  "#3b82f6", "#22c55e", "#a855f7", "#f59e0b",
-  "#f43f5e", "#06b6d4", "#6366f1", "#10b981",
-];
-
-function getMetricColorHex(metric: TrackerMetric, index: number): string {
-  if (metric.color && colorHexMap[metric.color]) {
-    return colorHexMap[metric.color];
-  }
-  return defaultColorCycle[index % defaultColorCycle.length];
-}
-
 // Helpers
 function getTodayValue(metricId: string, todayEntries: Entry[]): { count: number; sum: number } {
   const entries = todayEntries.filter((e) => e.metricId === metricId);
@@ -123,19 +93,6 @@ function getTodayValue(metricId: string, todayEntries: Entry[]): { count: number
     }
   }
   return { count: entries.length, sum };
-}
-
-function formatTodayDisplay(metric: TrackerMetric, todayEntries: Entry[]): string {
-  const { count, sum } = getTodayValue(metric.id, todayEntries);
-  const goal = metric.dailyGoal ?? 1;
-
-  if (metric.valueType === "none" || metric.valueType === "bool") {
-    return `${count}/${goal}`;
-  }
-
-  const displayValue = Number.isInteger(sum) ? sum.toString() : sum.toFixed(1);
-  const formattedValue = sum >= 1000 ? sum.toLocaleString() : displayValue;
-  return `${formattedValue}/${goal}`;
 }
 
 function getProgress(metric: TrackerMetric, todayEntries: Entry[]): number {
@@ -176,19 +133,124 @@ function formatTimeAgo(dateStr: string): string {
   return `${diffDay}d ago`;
 }
 
+// Build 7-day sparkline data for a metric from recent entries
+function buildSparkline(metricId: string, recentEntries: Entry[]): number[] {
+  const days: number[] = [];
+  const now = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const nextDay = new Date(day);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const dayEntries = recentEntries.filter((e) => {
+      const d = new Date(e.date);
+      return e.metricId === metricId && d >= day && d < nextDay;
+    });
+    let sum = 0;
+    for (const entry of dayEntries) {
+      const parsed = parseFloat(entry.value);
+      sum += isNaN(parsed) ? 1 : parsed;
+    }
+    days.push(sum);
+  }
+  return days;
+}
+
+// Mini sparkline SVG
+function Sparkline({ data, color, completed }: { data: number[]; color: string; completed: boolean }) {
+  const max = Math.max(...data, 1);
+  const h = 28;
+  const w = 64;
+  const step = w / (data.length - 1);
+  const strokeColor = completed ? "var(--app-success)" : color;
+
+  const points = data.map((v, i) => ({
+    x: i * step,
+    y: h - (v / max) * (h - 4) - 2,
+  }));
+
+  const pathD = points
+    .map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`))
+    .join(" ");
+
+  // Area fill
+  const areaD = `${pathD} L ${w} ${h} L 0 ${h} Z`;
+
+  return (
+    <svg width={w} height={h} className="shrink-0" viewBox={`0 0 ${w} ${h}`}>
+      <defs>
+        <linearGradient id={`spark-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={strokeColor} stopOpacity="0.2" />
+          <stop offset="100%" stopColor={strokeColor} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaD} fill={`url(#spark-${color.replace("#", "")})`} />
+      <path d={pathD} fill="none" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Current day dot */}
+      <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="3" fill={strokeColor} />
+    </svg>
+  );
+}
+
+// Water tracking dots
+function WaterDots({
+  current,
+  goal,
+  onAdd,
+  pending,
+}: {
+  current: number;
+  goal: number;
+  onAdd: () => void;
+  pending: boolean;
+}) {
+  const dots = Math.max(goal, 8);
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      {Array.from({ length: dots }).map((_, i) => (
+        <button
+          key={i}
+          className={`
+            w-7 h-7 rounded-full transition-all duration-300 cursor-pointer border-0
+            ${i < current
+              ? "bg-[var(--app-primary)] scale-100"
+              : "bg-secondary scale-90 hover:scale-100 hover:bg-border"
+            }
+          `}
+          style={{
+            transitionDelay: `${i * 30}ms`,
+          }}
+          disabled={i < current || pending}
+          onClick={onAdd}
+          title={`${i + 1} of ${goal}`}
+        />
+      ))}
+      <span className="text-sm font-mono text-muted-foreground ml-1">
+        {current}/{goal}
+      </span>
+    </div>
+  );
+}
+
 export function DashboardClient({ metrics, todayEntries, recentEntries, foodTotals, mealSummaries }: DashboardClientProps) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [entryMetric, setEntryMetric] = useState<TrackerMetric | null>(null);
   const [entryValue, setEntryValue] = useState("");
   const [, startTransition] = useTransition();
+  const [settledIds, setSettledIds] = useState<Set<string>>(new Set());
 
   const completedCount = metrics.filter((m) => isGoalMet(m, todayEntries)).length;
+  const overallProgress = metrics.length > 0
+    ? Math.round(metrics.reduce((sum, m) => sum + getProgress(m, todayEntries), 0) / metrics.length)
+    : 0;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const recentNonToday = recentEntries
     .filter((e) => new Date(e.date) < today)
     .slice(0, 8);
+
+  const goalMetrics = metrics.filter((m) => !m.counter);
+  const counterMetrics = metrics.filter((m) => m.counter);
 
   function handleQuickLog(metricId: string) {
     setPendingId(metricId);
@@ -197,40 +259,66 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
       fd.set("metricId", metricId);
       fd.set("value", "done");
       await quickLog(fd);
+      // Trigger settle animation
+      setSettledIds((prev) => new Set(prev).add(metricId));
+      setTimeout(() => setSettledIds((prev) => {
+        const next = new Set(prev);
+        next.delete(metricId);
+        return next;
+      }), 400);
       setPendingId(null);
     });
   }
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="mb-10">
-        <p className="text-sm text-muted-foreground mb-1">Today</p>
-        <h2>{formatDate(new Date())}</h2>
-        <p className="text-sm text-muted-foreground mt-2">
-          {completedCount}/{metrics.length} goals completed
-        </p>
+      {/* Header with progress ring */}
+      <div className="flex items-start justify-between mb-10 fade-section">
+        <div>
+          <p className="text-sm text-muted-foreground font-medium mb-1 tracking-wide uppercase" style={{ fontSize: "11px", letterSpacing: "0.08em" }}>
+            Today
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-display mb-2" style={{ fontWeight: 500 }}>
+            {formatDate(new Date())}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {completedCount} of {metrics.length} practices complete
+          </p>
+        </div>
+        <div className="shrink-0 ml-6">
+          <ProgressRing
+            value={overallProgress}
+            size={88}
+            strokeWidth={7}
+            color={overallProgress >= 100 ? "var(--app-success)" : "var(--app-primary)"}
+            trackColor="var(--app-secondary)"
+          >
+            <span className="text-lg font-mono font-semibold" style={{ color: "var(--app-heading-color)" }}>
+              {overallProgress}%
+            </span>
+          </ProgressRing>
+        </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 mb-10">
+      <div className="flex gap-3 mb-10 fade-section" style={{ animationDelay: "60ms" }}>
         <Button asChild>
           <Link href="/entry">
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4 mr-1.5" />
             Log Entry
           </Link>
         </Button>
         <Button variant="secondary" asChild>
           <Link href="/metrics">
-            <Settings className="w-4 h-4 mr-2" />
+            <Settings className="w-4 h-4 mr-1.5" />
             Metrics
           </Link>
         </Button>
       </div>
 
       {metrics.length === 0 ? (
-        <div className="border border-dashed border-border rounded-xl p-12 text-center">
-          <p className="text-muted-foreground mb-4">
+        <div className="border border-dashed border-border rounded-2xl p-12 text-center card-texture bg-card">
+          <p className="text-muted-foreground mb-4 font-body">
             No metrics yet. Create some to start tracking.
           </p>
           <Button variant="outline" asChild>
@@ -239,111 +327,89 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
         </div>
       ) : (
         <>
-          {/* Goals */}
-          <section className="mb-12">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-5">
+          {/* Goal Cards */}
+          <section className="mb-12 fade-section" style={{ animationDelay: "120ms" }}>
+            <h3 className="text-xs font-medium text-muted-foreground uppercase mb-5" style={{ letterSpacing: "0.1em" }}>
               Today&apos;s Goals
             </h3>
-            <div className="grid gap-2" style={{ gridTemplateColumns: "auto auto auto 1fr auto auto auto" }}>
-              {metrics.filter((m) => !m.counter).map((metric, index) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 stagger-children">
+              {goalMetrics.map((metric, index) => {
                 const MetricIcon = getMetricIcon(metric, index);
                 const completed = isGoalMet(metric, todayEntries);
                 const { sum, count } = getTodayValue(metric.id, todayEntries);
                 const goal = metric.dailyGoal ?? 1;
                 const isCountType = metric.valueType === "none" || metric.valueType === "bool";
                 const currentValue = isCountType ? count : (Number.isInteger(sum) ? sum : sum.toFixed(1));
-                const unit = metric.unit || (isCountType ? "done" : "");
+                const unit = metric.unit || (isCountType ? "" : "");
+                const progress = getProgress(metric, todayEntries);
+                const sparkData = buildSparkline(metric.id, recentEntries);
+                const isSettling = settledIds.has(metric.id);
 
                 return (
-                  <div key={metric.id} className="col-span-7 grid items-center py-3 px-4 rounded-lg bg-card" style={{ gridTemplateColumns: "subgrid" }}>
-                    <div className="flex items-center gap-3">
-                      <MetricIcon className="w-5 h-5 text-primary" />
-                      <Link href={`/metrics/${metric.id}`} className="text-base font-semibold no-underline hover:opacity-70" style={{ color: "var(--app-heading-color)" }}>{titleCase(metric.name)}</Link>
+                  <div
+                    key={metric.id}
+                    className={`
+                      relative bg-card rounded-2xl border border-border p-4 card-texture
+                      transition-all duration-300
+                      ${completed ? "goal-completed" : ""}
+                      ${isSettling ? "animate-settle" : ""}
+                    `}
+                  >
+                    {/* Top row: icon, name, sparkline */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`
+                          w-9 h-9 rounded-xl flex items-center justify-center shrink-0
+                          ${completed ? "bg-success/10 text-success" : "bg-secondary text-muted-foreground"}
+                          transition-colors duration-500
+                        `}>
+                          {completed
+                            ? <Check className="w-4.5 h-4.5" strokeWidth={2.5} />
+                            : <MetricIcon className="w-4.5 h-4.5" />
+                          }
+                        </div>
+                        <div>
+                          <Link
+                            href={`/metrics/${metric.id}`}
+                            className="text-sm font-semibold no-underline hover:opacity-70 block"
+                            style={{ color: "var(--app-heading-color)" }}
+                          >
+                            {titleCase(metric.name)}
+                          </Link>
+                          <span className="text-xs text-muted-foreground">
+                            goal: {goal} {unit}
+                          </span>
+                        </div>
+                      </div>
+                      <Sparkline data={sparkData} color="var(--app-primary)" completed={completed} />
                     </div>
-                    <div className="w-5 flex items-center justify-center">
-                      {completed && <Check className="w-4 h-4 text-green-500" />}
-                    </div>
-                    <span className="text-sm text-muted-foreground">(goal: {goal} {unit})</span>
-                    <div className="mx-4">
-                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+
+                    {/* Progress bar */}
+                    <div className="mb-3">
+                      <div className="h-2 rounded-full bg-secondary overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all"
+                          className="h-full rounded-full transition-all duration-700"
                           style={{
-                            width: `${Math.min(100, getProgress(metric, todayEntries))}%`,
-                            backgroundColor: completed ? "#22c55e" : "#a57cf4",
+                            width: `${Math.min(100, progress)}%`,
+                            backgroundColor: completed ? "var(--app-success)" : "var(--app-primary)",
+                            transitionTimingFunction: "var(--ease-settle)",
                           }}
                         />
                       </div>
                     </div>
-                    <span className="text-sm text-muted-foreground text-left mx-2">{currentValue} {unit}</span>
-                    <Button
-                      size="icon-sm"
-                      variant="secondary"
-                      disabled={pendingId === metric.id + "-add"}
-                      onClick={() => {
-                        if (metric.counter) {
-                          setPendingId(metric.id + "-add");
-                          startTransition(async () => {
-                            const fd = new FormData();
-                            fd.set("metricId", metric.id);
-                            fd.set("value", "1");
-                            await quickLog(fd);
-                            setPendingId(null);
-                          });
-                        } else {
-                          setEntryMetric(metric);
-                          setEntryValue("");
-                        }
-                      }}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="icon-sm"
-                      variant="default"
-                      disabled={pendingId === metric.id}
-                      onClick={() => handleQuickLog(metric.id)}
-                    >
-                      <CheckCheck className="w-4 h-4" />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
 
-          {/* Counters */}
-          {(() => {
-            const counterMetrics = metrics.filter((m) => m.counter);
-            if (counterMetrics.length === 0) return null;
-            return (
-              <section className="mb-12 -mt-6">
-                <h3 className="sr-only">
-                  Counters
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {counterMetrics.map((metric, index) => {
-                    const MetricIcon = getMetricIcon(metric, index);
-                    const { sum, count } = getTodayValue(metric.id, todayEntries);
-                    const isCountType = metric.valueType === "none" || metric.valueType === "bool";
-                    const currentValue = isCountType ? count : (Number.isInteger(sum) ? sum : sum.toFixed(1));
-                    const unit = metric.unit || "";
-
-                    return (
-                      <div key={metric.id} className="bg-card rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 inline-flex items-center justify-center rounded-full bg-secondary text-accent shrink-0">
-                              <MetricIcon className="w-3.5 h-3.5" />
-                            </div>
-                            <span className="text-sm font-semibold" style={{ color: "var(--app-heading-color)" }}>{titleCase(metric.name)}</span>
-                          </div>
-                          <Button
-                            size="icon-xs"
-                            variant="secondary"
-                            disabled={pendingId === metric.id + "-counter"}
-                            onClick={() => {
-                              setPendingId(metric.id + "-counter");
+                    {/* Bottom row: value + actions */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-mono text-muted-foreground">
+                        {currentValue}{unit ? ` ${unit}` : ""} / {goal}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          className="w-8 h-8 rounded-lg bg-secondary text-muted-foreground hover:bg-border hover:text-foreground flex items-center justify-center transition-all duration-200 cursor-pointer border-0"
+                          disabled={pendingId === metric.id + "-add"}
+                          onClick={() => {
+                            if (metric.counter) {
+                              setPendingId(metric.id + "-add");
                               startTransition(async () => {
                                 const fd = new FormData();
                                 fd.set("metricId", metric.id);
@@ -351,25 +417,94 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                                 await quickLog(fd);
                                 setPendingId(null);
                               });
-                            }}
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{currentValue} {unit}</p>
+                            } else {
+                              setEntryMetric(metric);
+                              setEntryValue("");
+                            }
+                          }}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                        <button
+                          className={`
+                            w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer border-0
+                            ${completed
+                              ? "bg-success/10 text-success"
+                              : "bg-primary text-primary-foreground hover:brightness-110"
+                            }
+                          `}
+                          disabled={pendingId === metric.id}
+                          onClick={() => handleQuickLog(metric.id)}
+                        >
+                          <Check className="w-4 h-4" strokeWidth={2.5} />
+                        </button>
                       </div>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })()}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
 
-          {/* Food */}
-          <section className="mb-12">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-5">
-              Food
-            </h3>
+          {/* Counters */}
+          {counterMetrics.length > 0 && (
+            <section className="mb-12 -mt-4 fade-section" style={{ animationDelay: "180ms" }}>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
+                {counterMetrics.map((metric, index) => {
+                  const MetricIcon = getMetricIcon(metric, index);
+                  const { sum, count } = getTodayValue(metric.id, todayEntries);
+                  const isCountType = metric.valueType === "none" || metric.valueType === "bool";
+                  const currentValue = isCountType ? count : (Number.isInteger(sum) ? sum : sum.toFixed(1));
+                  const unit = metric.unit || "";
+
+                  return (
+                    <div key={metric.id} className="bg-card rounded-2xl border border-border p-4 card-texture">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground shrink-0">
+                            <MetricIcon className="w-4 h-4" />
+                          </div>
+                          <span className="text-sm font-semibold" style={{ color: "var(--app-heading-color)" }}>{titleCase(metric.name)}</span>
+                        </div>
+                        <button
+                          className="w-7 h-7 rounded-lg bg-secondary text-muted-foreground hover:bg-border hover:text-foreground flex items-center justify-center transition-all duration-200 cursor-pointer border-0"
+                          disabled={pendingId === metric.id + "-counter"}
+                          onClick={() => {
+                            setPendingId(metric.id + "-counter");
+                            startTransition(async () => {
+                              const fd = new FormData();
+                              fd.set("metricId", metric.id);
+                              fd.set("value", "1");
+                              await quickLog(fd);
+                              setPendingId(null);
+                            });
+                          }}
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-lg font-mono font-semibold" style={{ color: "var(--app-heading-color)" }}>
+                        {currentValue} <span className="text-sm font-normal text-muted-foreground">{unit}</span>
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* Nourishment (Food) */}
+          <section className="mb-12 fade-section" style={{ animationDelay: "240ms" }}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-xs font-medium text-muted-foreground uppercase" style={{ letterSpacing: "0.1em" }}>
+                Nourishment
+              </h3>
+              <Link href="/food" className="text-xs text-muted-foreground hover:text-foreground no-underline flex items-center gap-0.5 transition-colors">
+                View all <ChevronRight className="w-3 h-3" />
+              </Link>
+            </div>
+
+            {/* Macro summary cards */}
             <div className="grid grid-cols-4 gap-3 mb-4">
               {[
                 { label: "Calories", value: foodTotals.calories, unit: "kcal", icon: Flame },
@@ -377,14 +512,16 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                 { label: "Carbs", value: foodTotals.carbs, unit: "g", icon: Wheat },
                 { label: "Fat", value: foodTotals.fat, unit: "g", icon: Droplet },
               ].map((item) => (
-                <div key={item.label} className="bg-card rounded-lg p-3 text-center">
-                  <item.icon className="w-4 h-4 text-primary mx-auto mb-1" />
-                  <p className="text-lg font-semibold" style={{ color: "var(--app-heading-color)" }}>{item.value}</p>
-                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                <div key={item.label} className="bg-card rounded-xl border border-border p-3 text-center card-texture">
+                  <item.icon className="w-4 h-4 mx-auto mb-1.5 text-muted-foreground" strokeWidth={1.8} />
+                  <p className="text-lg font-mono font-semibold" style={{ color: "var(--app-heading-color)" }}>{item.value}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{item.label}</p>
                 </div>
               ))}
             </div>
-            <div className="bg-card rounded-lg divide-y divide-border">
+
+            {/* Meal rows */}
+            <div className="bg-card rounded-2xl border border-border divide-y divide-border overflow-hidden card-texture">
               {[
                 { key: "breakfast", label: "Breakfast", icon: Coffee },
                 { key: "lunch", label: "Lunch", icon: UtensilsCrossed },
@@ -393,17 +530,21 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
               ].map((meal) => {
                 const summary = mealSummaries[meal.key] || { count: 0, calories: 0 };
                 return (
-                  <div key={meal.key} className="flex items-center justify-between px-4 py-3">
+                  <div key={meal.key} className="flex items-center justify-between px-4 py-3.5">
                     <div className="flex items-center gap-3">
-                      <meal.icon className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-semibold" style={{ color: "var(--app-heading-color)" }}>{meal.label}</span>
-                      {summary.count > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          {summary.count} {summary.count === 1 ? "item" : "items"} &middot; {summary.calories} cal
-                        </span>
-                      )}
+                      <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground shrink-0">
+                        <meal.icon className="w-4 h-4" strokeWidth={1.8} />
+                      </div>
+                      <div>
+                        <span className="text-sm font-semibold block" style={{ color: "var(--app-heading-color)" }}>{meal.label}</span>
+                        {summary.count > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {summary.count} {summary.count === 1 ? "item" : "items"} &middot; {summary.calories} cal
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <Button size="icon-xs" variant="secondary" asChild>
+                    <Button size="icon-xs" variant="secondary" asChild className="rounded-lg">
                       <Link href="/food">
                         <Plus className="w-3.5 h-3.5" />
                       </Link>
@@ -416,11 +557,11 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
 
           {/* Recent Activity */}
           {recentNonToday.length > 0 && (
-            <section>
-              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-5">
+            <section className="fade-section" style={{ animationDelay: "300ms" }}>
+              <h3 className="text-xs font-medium text-muted-foreground uppercase mb-5" style={{ letterSpacing: "0.1em" }}>
                 Recent Activity
               </h3>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {recentNonToday.map((entry) => {
                   const metric = metrics.find((m) => m.id === entry.metricId);
                   const entryIndex = metric ? metrics.indexOf(metric) : 0;
@@ -431,15 +572,15 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                   return (
                     <div
                       key={entry.id}
-                      className="flex items-center justify-between py-2.5 px-4 rounded-lg"
+                      className="flex items-center justify-between py-2.5 px-4 rounded-xl hover:bg-secondary/50 transition-colors duration-200"
                     >
                       <div className="flex items-center gap-3">
-                        <EntryIcon className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-base font-semibold" style={{ color: "var(--app-heading-color)" }}>
+                        <EntryIcon className="w-4 h-4 text-muted-foreground" strokeWidth={1.8} />
+                        <span className="text-sm font-semibold" style={{ color: "var(--app-heading-color)" }}>
                           {titleCase(metric?.name ?? "Unknown")}
                         </span>
                         {entry.value && entry.value !== "done" && (
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-sm text-muted-foreground font-mono">
                             {entry.value}
                             {metric?.unit ? ` ${metric.unit}` : ""}
                           </span>
@@ -456,6 +597,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
           )}
         </>
       )}
+
       {/* Quick Entry Modal */}
       <Dialog open={!!entryMetric} onOpenChange={(open) => { if (!open) setEntryMetric(null); }}>
         <DialogContent>
@@ -492,7 +634,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                         name="value"
                         checked={entryValue === "true"}
                         onChange={(e) => setEntryValue(e.target.checked ? "true" : "false")}
-                        className="w-5 h-5 rounded border-border cursor-pointer"
+                        className="w-5 h-5 rounded border-border cursor-pointer accent-[var(--app-primary)]"
                       />
                       <span className="text-sm text-muted-foreground">{entryValue === "true" ? "Yes" : "No"}</span>
                     </div>
@@ -508,7 +650,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                         required
                         autoFocus
                         placeholder="0"
-                        className="w-20"
+                        className="w-24 text-center font-mono text-lg"
                       />
                       {entryMetric.unit && <span className="text-sm text-muted-foreground">{entryMetric.unit}</span>}
                     </div>
@@ -517,11 +659,11 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
               )}
 
               <div className="flex gap-3 pt-2 justify-end">
-                <Button type="submit" disabled={entryMetric.valueType !== "none" && !entryValue}>
-                  Save
-                </Button>
                 <Button type="button" variant="secondary" onClick={() => setEntryMetric(null)}>
                   Cancel
+                </Button>
+                <Button type="submit" disabled={entryMetric.valueType !== "none" && !entryValue}>
+                  Save
                 </Button>
               </div>
             </form>

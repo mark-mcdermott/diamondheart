@@ -3,12 +3,11 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { Nav } from "@/components/blocks/nav";
-import { Footer } from "@/components/blocks/footer";
+import { SidebarNav } from "@/components/blocks/sidebar-nav";
 import { getNavItems } from "@/app/actions/nav";
 import { getUnreadCount } from "@/app/actions/notifications";
 import { getUserPreferences } from "@/app/actions/preferences";
-import type { NavLink } from "@/components/blocks/nav";
+import type { NavLink } from "@/components/blocks/sidebar-nav";
 
 export default async function DashboardLayout({
   children,
@@ -42,8 +41,8 @@ export default async function DashboardLayout({
     }));
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Nav
+    <div className="min-h-screen">
+      <SidebarNav
         siteName="Diamondheart"
         logo="/logo.png"
         links={links}
@@ -52,10 +51,9 @@ export default async function DashboardLayout({
         showSiteName={prefs.showSiteName}
         showThemeToggle
       />
-      <main className="flex-1 px-4 py-6 mx-auto w-full max-w-5xl">
+      <main className="md:ml-[68px] px-4 py-6 pb-24 md:pb-6 mx-auto w-full max-w-4xl">
         {children}
       </main>
-      <Footer siteName="Diamondheart" logoImage="/logo.png" />
     </div>
   );
 }

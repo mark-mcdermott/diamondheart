@@ -80,7 +80,7 @@ export function Nav({
       <div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-4">
         <Link href="/" className="group flex items-center gap-2 font-semibold no-underline shrink-0">
           <img src="/logo.png" alt="Diamondheart" className="h-[3.8rem] w-auto my-1" />
-          {showSiteName && <span style={{ color: "var(--app-heading-color)" }}>Diamondheart</span>}
+          {showSiteName && <span className="font-display" style={{ color: "var(--app-heading-color)" }}>Diamondheart</span>}
         </Link>
 
         {/* Desktop nav */}
