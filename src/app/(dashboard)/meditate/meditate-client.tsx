@@ -14,6 +14,7 @@ interface MeditateClientProps {
   sessions: MeditationSession[];
   styles: MeditationStyle[];
   presets: MeditationPreset[];
+  defaultTimerSeconds?: number;
 }
 
 const DEFAULT_PRESETS = [
@@ -29,10 +30,16 @@ const DEFAULT_STYLES = [
   { key: "breathing", label: "Breathing", iconName: "wind" },
 ];
 
+const QUICK_ADD = [
+  { label: "+0:30", seconds: 30 },
+  { label: "+1:00", seconds: 60 },
+  { label: "+5:00", seconds: 300 },
+];
+
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function formatDurationShort(seconds: number): string {
@@ -43,7 +50,28 @@ function formatDurationShort(seconds: number): string {
   return rm > 0 ? `${h}h ${rm}m` : `${h}h`;
 }
 
-export function MeditateClient({ sessions, styles, presets }: MeditateClientProps) {
+function parseTimeInput(value: string): number | null {
+  const trimmed = value.trim();
+  // Try "M:SS" or "MM:SS" or "H:MM:SS"
+  const parts = trimmed.split(":");
+  if (parts.length === 2) {
+    const m = parseInt(parts[0]);
+    const s = parseInt(parts[1]);
+    if (!isNaN(m) && !isNaN(s) && s >= 0 && s < 60) return m * 60 + s;
+  }
+  if (parts.length === 3) {
+    const h = parseInt(parts[0]);
+    const m = parseInt(parts[1]);
+    const s = parseInt(parts[2]);
+    if (!isNaN(h) && !isNaN(m) && !isNaN(s) && m >= 0 && m < 60 && s >= 0 && s < 60) return h * 3600 + m * 60 + s;
+  }
+  // Try plain number as minutes
+  const mins = parseInt(trimmed);
+  if (!isNaN(mins) && mins > 0) return mins * 60;
+  return null;
+}
+
+export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds = 600 }: MeditateClientProps) {
   const resolvedStyles = styles.length > 0
     ? styles.map((s) => ({ key: s.label.toLowerCase(), label: s.label, iconName: s.iconName }))
     : DEFAULT_STYLES;
@@ -53,7 +81,7 @@ export function MeditateClient({ sessions, styles, presets }: MeditateClientProp
 
   const [isPending, startTransition] = useTransition();
   const [sessionType, setSessionType] = useState(resolvedStyles[0]?.key || "guided");
-  const [targetSeconds, setTargetSeconds] = useState(600);
+  const [targetSeconds, setTargetSeconds] = useState(defaultTimerSeconds);
   const [elapsed, setElapsed] = useState(0);
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
@@ -63,6 +91,13 @@ export function MeditateClient({ sessions, styles, presets }: MeditateClientProp
   const [editDuration, setEditDuration] = useState("");
   const [editType, setEditType] = useState("guided");
   const [editNotes, setEditNotes] = useState("");
+
+  // Editable time display
+  const [editingTime, setEditingTime] = useState(false);
+  const [timeInputValue, setTimeInputValue] = useState("");
+  const timeInputRef = useRef<HTMLInputElement>(null);
+  const timeButtonRef = useRef<HTMLButtonElement>(null);
+  const cursorPosRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (running) {
@@ -80,6 +115,27 @@ export function MeditateClient({ sessions, styles, presets }: MeditateClientProp
     }
     return () => clearInterval(intervalRef.current);
   }, [running, targetSeconds]);
+
+  useEffect(() => {
+    if (editingTime && timeInputRef.current) {
+      timeInputRef.current.focus();
+      if (cursorPosRef.current !== null) {
+        timeInputRef.current.setSelectionRange(cursorPosRef.current, cursorPosRef.current);
+        cursorPosRef.current = null;
+      }
+    }
+  }, [editingTime]);
+
+  const isActive = running || elapsed > 0 || finished;
+  const progress = targetSeconds > 0 ? Math.min(100, (elapsed / targetSeconds) * 100) : 0;
+  const remaining = Math.max(0, targetSeconds - elapsed);
+
+  // Progress ring geometry
+  const ringSize = 280;
+  const ringStroke = 8;
+  const ringRadius = (ringSize - ringStroke) / 2;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCircumference - (progress / 100) * ringCircumference;
 
   function handleStart() {
     setElapsed(0);
@@ -115,6 +171,34 @@ export function MeditateClient({ sessions, styles, presets }: MeditateClientProp
     });
   }
 
+  function handleQuickAdd(seconds: number) {
+    setTargetSeconds((prev) => prev + seconds);
+  }
+
+  function handleTimeClick(e: React.MouseEvent<HTMLButtonElement>) {
+    const text = formatDuration(targetSeconds);
+    const btn = timeButtonRef.current;
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const charWidth = rect.width / text.length;
+      cursorPosRef.current = Math.round(clickX / charWidth);
+    }
+    setTimeInputValue(text);
+    setEditingTime(true);
+  }
+
+  function handleTimeSubmit() {
+    const parsed = parseTimeInput(timeInputValue);
+    if (parsed && parsed > 0) setTargetSeconds(parsed);
+    setEditingTime(false);
+  }
+
+  function handleTimeKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") handleTimeSubmit();
+    if (e.key === "Escape") setEditingTime(false);
+  }
+
   function handleDelete(sessionId: string) {
     startTransition(async () => {
       const fd = new FormData();
@@ -145,9 +229,6 @@ export function MeditateClient({ sessions, styles, presets }: MeditateClientProp
     });
   }
 
-  const progress = targetSeconds > 0 ? Math.min(100, (elapsed / targetSeconds) * 100) : 0;
-  const remaining = Math.max(0, targetSeconds - elapsed);
-
   // Group sessions by date
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -157,103 +238,211 @@ export function MeditateClient({ sessions, styles, presets }: MeditateClientProp
 
   return (
     <>
-      {/* Timer */}
+      {/* Timer Card */}
       <section className="mb-12">
-        <div className="bg-card rounded-lg p-8 text-center">
-          {/* Session type */}
-          <div className="flex justify-center gap-2 mb-6">
+        <div className="bg-card rounded-2xl overflow-hidden">
+          {/* Style selector row */}
+          <div className="flex items-center gap-3 px-6 pt-6 pb-2">
             {resolvedStyles.map((t) => (
-              <Button
+              <button
                 key={t.key}
-                size="sm"
-                variant={sessionType === t.key ? "default" : "secondary"}
                 onClick={() => setSessionType(t.key)}
                 disabled={running}
+                className={`flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full transition-colors cursor-pointer ${
+                  sessionType === t.key
+                    ? "bg-primary/15 text-primary hover:bg-primary/25"
+                    : "text-muted-foreground hover:text-black dark:hover:text-white"
+                }`}
               >
-                <LucideIconByName name={t.iconName} className="w-3.5 h-3.5 mr-1" />
+                <LucideIconByName name={t.iconName} className="w-4 h-4" />
                 {t.label}
-              </Button>
+              </button>
             ))}
           </div>
 
-          {/* Presets */}
-          {!running && !finished && (
-            <div className="flex justify-center gap-2 mb-6">
-              {resolvedPresets.map((p) => (
-                <Button
-                  key={p.seconds}
-                  size="sm"
-                  variant={targetSeconds === p.seconds ? "default" : "secondary"}
-                  onClick={() => setTargetSeconds(p.seconds)}
-                >
-                  {p.label}
-                </Button>
-              ))}
-            </div>
-          )}
-
-          {/* Timer display */}
-          <div className="mb-6">
-            <p className="text-6xl font-bold tabular-nums" style={{ color: "var(--app-heading-color)" }}>
-              {formatDuration(running || finished ? remaining : targetSeconds)}
-            </p>
-            {(running || finished) && (
-              <div className="mt-4 mx-auto max-w-xs">
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${progress}%`,
-                      backgroundColor: finished ? "#22c55e" : "#a57cf4",
-                    }}
+          {/* Timer area */}
+          <div className="flex flex-col items-center justify-center py-12 px-6 min-h-[360px]">
+            {isActive ? (
+              /* Running/paused/finished: show ring */
+              <div className="relative inline-flex items-center justify-center" style={{ width: ringSize, height: ringSize }}>
+                <svg width={ringSize} height={ringSize} className="-rotate-90">
+                  <circle
+                    cx={ringSize / 2}
+                    cy={ringSize / 2}
+                    r={ringRadius}
+                    fill="none"
+                    stroke="hsl(var(--muted))"
+                    strokeWidth={ringStroke}
                   />
+                  <circle
+                    cx={ringSize / 2}
+                    cy={ringSize / 2}
+                    r={ringRadius}
+                    fill="none"
+                    stroke={finished ? "#22c55e" : "hsl(var(--primary))"}
+                    strokeWidth={ringStroke}
+                    strokeLinecap="round"
+                    strokeDasharray={ringCircumference}
+                    strokeDashoffset={ringOffset}
+                    className="transition-all duration-700 ease-out"
+                  />
+                </svg>
+                {/* Dot at progress tip */}
+                <svg
+                  width={ringSize}
+                  height={ringSize}
+                  className="absolute inset-0"
+                  style={{ transform: `rotate(${(progress / 100) * 360 - 90}deg)` }}
+                >
+                  <circle
+                    cx={ringSize / 2}
+                    cy={ringStroke / 2}
+                    r={ringStroke / 2 + 2}
+                    fill={finished ? "#22c55e" : "hsl(var(--primary))"}
+                    className="transition-all duration-700 ease-out"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-6xl font-bold tabular-nums tracking-tight" style={{ color: "var(--app-heading-color)" }}>
+                    {formatDuration(remaining)}
+                  </span>
+                  {/* Quick-add buttons inside ring */}
+                  <div className="flex gap-2 mt-4">
+                    {QUICK_ADD.slice(0, 2).map((q) => (
+                      <button
+                        key={q.seconds}
+                        onClick={() => handleQuickAdd(q.seconds)}
+                        className="text-sm font-medium px-3 py-1 rounded-full bg-muted/80 text-muted-foreground hover:brightness-80 transition-all cursor-pointer"
+                      >
+                        {q.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
-
-          {/* Controls */}
-          <div className="flex justify-center gap-3">
-            {!running && !finished && (
-              <Button onClick={handleStart}>
-                <Play className="w-4 h-4 mr-2" />
-                Start
-              </Button>
-            )}
-            {running && (
-              <Button onClick={handlePause} variant="secondary">
-                <Pause className="w-4 h-4 mr-2" />
-                Pause
-              </Button>
-            )}
-            {!running && elapsed > 0 && !finished && (
+            ) : (
+              /* Idle: show large editable time */
               <>
-                <Button onClick={handleResume}>
-                  <Play className="w-4 h-4 mr-2" />
-                  Resume
-                </Button>
-                <Button variant="secondary" onClick={handleSave}>
-                  Save ({formatDurationShort(elapsed)})
-                </Button>
+                {editingTime ? (
+                  <input
+                    ref={timeInputRef}
+                    type="text"
+                    value={timeInputValue}
+                    onChange={(e) => setTimeInputValue(e.target.value)}
+                    onBlur={handleTimeSubmit}
+                    onKeyDown={handleTimeKeyDown}
+                    className="text-7xl font-bold tabular-nums tracking-tight text-center bg-transparent border-none outline-none w-64"
+                    style={{ color: "var(--app-heading-color)" }}
+                  />
+                ) : (
+                  <button
+                    ref={timeButtonRef}
+                    onClick={handleTimeClick}
+                    className="text-7xl font-bold tabular-nums tracking-tight cursor-text hover:opacity-70 transition-opacity"
+                    style={{ color: "var(--app-heading-color)" }}
+                  >
+                    {formatDuration(targetSeconds)}
+                  </button>
+                )}
+                <div className="w-48 h-px bg-border mt-2 mb-6" />
+                {/* Quick-add pills */}
+                <div className="flex gap-2">
+                  {QUICK_ADD.map((q) => (
+                    <button
+                      key={q.seconds}
+                      onClick={() => handleQuickAdd(q.seconds)}
+                      className="text-sm font-medium px-4 py-1.5 rounded-full bg-muted/80 text-muted-foreground hover:brightness-80 transition-all cursor-pointer"
+                    >
+                      {q.label}
+                    </button>
+                  ))}
+                </div>
               </>
             )}
+
+            {/* Notes input when finished */}
             {finished && (
-              <>
+              <div className="mt-6 w-full max-w-xs">
                 <Input
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="How was it? (optional)"
-                  className="max-w-xs"
                 />
-                <Button onClick={handleSave} disabled={isPending}>
-                  Save Session
-                </Button>
-              </>
+              </div>
             )}
-            {(running || elapsed > 0) && (
-              <Button variant="ghost" size="icon" onClick={handleReset}>
-                <RotateCcw className="w-4 h-4" />
-              </Button>
+          </div>
+
+          {/* Presets (idle only) */}
+          {!isActive && (
+            <div className="flex justify-center gap-2 px-6 pb-4">
+              {resolvedPresets.map((p) => (
+                <button
+                  key={p.seconds}
+                  onClick={() => setTargetSeconds(p.seconds)}
+                  className={`text-sm font-medium px-4 py-1.5 rounded-full transition-colors cursor-pointer ${
+                    targetSeconds === p.seconds
+                      ? "bg-primary text-primary-foreground hover:brightness-80"
+                      : "bg-muted/80 text-muted-foreground hover:brightness-80"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Bottom action buttons */}
+          <div className="px-6 pb-6 pt-2">
+            {!isActive && (
+              <button
+                onClick={handleStart}
+                className="w-full flex items-center justify-center py-4 rounded-full bg-primary text-primary-foreground font-medium text-lg transition-colors hover:brightness-80 cursor-pointer"
+              >
+                <Play className="w-5 h-5" fill="currentColor" />
+              </button>
+            )}
+
+            {isActive && (
+              <div className="flex gap-3">
+                {running ? (
+                  <button
+                    onClick={handlePause}
+                    className="flex-1 flex items-center justify-center py-4 rounded-full bg-primary text-primary-foreground font-medium text-lg transition-colors hover:brightness-80 cursor-pointer"
+                  >
+                    <Pause className="w-5 h-5" fill="currentColor" />
+                  </button>
+                ) : finished ? (
+                  <button
+                    onClick={handleSave}
+                    disabled={isPending}
+                    className="flex-1 flex items-center justify-center py-4 rounded-full bg-primary text-primary-foreground font-medium text-lg transition-all hover:brightness-80 cursor-pointer disabled:opacity-50"
+                  >
+                    Save Session
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleResume}
+                      className="flex-1 flex items-center justify-center py-4 rounded-full bg-primary text-primary-foreground font-medium text-lg transition-colors hover:brightness-80 cursor-pointer"
+                    >
+                      <Play className="w-5 h-5" fill="currentColor" />
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      disabled={isPending}
+                      className="flex-1 flex items-center justify-center py-4 rounded-full bg-primary text-primary-foreground font-medium text-lg transition-all hover:brightness-80 cursor-pointer disabled:opacity-50"
+                    >
+                      Save ({formatDurationShort(elapsed)})
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={handleReset}
+                  className="flex-1 flex items-center justify-center py-4 rounded-full bg-muted text-muted-foreground font-medium text-lg transition-all hover:brightness-80 cursor-pointer"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                </button>
+              </div>
             )}
           </div>
         </div>

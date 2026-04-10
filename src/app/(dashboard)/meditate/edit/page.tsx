@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { getMeditationStyles, getMeditationPresets, seedMeditationDefaults } from "@/app/actions/meditation";
+import { getMeditationStyles, getMeditationPresets, seedMeditationDefaults, getDefaultTimerSeconds } from "@/app/actions/meditation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { MeditateEditClient } from "./edit-client";
@@ -9,9 +9,10 @@ export default async function MeditateEditPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
 
-  let [styles, presets] = await Promise.all([
+  let [styles, presets, defaultTimerSeconds] = await Promise.all([
     getMeditationStyles(session.userId),
     getMeditationPresets(session.userId),
+    getDefaultTimerSeconds(session.userId),
   ]);
 
   if (styles.length === 0 || presets.length === 0) {
@@ -33,7 +34,7 @@ export default async function MeditateEditPage() {
           <p className="text-muted-foreground mt-1">Customize your styles and timer presets</p>
         </div>
       </div>
-      <MeditateEditClient styles={styles} presets={presets} />
+      <MeditateEditClient styles={styles} presets={presets} defaultTimerSeconds={defaultTimerSeconds} />
     </div>
   );
 }

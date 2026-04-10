@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { meditationSessions, meditationStyles, meditationPresets } from "@/db/schema";
+import { meditationSessions, meditationStyles, meditationPresets, users } from "@/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -59,6 +59,30 @@ export async function deleteMeditationSession(formData: FormData): Promise<Resul
     .where(and(eq(meditationSessions.id, sessionId), eq(meditationSessions.userId, session.userId)));
 
   revalidatePath("/meditate");
+  return { success: true };
+}
+
+// --- Default Timer ---
+
+export async function getDefaultTimerSeconds(userId: string): Promise<number> {
+  const [user] = await db.select({ defaultTimerSeconds: users.defaultTimerSeconds })
+    .from(users).where(eq(users.id, userId)).limit(1);
+  return user?.defaultTimerSeconds ?? 600;
+}
+
+export async function setDefaultTimerSeconds(formData: FormData): Promise<Result> {
+  const session = await getCurrentUser();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  const seconds = parseInt(formData.get("seconds") as string);
+  if (!seconds || seconds <= 0) return { success: false, error: "Duration is required" };
+
+  await db.update(users)
+    .set({ defaultTimerSeconds: seconds, updatedAt: new Date() })
+    .where(eq(users.id, session.userId));
+
+  revalidatePath("/meditate");
+  revalidatePath("/meditate/edit");
   return { success: true };
 }
 
