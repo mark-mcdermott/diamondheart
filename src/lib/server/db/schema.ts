@@ -395,6 +395,16 @@ export const entertainmentItems = pgTable('entertainment_items', {
 	notes: text('notes'),
 	startDate: timestamp('start_date', { withTimezone: true }),
 	endDate: timestamp('end_date', { withTimezone: true }),
+	tmdbId: integer('tmdb_id'),
+	posterPath: text('poster_path'),
+	backdropPath: text('backdrop_path'),
+	overview: text('overview'),
+	releaseDate: text('release_date'),
+	genres: text('genres'),
+	seasonCount: integer('season_count'),
+	episodeCount: integer('episode_count'),
+	runtime: integer('runtime'),
+	voteAverage: text('vote_average'),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
@@ -460,3 +470,37 @@ export const userNavItems = pgTable('user_nav_items', {
 });
 
 export type UserNavItem = typeof userNavItems.$inferSelect;
+
+
+// ============================================
+// Notifications
+// ============================================
+
+export const notifications = pgTable('notifications', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	type: text('type').notNull(), // new_episode, release_date, reminder
+	title: text('title').notNull(),
+	body: text('body'),
+	href: text('href'),
+	read: boolean('read').notNull().default(false),
+	referenceId: text('reference_id'),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type Notification = typeof notifications.$inferSelect;
+
+
+// ============================================
+// User Preferences
+// ============================================
+
+export const userPreferences = pgTable('user_preferences', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+	useNetflixUI: boolean('use_netflix_ui').notNull().default(false),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type UserPreferences = typeof userPreferences.$inferSelect;

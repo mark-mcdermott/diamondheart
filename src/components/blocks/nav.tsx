@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, X, ChevronDown, Github } from "lucide-react";
+import { Menu, X, ChevronDown, Github, Bell } from "lucide-react";
 import { Sheet, SheetContent, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -34,6 +34,7 @@ interface NavProps {
   isAdmin?: boolean;
   links?: NavLink[];
   showThemeToggle?: boolean;
+  notificationCount?: number;
 }
 
 export function Nav({
@@ -43,6 +44,7 @@ export function Nav({
   isAdmin = false,
   links = [],
   showThemeToggle = true,
+  notificationCount = 0,
 }: NavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -122,13 +124,25 @@ export function Nav({
             </Button>
           )}
           {user && (
-            <AvatarMenu
-              user={{
-                displayName: user.name || user.email,
-                email: user.email,
-                avatarUrl: user.avatarUrl,
-              }}
-            />
+            <>
+              <Link
+                href="/notifications"
+                className="relative text-foreground transition-colors hover:text-black dark:hover:text-white px-2 py-1.5 -mx-2 rounded-md"
+              >
+                <Bell className="h-5 w-5" />
+                {notificationCount > 0 && (
+                  <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-red-500" />
+                )}
+              </Link>
+              <AvatarMenu
+                user={{
+                  displayName: user.name || user.email,
+                  email: user.email,
+                  avatarUrl: user.avatarUrl,
+                }}
+                notificationCount={notificationCount}
+              />
+            </>
           )}
           {showThemeToggle && <ThemeToggle />}
         </nav>
@@ -137,13 +151,25 @@ export function Nav({
         <div className="flex items-center gap-2 md:hidden">
           {showThemeToggle && <ThemeToggle />}
           {user && (
-            <AvatarMenu
-              user={{
-                displayName: user.name || user.email,
-                email: user.email,
-                avatarUrl: user.avatarUrl,
-              }}
-            />
+            <>
+              <Link
+                href="/notifications"
+                className="relative text-foreground transition-colors hover:text-black dark:hover:text-white"
+              >
+                <Bell className="h-5 w-5" />
+                {notificationCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500" />
+                )}
+              </Link>
+              <AvatarMenu
+                user={{
+                  displayName: user.name || user.email,
+                  email: user.email,
+                  avatarUrl: user.avatarUrl,
+                }}
+                notificationCount={notificationCount}
+              />
+            </>
           )}
           <Sheet open={open} onOpenChange={setOpen}>
             <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
