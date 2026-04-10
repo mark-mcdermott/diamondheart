@@ -29,7 +29,7 @@ export default async function DashboardLayout({
         siteName="Diamondheart"
         logo="/logo.png"
         links={defaultNavLinks}
-        user={{ id: user.id, email: user.email, name: user.name }}
+        user={{ id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl }}
         showThemeToggle
       />
       <main className="flex-1 px-4 py-6 mx-auto w-full max-w-5xl">

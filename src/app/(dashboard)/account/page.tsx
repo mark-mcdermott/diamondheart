@@ -19,7 +19,7 @@ export default async function Account() {
 
   return (
     <AccountPage
-      user={{ id: user.id, email: user.email, name: user.name || undefined }}
+      user={{ id: user.id, email: user.email, name: user.name || undefined, avatarUrl: user.avatarUrl }}
       backHref="/dashboard"
       backLabel="Dashboard"
     />

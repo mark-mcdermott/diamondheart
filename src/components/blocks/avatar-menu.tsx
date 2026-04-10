@@ -35,8 +35,8 @@ export function AvatarMenu({ user }: AvatarMenuProps) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
-        <Avatar className="h-8 w-8">
+      <DropdownMenuTrigger className="flex items-center gap-2 outline-none transition-colors hover:text-black dark:hover:text-white cursor-pointer">
+        <Avatar key={user.avatarUrl ?? "no-avatar"} className="h-8 w-8">
           {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.displayName} />}
           <AvatarFallback className="text-xs">{initials}</AvatarFallback>
         </Avatar>
@@ -50,14 +50,14 @@ export function AvatarMenu({ user }: AvatarMenuProps) {
           <p className="text-xs text-muted-foreground">{user.email}</p>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push("/account")}>
+        <DropdownMenuItem onClick={() => router.push("/account")} className="cursor-pointer">
           Account
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => router.push("/orders")}>
+        <DropdownMenuItem onClick={() => router.push("/orders")} className="cursor-pointer">
           Orders
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+        <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
           Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
