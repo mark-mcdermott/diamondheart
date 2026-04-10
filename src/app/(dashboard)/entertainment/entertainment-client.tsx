@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { addEntertainment, updateEntertainment, deleteEntertainment } from "@/app/actions/entertainment";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { EntertainmentItem } from "@/db/schema";
 import { Plus, Trash2, Pencil, Tv, Film, BookOpen, Music, Gamepad2, Podcast, Star } from "lucide-react";
 
@@ -155,9 +156,10 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="border border-dashed border-border rounded-lg p-12 text-center">
-          <p className="text-muted-foreground">Nothing here yet.</p>
-        </div>
+        <EmptyState
+          title="Nothing here yet"
+          description="Add your first show, movie, book, or game to start tracking."
+        />
       ) : (
         <div className="bg-card rounded-lg divide-y divide-border">
           {filtered.map((item) => {

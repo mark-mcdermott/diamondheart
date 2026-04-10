@@ -174,7 +174,7 @@ export function AccountPage({
                   <p className="text-sm text-destructive">{passwordState.error}</p>
                 )}
                 {passwordState.success && (
-                  <p className="text-sm text-green-600 dark:text-green-400">
+                  <p className="text-sm text-success">
                     Password changed successfully.
                   </p>
                 )}

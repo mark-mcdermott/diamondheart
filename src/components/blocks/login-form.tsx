@@ -27,54 +27,65 @@ export function LoginForm({
 }: LoginFormProps) {
   return (
     <div className={className}>
-      <Card className="mx-auto max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
-        </CardHeader>
-        <CardContent>
-          <form action={action} className="space-y-4">
-            {error && (
-              <div className="alert alert-error">{error}</div>
+      <div className="mx-auto max-w-sm w-full">
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <img src="/logo.png" alt="Diamondheart" className="h-16 w-16 object-contain" />
+        </div>
+
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">{title}</CardTitle>
+            {description ? (
+              <CardDescription>{description}</CardDescription>
+            ) : (
+              <CardDescription>Sign in to continue your practice</CardDescription>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full">
-              Sign in
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="justify-center">
-          <p className="text-sm text-muted-foreground">
-            {signupText || (
-              <>
-                Don&apos;t have an account?{" "}
-                <Link href={signupHref} className="text-primary">
-                  Sign up
-                </Link>
-              </>
-            )}
-          </p>
-        </CardFooter>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            <form action={action} className="space-y-4">
+              {error && (
+                <div className="alert alert-error">{error}</div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Sign in
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="justify-center">
+            <p className="text-sm text-muted-foreground">
+              {signupText || (
+                <>
+                  Don&apos;t have an account?{" "}
+                  <Link href={signupHref} className="text-primary font-medium">
+                    Sign up
+                  </Link>
+                </>
+              )}
+            </p>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }

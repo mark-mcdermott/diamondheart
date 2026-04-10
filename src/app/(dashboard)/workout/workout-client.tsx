@@ -130,9 +130,9 @@ export function WorkoutClient({
 
       {/* PR Alert */}
       {prAlert && (
-        <div className="mb-6 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 flex items-center gap-3">
-          <Trophy className="w-5 h-5 text-yellow-600" />
-          <span className="font-medium text-yellow-800 dark:text-yellow-200">{prAlert}</span>
+        <div className="mb-6 p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center gap-3">
+          <Trophy className="w-5 h-5 text-primary" />
+          <span className="font-medium text-primary">{prAlert}</span>
         </div>
       )}
 

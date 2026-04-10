@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "Mindful tracking for meditation, wellness, and daily habits",
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.png",
+    icon: "/favicon.svg",
     apple: "/icons/apple-touch-icon.png",
   },
   appleWebApp: {
@@ -37,7 +37,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
-        <meta name="theme-color" content="#a57cf4" />
+        <meta name="theme-color" content="#C4653A" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
       <body>

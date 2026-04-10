@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ProgressRing } from "@/components/ui/progress-ring";
+import { EmptyState } from "@/components/ui/empty-state";
 import { quickLog } from "@/app/actions/tracker";
 import type { TrackerMetric } from "@/db/schema";
 import {
@@ -317,14 +318,13 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
       </div>
 
       {metrics.length === 0 ? (
-        <div className="border border-dashed border-border rounded-2xl p-12 text-center card-texture bg-card">
-          <p className="text-muted-foreground mb-4 font-body">
-            No metrics yet. Create some to start tracking.
-          </p>
-          <Button variant="outline" asChild>
-            <Link href="/metrics">Set Up Metrics</Link>
-          </Button>
-        </div>
+        <EmptyState
+          showIllustration
+          title="Begin your practice"
+          description="Create some metrics to start tracking your daily habits and wellness goals."
+          actionLabel="Set Up Metrics"
+          actionHref="/metrics"
+        />
       ) : (
         <>
           {/* Goal Cards */}

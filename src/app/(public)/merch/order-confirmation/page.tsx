@@ -5,8 +5,8 @@ import { Check } from "lucide-react";
 export default function OrderConfirmationPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-      <div className="w-16 h-16 rounded-full bg-green-50 dark:bg-green-950 flex items-center justify-center mx-auto mb-6">
-        <Check className="w-8 h-8 text-green-500" />
+      <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-6">
+        <Check className="w-8 h-8 text-success" />
       </div>
       <h1>Order Confirmed</h1>
       <p className="text-muted-foreground mt-4 mb-8">

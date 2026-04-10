@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   addMetric,
   deleteMetric,
@@ -558,11 +559,11 @@ export function MetricsClient({
 
       {/* Metrics grouped by category */}
       {metrics.length === 0 ? (
-        <div className="border border-dashed border-border rounded-lg p-8 text-center">
-          <p className="text-muted-foreground mb-4">
-            No metrics yet. Add your first metric to start tracking.
-          </p>
-        </div>
+        <EmptyState
+          showIllustration
+          title="No metrics yet"
+          description="Add your first metric to start tracking your wellness journey."
+        />
       ) : (
         <DndContext
           sensors={sensors}
