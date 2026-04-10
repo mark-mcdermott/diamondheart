@@ -7,6 +7,7 @@ import {
   toggleNavItemVisibility,
   reorderNavItems,
 } from "@/app/actions/nav";
+import { toggleNetflixUI } from "@/app/actions/preferences";
 import type { UserNavItem } from "@/db/schema";
 import { ArrowLeft, GripVertical, Lock } from "lucide-react";
 import {
@@ -29,6 +30,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 interface SettingsClientProps {
   navItems: UserNavItem[];
+  useNetflixUI: boolean;
 }
 
 function SortableNavItem({
@@ -102,7 +104,8 @@ function SortableNavItem({
   );
 }
 
-export function SettingsClient({ navItems: serverNavItems }: SettingsClientProps) {
+export function SettingsClient({ navItems: serverNavItems, useNetflixUI }: SettingsClientProps) {
+  const [netflixUI, setNetflixUI] = useState(useNetflixUI);
   const [isPending, startTransition] = useTransition();
   const [items, setItems] = useState(serverNavItems);
 
@@ -193,6 +196,43 @@ export function SettingsClient({ navItems: serverNavItems }: SettingsClientProps
           </p>
         </div>
       </div>
+
+      {/* Entertainment Section */}
+      <section className="mb-8">
+        <h3
+          className="text-lg font-semibold mb-4"
+          style={{ color: "var(--app-heading-color)" }}
+        >
+          Entertainment
+        </h3>
+        <div className="bg-card border border-border rounded-lg px-4 py-3">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <Checkbox
+              checked={netflixUI}
+              onCheckedChange={() => {
+                setNetflixUI((prev) => !prev);
+                startTransition(async () => {
+                  const fd = new FormData();
+                  await toggleNetflixUI(fd);
+                });
+              }}
+              className="mt-0.5"
+            />
+            <div>
+              <span
+                className="text-sm font-medium"
+                style={{ color: "var(--app-heading-color)" }}
+              >
+                Use Netflix-style entertainment UI
+              </span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Show movies and TV shows with cover art in a Netflix-style grid
+                instead of a simple list
+              </p>
+            </div>
+          </label>
+        </div>
+      </section>
 
       {/* Navbar Section */}
       <section>
