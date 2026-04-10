@@ -7,6 +7,7 @@ import { Nav } from "@/components/blocks/nav";
 import { Footer } from "@/components/blocks/footer";
 import { getNavItems } from "@/app/actions/nav";
 import { getUnreadCount } from "@/app/actions/notifications";
+import { getUserPreferences } from "@/app/actions/preferences";
 import type { NavLink } from "@/components/blocks/nav";
 
 export default async function DashboardLayout({
@@ -25,9 +26,10 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/login");
 
-  const [navItems, notificationCount] = await Promise.all([
+  const [navItems, notificationCount, prefs] = await Promise.all([
     getNavItems(session.userId),
     getUnreadCount(session.userId),
+    getUserPreferences(session.userId),
   ]);
 
   // Convert user nav items to NavLink format
@@ -47,6 +49,7 @@ export default async function DashboardLayout({
         links={links}
         user={{ id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl }}
         notificationCount={notificationCount}
+        showSiteName={prefs.showSiteName}
         showThemeToggle
       />
       <main className="flex-1 px-4 py-6 mx-auto w-full max-w-5xl">

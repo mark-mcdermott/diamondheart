@@ -7,7 +7,7 @@ import {
   toggleNavItemVisibility,
   reorderNavItems,
 } from "@/app/actions/nav";
-import { toggleNetflixUI } from "@/app/actions/preferences";
+import { toggleNetflixUI, toggleSiteName } from "@/app/actions/preferences";
 import type { UserNavItem } from "@/db/schema";
 import { ArrowLeft, GripVertical, Lock } from "lucide-react";
 import {
@@ -31,6 +31,7 @@ import { CSS } from "@dnd-kit/utilities";
 interface SettingsClientProps {
   navItems: UserNavItem[];
   useNetflixUI: boolean;
+  showSiteName: boolean;
 }
 
 function SortableNavItem({
@@ -104,8 +105,9 @@ function SortableNavItem({
   );
 }
 
-export function SettingsClient({ navItems: serverNavItems, useNetflixUI }: SettingsClientProps) {
+export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSiteName: initialShowSiteName }: SettingsClientProps) {
   const [netflixUI, setNetflixUI] = useState(useNetflixUI);
+  const [siteName, setSiteName] = useState(initialShowSiteName);
   const [isPending, startTransition] = useTransition();
   const [items, setItems] = useState(serverNavItems);
 
@@ -228,6 +230,43 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI }: Setti
               <p className="text-xs text-muted-foreground mt-0.5">
                 Show movies and TV shows with cover art in a Netflix-style grid
                 instead of a simple list
+              </p>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      {/* Navbar Appearance */}
+      <section className="mb-8">
+        <h3
+          className="text-lg font-semibold mb-4"
+          style={{ color: "var(--app-heading-color)" }}
+        >
+          Navbar Appearance
+        </h3>
+        <div className="bg-card border border-border rounded-lg px-4 py-3">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <Checkbox
+              checked={siteName}
+              onCheckedChange={() => {
+                setSiteName((prev) => !prev);
+                startTransition(async () => {
+                  const fd = new FormData();
+                  await toggleSiteName(fd);
+                });
+              }}
+              className="mt-0.5"
+            />
+            <div>
+              <span
+                className="text-sm font-medium"
+                style={{ color: "var(--app-heading-color)" }}
+              >
+                Show site name in navbar
+              </span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Uncheck to show only the logo icon without the
+                &ldquo;Diamondheart&rdquo; text
               </p>
             </div>
           </label>

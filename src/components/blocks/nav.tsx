@@ -35,7 +35,10 @@ interface NavProps {
   links?: NavLink[];
   showThemeToggle?: boolean;
   notificationCount?: number;
+  showSiteName?: boolean;
 }
+
+const NAV_CHAR_LIMIT = 55;
 
 export function Nav({
   siteName,
@@ -45,30 +48,44 @@ export function Nav({
   links = [],
   showThemeToggle = true,
   notificationCount = 0,
+  showSiteName = true,
 }: NavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isLoggedIn = !!user;
   const isLogoImage = logo && (logo.startsWith("/") || logo.startsWith("http") || logo.endsWith(".svg"));
 
-  const visibleLinks = links.filter((link) => {
+  const allVisibleLinks = links.filter((link) => {
     if (link.requiresAuth && !isLoggedIn) return false;
     if (link.requiresAdmin && !isAdmin) return false;
     if (link.hideWhenAuth && isLoggedIn) return false;
     return true;
   });
 
+  // Cap desktop nav links by total character count
+  const desktopLinks: typeof allVisibleLinks = [];
+  let charCount = 0;
+  for (const link of allVisibleLinks) {
+    const label = link.label || "";
+    if (charCount + label.length > NAV_CHAR_LIMIT && desktopLinks.length > 0) break;
+    charCount += label.length;
+    desktopLinks.push(link);
+  }
+
+  // Mobile nav always shows all links
+  const visibleLinks = allVisibleLinks;
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-4">
-        <Link href="/" className="group flex items-center gap-2 font-semibold no-underline">
+        <Link href="/" className="group flex items-center gap-2 font-semibold no-underline shrink-0">
           <img src="/logo.png" alt="Diamondheart" className="h-[3.8rem] w-auto my-1" />
-          <span style={{ color: "var(--app-heading-color)" }}>Diamondheart</span>
+          {showSiteName && <span style={{ color: "var(--app-heading-color)" }}>Diamondheart</span>}
         </Link>
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-4 md:flex">
-          {visibleLinks.map((link, i) => {
+          {desktopLinks.map((link, i) => {
             if (link.children) {
               const isChildActive = link.children.some((child) => pathname === child.href || pathname.startsWith(child.href + "/"));
               return (
