@@ -2,9 +2,10 @@
 
 import { db } from "@/db";
 import { userNavItems, trackerCategories } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { deduplicateNavItems } from "@/lib/nav-utils";
 
 export type ActionResult = {
   success: boolean;
@@ -47,6 +48,15 @@ export async function getNavItems(userId: string) {
       .from(userNavItems)
       .where(eq(userNavItems.userId, userId))
       .orderBy(userNavItems.sortOrder);
+  }
+
+  // Clean up duplicates caused by concurrent auto-seed race conditions
+  const { keep, removeIds } = deduplicateNavItems(items);
+  if (removeIds.length > 0) {
+    await db
+      .delete(userNavItems)
+      .where(inArray(userNavItems.id, removeIds));
+    return keep;
   }
 
   return items;

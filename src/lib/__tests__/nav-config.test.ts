@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { deduplicateNavItems } from "@/lib/nav-utils";
 
 describe("nav item defaults", () => {
   const DEFAULT_NAV_ITEMS = [
@@ -48,6 +49,73 @@ describe("nav item defaults", () => {
     DEFAULT_NAV_ITEMS.forEach((item, i) => {
       expect(item.sortOrder).toBe(i);
     });
+  });
+});
+
+describe("deduplicateNavItems", () => {
+  it("removes duplicate builtin items, keeping the first by sortOrder", () => {
+    const items = [
+      { id: "1", label: "Dashboard", href: "/dashboard", itemType: "builtin", referenceId: null, sortOrder: 0 },
+      { id: "2", label: "Dashboard", href: "/dashboard", itemType: "builtin", referenceId: null, sortOrder: 6 },
+      { id: "3", label: "Meditate", href: "/meditate", itemType: "builtin", referenceId: null, sortOrder: 1 },
+      { id: "4", label: "Meditate", href: "/meditate", itemType: "builtin", referenceId: null, sortOrder: 7 },
+    ];
+
+    const { keep, removeIds } = deduplicateNavItems(items);
+    expect(keep).toHaveLength(2);
+    expect(keep[0].id).toBe("1");
+    expect(keep[1].id).toBe("3");
+    expect(removeIds).toContain("2");
+    expect(removeIds).toContain("4");
+  });
+
+  it("returns items unchanged when no duplicates exist", () => {
+    const items = [
+      { id: "1", label: "Dashboard", href: "/dashboard", itemType: "builtin", referenceId: null, sortOrder: 0 },
+      { id: "2", label: "Meditate", href: "/meditate", itemType: "builtin", referenceId: null, sortOrder: 1 },
+      { id: "3", label: "Food", href: "/food", itemType: "builtin", referenceId: null, sortOrder: 2 },
+    ];
+
+    const { keep, removeIds } = deduplicateNavItems(items);
+    expect(keep).toHaveLength(3);
+    expect(removeIds).toHaveLength(0);
+  });
+
+  it("handles metric_category duplicates by referenceId", () => {
+    const items = [
+      { id: "1", label: "Health", href: "/metrics#health", itemType: "metric_category", referenceId: "cat-1", sortOrder: 0 },
+      { id: "2", label: "Health", href: "/metrics#health", itemType: "metric_category", referenceId: "cat-1", sortOrder: 5 },
+      { id: "3", label: "Activity", href: "/metrics#activity", itemType: "metric_category", referenceId: "cat-2", sortOrder: 1 },
+    ];
+
+    const { keep, removeIds } = deduplicateNavItems(items);
+    expect(keep).toHaveLength(2);
+    expect(keep[0].id).toBe("1");
+    expect(keep[1].id).toBe("3");
+    expect(removeIds).toEqual(["2"]);
+  });
+
+  it("returns empty arrays for empty input", () => {
+    const { keep, removeIds } = deduplicateNavItems([]);
+    expect(keep).toHaveLength(0);
+    expect(removeIds).toHaveLength(0);
+  });
+
+  it("handles large numbers of duplicates (race condition scenario)", () => {
+    // Simulate 10 concurrent auto-seeds creating 10 copies of each item
+    const items = [];
+    for (let copy = 0; copy < 10; copy++) {
+      items.push(
+        { id: `d-${copy}`, label: "Dashboard", href: "/dashboard", itemType: "builtin", referenceId: null, sortOrder: copy * 6 + 0 },
+        { id: `m-${copy}`, label: "Meditate", href: "/meditate", itemType: "builtin", referenceId: null, sortOrder: copy * 6 + 1 },
+        { id: `f-${copy}`, label: "Food", href: "/food", itemType: "builtin", referenceId: null, sortOrder: copy * 6 + 2 },
+      );
+    }
+
+    const { keep, removeIds } = deduplicateNavItems(items);
+    expect(keep).toHaveLength(3); // One of each
+    expect(removeIds).toHaveLength(27); // 30 - 3 = 27 removed
+    expect(keep.map(k => k.label)).toEqual(["Dashboard", "Meditate", "Food"]);
   });
 });
 
