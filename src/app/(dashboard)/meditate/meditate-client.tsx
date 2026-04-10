@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useTransition } from "react";
+import { useState, useEffect, useRef, useTransition, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -70,6 +70,8 @@ function parseTimeInput(value: string): number | null {
   if (!isNaN(mins) && mins > 0) return mins * 60;
   return null;
 }
+
+const MeditateChart = lazy(() => import("./meditate-chart").then((m) => ({ default: m.MeditateChart })));
 
 export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds = 600 }: MeditateClientProps) {
   const resolvedStyles = styles.length > 0
@@ -447,6 +449,11 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
           </div>
         </div>
       </section>
+
+      {/* Chart */}
+      <Suspense fallback={<div className="h-64 bg-card border border-border rounded-lg animate-pulse mb-8" />}>
+        <MeditateChart />
+      </Suspense>
 
       {/* Today's stats */}
       {todaySessions.length > 0 && (
