@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,8 @@ const TYPE_ICONS: Record<string, typeof Droplets> = {
   doctor: Stethoscope,
   sick: AlertCircle,
 };
+
+const MedicalChart = lazy(() => import("./medical-chart").then((m) => ({ default: m.MedicalChart })));
 
 export function MedicalClient({ logs }: MedicalClientProps) {
   const [isPending, startTransition] = useTransition();
@@ -80,6 +82,11 @@ export function MedicalClient({ logs }: MedicalClientProps) {
 
   return (
     <>
+      {/* Chart */}
+      <Suspense fallback={<div className="h-64 bg-card border border-border rounded-lg animate-pulse mb-8" />}>
+        <MedicalChart />
+      </Suspense>
+
       {/* Quick Log Buttons */}
       <section className="mb-8">
         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">Quick Log</h3>
