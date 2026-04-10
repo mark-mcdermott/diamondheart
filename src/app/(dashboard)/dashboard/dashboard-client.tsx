@@ -14,11 +14,18 @@ import {
   Settings,
   Check,
   CheckCheck,
+  Flame,
+  Beef,
+  Wheat,
+  Droplet,
+  Coffee,
+  UtensilsCrossed,
+  Salad,
+  Cookie,
   Brain,
   Droplets,
   Dumbbell,
   Heart,
-  Flame,
   BookOpen,
   Moon,
   Sun,
@@ -39,10 +46,17 @@ interface Entry {
   date: string;
 }
 
+interface MealSummary {
+  count: number;
+  calories: number;
+}
+
 interface DashboardClientProps {
   metrics: TrackerMetric[];
   todayEntries: Entry[];
   recentEntries: Entry[];
+  foodTotals: { calories: number; protein: number; carbs: number; fat: number };
+  mealSummaries: Record<string, MealSummary>;
 }
 
 // Icon mapping
@@ -162,7 +176,7 @@ function formatTimeAgo(dateStr: string): string {
   return `${diffDay}d ago`;
 }
 
-export function DashboardClient({ metrics, todayEntries, recentEntries }: DashboardClientProps) {
+export function DashboardClient({ metrics, todayEntries, recentEntries, foodTotals, mealSummaries }: DashboardClientProps) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [entryMetric, setEntryMetric] = useState<TrackerMetric | null>(null);
   const [entryValue, setEntryValue] = useState("");
@@ -303,8 +317,8 @@ export function DashboardClient({ metrics, todayEntries, recentEntries }: Dashbo
             const counterMetrics = metrics.filter((m) => m.counter);
             if (counterMetrics.length === 0) return null;
             return (
-              <section className="mb-12">
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-5">
+              <section className="mb-12 -mt-6">
+                <h3 className="sr-only">
                   Counters
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -350,6 +364,55 @@ export function DashboardClient({ metrics, todayEntries, recentEntries }: Dashbo
               </section>
             );
           })()}
+
+          {/* Food */}
+          <section className="mb-12">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-5">
+              Food
+            </h3>
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              {[
+                { label: "Calories", value: foodTotals.calories, unit: "kcal", icon: Flame },
+                { label: "Protein", value: foodTotals.protein, unit: "g", icon: Beef },
+                { label: "Carbs", value: foodTotals.carbs, unit: "g", icon: Wheat },
+                { label: "Fat", value: foodTotals.fat, unit: "g", icon: Droplet },
+              ].map((item) => (
+                <div key={item.label} className="bg-card rounded-lg p-3 text-center">
+                  <item.icon className="w-4 h-4 text-primary mx-auto mb-1" />
+                  <p className="text-lg font-semibold" style={{ color: "var(--app-heading-color)" }}>{item.value}</p>
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="bg-card rounded-lg divide-y divide-border">
+              {[
+                { key: "breakfast", label: "Breakfast", icon: Coffee },
+                { key: "lunch", label: "Lunch", icon: UtensilsCrossed },
+                { key: "dinner", label: "Dinner", icon: Salad },
+                { key: "snack", label: "Snack", icon: Cookie },
+              ].map((meal) => {
+                const summary = mealSummaries[meal.key] || { count: 0, calories: 0 };
+                return (
+                  <div key={meal.key} className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <meal.icon className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-semibold" style={{ color: "var(--app-heading-color)" }}>{meal.label}</span>
+                      {summary.count > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          {summary.count} {summary.count === 1 ? "item" : "items"} &middot; {summary.calories} cal
+                        </span>
+                      )}
+                    </div>
+                    <Button size="icon-xs" variant="secondary" asChild>
+                      <Link href="/food">
+                        <Plus className="w-3.5 h-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
 
           {/* Recent Activity */}
           {recentNonToday.length > 0 && (
