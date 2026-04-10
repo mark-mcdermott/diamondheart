@@ -12,6 +12,7 @@ import {
   entertainmentItems,
   workouts,
   meditationSessions,
+  financialAccounts,
 } from "@/db/schema";
 import { eq, and, gte, sql } from "drizzle-orm";
 import { MetricsClient } from "./metrics-client";
@@ -46,6 +47,7 @@ export default async function MetricsPage() {
     entertainmentCount,
     workoutCount,
     meditationStats,
+    financeAccountCount,
   ] = await Promise.all([
     db.select().from(trackerCategories).orderBy(trackerCategories.sortOrder),
     db.select().from(trackerMetrics).where(eq(trackerMetrics.archived, false)).orderBy(trackerMetrics.sortOrder),
@@ -100,6 +102,12 @@ export default async function MetricsPage() {
       })
       .from(meditationSessions)
       .where(and(eq(meditationSessions.userId, session.userId), gte(meditationSessions.date, daysAgo(7)))),
+
+    // Finances: number of accounts
+    db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(financialAccounts)
+      .where(and(eq(financialAccounts.userId, session.userId), eq(financialAccounts.archived, false))),
   ]);
 
   // Resolve category nav status (needed the categories list)
@@ -116,6 +124,7 @@ export default async function MetricsPage() {
     entertainment: `${entertainmentCount[0]?.count ?? 0} in progress`,
     workout: `${workoutCount[0]?.count ?? 0} sessions this week`,
     meditate: `${meditationStats[0]?.count ?? 0} sessions, ${meditationStats[0]?.totalMinutes ?? 0} min this week`,
+    finances: `${financeAccountCount[0]?.count ?? 0} accounts tracked`,
   };
 
   return (
