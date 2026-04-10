@@ -5,14 +5,14 @@ import { meditationSessions } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowLeft, Pencil } from "lucide-react";
-import { getMeditationStyles, getMeditationPresets } from "@/app/actions/meditation";
+import { getMeditationStyles, getMeditationPresets, getDefaultTimerSeconds } from "@/app/actions/meditation";
 import { MeditateClient } from "./meditate-client";
 
 export default async function MeditatePage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
 
-  const [sessions, styles, presets] = await Promise.all([
+  const [sessions, styles, presets, defaultTimerSeconds] = await Promise.all([
     db.select()
       .from(meditationSessions)
       .where(eq(meditationSessions.userId, session.userId))
@@ -20,6 +20,7 @@ export default async function MeditatePage() {
       .limit(200),
     getMeditationStyles(session.userId),
     getMeditationPresets(session.userId),
+    getDefaultTimerSeconds(session.userId),
   ]);
 
   return (
@@ -36,7 +37,7 @@ export default async function MeditatePage() {
           <Pencil className="w-4 h-4" />
         </Link>
       </div>
-      <MeditateClient sessions={sessions} styles={styles} presets={presets} />
+      <MeditateClient sessions={sessions} styles={styles} presets={presets} defaultTimerSeconds={defaultTimerSeconds} />
     </div>
   );
 }

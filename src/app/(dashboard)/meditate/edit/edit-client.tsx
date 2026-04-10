@@ -11,6 +11,7 @@ import {
   addMeditationPreset,
   updateMeditationPreset,
   deleteMeditationPreset,
+  setDefaultTimerSeconds,
 } from "@/app/actions/meditation";
 import type { MeditationStyle, MeditationPreset } from "@/db/schema";
 import { Plus, Pencil, Trash2, Save, X } from "lucide-react";
@@ -19,11 +20,15 @@ import { ICON_MAP, LucideIconByName } from "../icon-map";
 interface MeditateEditClientProps {
   styles: MeditationStyle[];
   presets: MeditationPreset[];
+  defaultTimerSeconds: number;
 }
 
-export function MeditateEditClient({ styles, presets }: MeditateEditClientProps) {
+export function MeditateEditClient({ styles, presets, defaultTimerSeconds }: MeditateEditClientProps) {
   const [isPending, startTransition] = useTransition();
   const [deleteError, setDeleteError] = useState("");
+
+  // Default timer
+  const [defaultMinutes, setDefaultMinutes] = useState(String(defaultTimerSeconds / 60));
 
   // Style form
   const [styleLabel, setStyleLabel] = useState("");
@@ -115,6 +120,16 @@ export function MeditateEditClient({ styles, presets }: MeditateEditClientProps)
     });
   }
 
+  function handleSaveDefaultTimer() {
+    const mins = parseInt(defaultMinutes);
+    if (!mins || mins <= 0) return;
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("seconds", String(mins * 60));
+      await setDefaultTimerSeconds(fd);
+    });
+  }
+
   const iconNames = Object.keys(ICON_MAP);
 
   return (
@@ -124,6 +139,30 @@ export function MeditateEditClient({ styles, presets }: MeditateEditClientProps)
           {deleteError}
         </div>
       )}
+
+      {/* Default Timer */}
+      <section>
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">Default Timer</h3>
+        <div className="bg-card rounded-lg px-4 py-4">
+          <div className="flex items-end gap-3">
+            <div>
+              <Label className="text-xs">Minutes</Label>
+              <Input
+                type="number"
+                value={defaultMinutes}
+                onChange={(e) => setDefaultMinutes(e.target.value)}
+                className="mt-1 w-[100px]"
+                min={1}
+              />
+            </div>
+            <Button onClick={handleSaveDefaultTimer} disabled={!defaultMinutes || isPending} className="mb-0.5">
+              <Save className="w-4 h-4 mr-1" />
+              Save
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">The timer will start with this duration on page load.</p>
+        </div>
+      </section>
 
       {/* Styles */}
       <section>
