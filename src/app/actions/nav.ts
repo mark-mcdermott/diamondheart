@@ -2,10 +2,10 @@
 
 import { db } from "@/db";
 import { userNavItems, trackerCategories } from "@/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { deduplicateNavItems } from "@/lib/nav-utils";
+import { hasDuplicates } from "@/lib/nav-utils";
 
 export type ActionResult = {
   success: boolean;
@@ -22,6 +22,21 @@ const DEFAULT_NAV_ITEMS = [
   { label: "Entertainment", href: "/entertainment",  itemType: "builtin", sortOrder: 5, visible: true,  locked: false },
 ];
 
+async function seedNavItems(userId: string) {
+  for (const item of DEFAULT_NAV_ITEMS) {
+    await db.insert(userNavItems).values({
+      id: crypto.randomUUID(),
+      userId,
+      label: item.label,
+      href: item.href,
+      itemType: item.itemType,
+      sortOrder: item.sortOrder,
+      visible: item.visible,
+      locked: item.locked,
+    });
+  }
+}
+
 export async function getNavItems(userId: string) {
   let items = await db
     .select()
@@ -29,34 +44,28 @@ export async function getNavItems(userId: string) {
     .where(eq(userNavItems.userId, userId))
     .orderBy(userNavItems.sortOrder);
 
-  // Auto-seed if no nav items exist yet
-  if (items.length === 0) {
-    for (const item of DEFAULT_NAV_ITEMS) {
-      await db.insert(userNavItems).values({
-        id: crypto.randomUUID(),
-        userId,
-        label: item.label,
-        href: item.href,
-        itemType: item.itemType,
-        sortOrder: item.sortOrder,
-        visible: item.visible,
-        locked: item.locked,
-      });
-    }
+  // If duplicates exist (from race condition), nuke and reseed
+  if (hasDuplicates(items)) {
+    await db
+      .delete(userNavItems)
+      .where(eq(userNavItems.userId, userId));
+    await seedNavItems(userId);
     items = await db
       .select()
       .from(userNavItems)
       .where(eq(userNavItems.userId, userId))
       .orderBy(userNavItems.sortOrder);
+    return items;
   }
 
-  // Clean up duplicates caused by concurrent auto-seed race conditions
-  const { keep, removeIds } = deduplicateNavItems(items);
-  if (removeIds.length > 0) {
-    await db
-      .delete(userNavItems)
-      .where(inArray(userNavItems.id, removeIds));
-    return keep;
+  // Auto-seed if no nav items exist yet
+  if (items.length === 0) {
+    await seedNavItems(userId);
+    items = await db
+      .select()
+      .from(userNavItems)
+      .where(eq(userNavItems.userId, userId))
+      .orderBy(userNavItems.sortOrder);
   }
 
   return items;
