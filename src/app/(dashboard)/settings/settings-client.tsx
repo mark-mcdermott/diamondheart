@@ -10,6 +10,7 @@ import {
 import { toggleNetflixUI, toggleSiteName } from "@/app/actions/preferences";
 import type { UserNavItem } from "@/db/schema";
 import { ArrowLeft, GripVertical, Lock } from "lucide-react";
+import { PushToggle } from "@/components/blocks/push-toggle";
 import {
   DndContext,
   closestCenter,
@@ -273,6 +274,19 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
               </p>
             </div>
           </label>
+        </div>
+      </section>
+
+      {/* Notifications Section */}
+      <section className="mb-10">
+        <h3
+          className="text-lg font-semibold mb-4"
+          style={{ color: "var(--app-heading-color)" }}
+        >
+          Notifications
+        </h3>
+        <div className="bg-card border border-border rounded-lg px-4">
+          <PushToggle />
         </div>
       </section>
 

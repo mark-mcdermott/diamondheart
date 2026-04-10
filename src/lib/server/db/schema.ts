@@ -531,6 +531,22 @@ export type UserPreferences = typeof userPreferences.$inferSelect;
 
 
 // ============================================
+// Push Subscriptions (Web Push notifications)
+// ============================================
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	endpoint: text('endpoint').notNull(),
+	p256dh: text('p256dh').notNull(),
+	auth: text('auth').notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+
+
+// ============================================
 // Financial Tracking
 // ============================================
 
