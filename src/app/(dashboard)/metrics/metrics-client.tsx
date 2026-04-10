@@ -16,8 +16,10 @@ import {
   renameCategory,
   deleteCategory,
 } from "@/app/actions/categories";
-import { toggleCategoryInNav } from "@/app/actions/nav";
+import { toggleCategoryInNav, toggleTrackingSectionInNav } from "@/app/actions/nav";
 import type { TrackerCategory, TrackerMetric } from "@/db/schema";
+import { TRACKING_SECTIONS } from "@/lib/nav-utils";
+import { TrackingSectionCard } from "./tracking-section-card";
 import {
   ArrowLeft,
   Plus,
@@ -28,6 +30,13 @@ import {
   GripVertical,
   Check,
   X,
+  Brain,
+  UtensilsCrossed,
+  Package,
+  Stethoscope,
+  Calendar,
+  Tv,
+  Dumbbell,
 } from "lucide-react";
 import {
   DndContext,
@@ -47,10 +56,22 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+const SECTION_ICONS: Record<string, typeof Brain> = {
+  meditate: Brain,
+  food: UtensilsCrossed,
+  tracking: Package,
+  medical: Stethoscope,
+  appointments: Calendar,
+  entertainment: Tv,
+  workout: Dumbbell,
+};
+
 interface MetricsClientProps {
   categories: TrackerCategory[];
   metrics: TrackerMetric[];
   categoryNavStatus: Record<string, boolean>;
+  sectionStatus: Record<string, boolean>;
+  sectionSummaries: Record<string, string>;
 }
 
 const VALUE_TYPES = [
@@ -239,6 +260,8 @@ export function MetricsClient({
   categories: serverCategories,
   metrics: serverMetrics,
   categoryNavStatus: serverNavStatus,
+  sectionStatus: serverSectionStatus,
+  sectionSummaries,
 }: MetricsClientProps) {
   const [isPending, startTransition] = useTransition();
   const [showAddForm, setShowAddForm] = useState(false);
@@ -250,6 +273,7 @@ export function MetricsClient({
   const [newCategoryName, setNewCategoryName] = useState("");
   const [metrics, setMetrics] = useState(serverMetrics);
   const [navStatus, setNavStatus] = useState(serverNavStatus);
+  const [sectionStatus, setSectionStatus] = useState(serverSectionStatus);
 
   // Sync from server when props change
   if (serverMetrics !== metrics && serverMetrics.length !== metrics.length) {
@@ -370,6 +394,17 @@ export function MetricsClient({
       const fd = new FormData();
       fd.set("categoryId", categoryId);
       await toggleCategoryInNav(fd);
+    });
+  }
+
+  function handleToggleSection(sectionKey: string) {
+    setSectionStatus((prev) => ({ ...prev, [sectionKey]: !prev[sectionKey] }));
+    const section = TRACKING_SECTIONS.find((s) => s.key === sectionKey);
+    if (!section) return;
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("sectionHref", section.href);
+      await toggleTrackingSectionInNav(fd);
     });
   }
 
@@ -495,6 +530,31 @@ export function MetricsClient({
           </div>
         </div>
       )}
+
+      {/* Tracking Systems */}
+      <section className="mb-10">
+        <h3
+          className="text-lg font-semibold mb-4"
+          style={{ color: "var(--app-heading-color)" }}
+        >
+          Tracking Systems
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {TRACKING_SECTIONS.map((section) => (
+            <TrackingSectionCard
+              key={section.key}
+              title={section.label}
+              description={section.description}
+              href={section.href}
+              icon={SECTION_ICONS[section.key] || Package}
+              enabled={sectionStatus[section.key] ?? true}
+              summaryLine={sectionSummaries[section.key] ?? ""}
+              onToggle={() => handleToggleSection(section.key)}
+              isPending={isPending}
+            />
+          ))}
+        </div>
+      </section>
 
       {/* Metrics grouped by category */}
       {metrics.length === 0 ? (
