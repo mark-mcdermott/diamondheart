@@ -24,6 +24,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+function titleCase(s: string): string {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 interface Entry {
   id: string;
   metricId: string;
@@ -212,74 +216,31 @@ export function DashboardClient({ metrics, todayEntries, recentEntries }: Dashbo
         </div>
       ) : (
         <>
-          {/* Today's Progress */}
+          {/* Goals */}
           <section className="mb-12">
             <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-5">
-              Today&apos;s Progress
+              Goals
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {metrics.map((metric, index) => {
-                const MetricIcon = getMetricIcon(metric, index);
-                const progress = getProgress(metric, todayEntries);
-                const color = getMetricColorHex(metric, index);
-                const completed = isGoalMet(metric, todayEntries);
-
-                return (
-                  <Link
-                    key={metric.id}
-                    href={`/metrics/${metric.id}`}
-                    className="group bg-card rounded-lg p-5 flex flex-col items-center gap-3 hover:opacity-90 transition-opacity no-underline"
-                  >
-                    <ProgressRing
-                      value={progress}
-                      size={64}
-                      strokeWidth={5}
-                      color={completed ? "#22c55e" : color}
-                      trackColor="var(--color-muted)"
-                    >
-                      {completed ? (
-                        <Check className="w-5 h-5 text-green-500" />
-                      ) : (
-                        <MetricIcon className="w-5 h-5 text-muted-foreground" />
-                      )}
-                    </ProgressRing>
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground">{metric.name}</p>
-                      <p className="text-sm font-medium mt-0.5">
-                        {formatTodayDisplay(metric, todayEntries)}
-                        {metric.unit && (
-                          <span className="text-muted-foreground font-normal ml-1">
-                            {metric.unit}
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Quick Log */}
-          <section className="mb-12">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-5">
-              Quick Log
-            </h3>
-            <div className="space-y-2">
+            <div className="grid gap-2" style={{ gridTemplateColumns: "auto auto 1fr auto auto" }}>
               {metrics.map((metric, index) => {
                 const MetricIcon = getMetricIcon(metric, index);
                 const completed = isGoalMet(metric, todayEntries);
+                const { sum, count } = getTodayValue(metric.id, todayEntries);
+                const goal = metric.dailyGoal ?? 1;
+                const isCountType = metric.valueType === "none" || metric.valueType === "bool";
+                const currentValue = isCountType ? count : (Number.isInteger(sum) ? sum : sum.toFixed(1));
+                const unit = metric.unit || (isCountType ? "done" : "");
 
                 return (
-                  <div
-                    key={metric.id}
-                    className="flex items-center justify-between py-3 px-4 rounded-lg bg-card"
-                  >
+                  <div key={metric.id} className="col-span-5 grid items-center py-3 px-4 rounded-lg bg-card" style={{ gridTemplateColumns: "subgrid" }}>
                     <div className="flex items-center gap-3">
                       <MetricIcon className="w-5 h-5 text-muted-foreground" />
-                      <span className="text-sm font-medium">{metric.name}</span>
+                      <span className="text-base font-semibold" style={{ color: "var(--app-heading-color)" }}>{titleCase(metric.name)}</span>
                       {completed && <Check className="w-4 h-4 text-green-500" />}
                     </div>
+                    <span className="text-sm text-muted-foreground">(goal: {goal} {unit})</span>
+                    <span />
+                    <span className="text-sm text-muted-foreground text-left">{currentValue} {unit}</span>
                     <Button
                       size="sm"
                       variant={completed ? "outline" : "default"}
@@ -316,8 +277,8 @@ export function DashboardClient({ metrics, todayEntries, recentEntries }: Dashbo
                     >
                       <div className="flex items-center gap-3">
                         <EntryIcon className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {metric?.name ?? "Unknown"}
+                        <span className="text-base font-semibold" style={{ color: "var(--app-heading-color)" }}>
+                          {titleCase(metric?.name ?? "Unknown")}
                         </span>
                         {entry.value && entry.value !== "done" && (
                           <span className="text-sm text-muted-foreground">
