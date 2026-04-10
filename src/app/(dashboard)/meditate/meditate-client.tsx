@@ -25,8 +25,8 @@ const DEFAULT_PRESETS = [
 ];
 
 const DEFAULT_STYLES = [
-  { key: "guided", label: "Guided", iconName: "Brain" },
-  { key: "breathing", label: "Breathing", iconName: "Wind" },
+  { key: "guided", label: "Guided", iconName: "brain" },
+  { key: "breathing", label: "Breathing", iconName: "wind" },
 ];
 
 function formatDuration(seconds: number): string {

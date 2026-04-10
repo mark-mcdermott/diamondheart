@@ -23,10 +23,11 @@ interface MeditateEditClientProps {
 
 export function MeditateEditClient({ styles, presets }: MeditateEditClientProps) {
   const [isPending, startTransition] = useTransition();
+  const [deleteError, setDeleteError] = useState("");
 
   // Style form
   const [styleLabel, setStyleLabel] = useState("");
-  const [styleIcon, setStyleIcon] = useState("Brain");
+  const [styleIcon, setStyleIcon] = useState("brain");
   const [editingStyle, setEditingStyle] = useState<string | null>(null);
   const [editStyleLabel, setEditStyleLabel] = useState("");
   const [editStyleIcon, setEditStyleIcon] = useState("");
@@ -46,7 +47,7 @@ export function MeditateEditClient({ styles, presets }: MeditateEditClientProps)
       fd.set("iconName", styleIcon);
       await addMeditationStyle(fd);
       setStyleLabel("");
-      setStyleIcon("Brain");
+      setStyleIcon("brain");
     });
   }
 
@@ -63,6 +64,11 @@ export function MeditateEditClient({ styles, presets }: MeditateEditClientProps)
   }
 
   function handleDeleteStyle(styleId: string) {
+    if (styles.length <= 1) {
+      setDeleteError("There must always be at least one style and timer preset. To delete this one, please add another first.");
+      return;
+    }
+    setDeleteError("");
     startTransition(async () => {
       const fd = new FormData();
       fd.set("styleId", styleId);
@@ -97,6 +103,11 @@ export function MeditateEditClient({ styles, presets }: MeditateEditClientProps)
   }
 
   function handleDeletePreset(presetId: string) {
+    if (presets.length <= 1) {
+      setDeleteError("There must always be at least one style and timer preset. To delete this one, please add another first.");
+      return;
+    }
+    setDeleteError("");
     startTransition(async () => {
       const fd = new FormData();
       fd.set("presetId", presetId);
@@ -108,6 +119,12 @@ export function MeditateEditClient({ styles, presets }: MeditateEditClientProps)
 
   return (
     <div className="space-y-12">
+      {deleteError && (
+        <div className="bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-lg">
+          {deleteError}
+        </div>
+      )}
+
       {/* Styles */}
       <section>
         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">Styles</h3>
