@@ -6,6 +6,7 @@ import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { EntriesTable } from "./entries-table";
+import { MetricChart } from "./metric-chart";
 import { ArrowLeft } from "lucide-react";
 
 export default async function MetricDetailPage({
@@ -51,6 +52,18 @@ export default async function MetricDetailPage({
           </p>
         </div>
       </div>
+
+      {entries.length > 0 && (
+        <MetricChart
+          entries={entries.map((e) => ({
+            value: e.value,
+            date: e.date.toISOString(),
+          }))}
+          valueType={metric.valueType}
+          unit={metric.unit}
+          dailyGoal={metric.dailyGoal}
+        />
+      )}
 
       <EntriesTable
         metricId={metric.id}
