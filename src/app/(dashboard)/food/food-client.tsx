@@ -1,17 +1,48 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { addFood, removeFood } from "@/app/actions/food";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  addFood,
+  removeFood,
+  favoriteFood,
+  unfavoriteFood,
+  saveFavoriteMeal,
+  deleteFavoriteMeal,
+  logFavoriteMeal,
+  createCustomFood,
+} from "@/app/actions/food";
 import {
   ArrowLeft,
   Plus,
   Trash2,
   Search,
   Apple,
+  Flame,
+  Beef,
+  Wheat,
+  Droplet,
+  Star,
+  StarOff,
+  BookOpen,
+  Save,
+  PenLine,
 } from "lucide-react";
+
+interface StagedFood {
+  name: string;
+  fdcId?: string;
+  servingSize: number;
+  servingUnit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
 
 interface FoodItem {
   id: string;
@@ -34,9 +65,28 @@ interface SearchResult {
   servingUnit: string;
 }
 
+interface FavFood {
+  id: string;
+  name: string;
+  fdcId: string | null;
+  servingSize: number;
+  servingUnit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+interface FavMeal {
+  id: string;
+  name: string;
+}
+
 interface FoodClientProps {
   meals: Record<string, FoodItem[]>;
   totals: { calories: number; protein: number; carbs: number; fat: number };
+  favoriteFoods: FavFood[];
+  favoriteMeals: FavMeal[];
 }
 
 const MEAL_TYPES = [
@@ -46,12 +96,40 @@ const MEAL_TYPES = [
   { key: "snack", label: "Snack" },
 ];
 
-export function FoodClient({ meals, totals }: FoodClientProps) {
+export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals }: FoodClientProps) {
   const [isPending, startTransition] = useTransition();
   const [activeMeal, setActiveMeal] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [savingMeal, setSavingMeal] = useState<string | null>(null);
+  const [mealName, setMealName] = useState("");
+  const [stagedFood, setStagedFood] = useState<StagedFood | null>(null);
+  const [stagedQty, setStagedQty] = useState("1");
+  const [showCustom, setShowCustom] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const [customCal, setCustomCal] = useState("");
+  const [customProtein, setCustomProtein] = useState("");
+  const [customCarbs, setCustomCarbs] = useState("");
+  const [customFat, setCustomFat] = useState("");
+  const [customServing, setCustomServing] = useState("1");
+  const [customUnit, setCustomUnit] = useState("serving");
+  const searchRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Close search when clicking outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setActiveMeal(null);
+        setSearchQuery("");
+        setSearchResults([]);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   const doSearch = useCallback(async (q: string) => {
     if (q.length < 2) {
@@ -73,28 +151,95 @@ export function FoodClient({ meals, totals }: FoodClientProps) {
 
   function handleSearchChange(q: string) {
     setSearchQuery(q);
-    // Debounce
-    const timeout = setTimeout(() => doSearch(q), 300);
-    return () => clearTimeout(timeout);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => doSearch(q), 300);
   }
 
-  function handleAddFood(food: SearchResult) {
-    if (!activeMeal) return;
+  function stageSearchResult(food: SearchResult) {
+    setStagedFood({
+      name: food.description,
+      fdcId: food.fdcId,
+      servingSize: food.servingSize,
+      servingUnit: food.servingUnit,
+      calories: food.calories,
+      protein: food.protein,
+      carbs: food.carbs,
+      fat: food.fat,
+    });
+    setStagedQty("1");
+  }
+
+  function stageFavoriteFood(fav: FavFood) {
+    setStagedFood({
+      name: fav.name,
+      fdcId: fav.fdcId || undefined,
+      servingSize: fav.servingSize,
+      servingUnit: fav.servingUnit,
+      calories: fav.calories,
+      protein: fav.protein,
+      carbs: fav.carbs,
+      fat: fav.fat,
+    });
+    setStagedQty("1");
+  }
+
+  function confirmStagedFood() {
+    if (!activeMeal || !stagedFood) return;
     startTransition(async () => {
       const fd = new FormData();
       fd.set("mealType", activeMeal);
-      fd.set("name", food.description);
-      fd.set("fdcId", food.fdcId);
-      fd.set("servingSize", String(food.servingSize));
-      fd.set("servingUnit", food.servingUnit);
-      fd.set("calories", String(food.calories));
-      fd.set("protein", String(food.protein));
-      fd.set("carbs", String(food.carbs));
-      fd.set("fat", String(food.fat));
-      fd.set("quantity", "1");
+      fd.set("name", stagedFood.name);
+      fd.set("fdcId", stagedFood.fdcId || "");
+      fd.set("servingSize", String(stagedFood.servingSize));
+      fd.set("servingUnit", stagedFood.servingUnit);
+      fd.set("calories", String(stagedFood.calories));
+      fd.set("protein", String(stagedFood.protein));
+      fd.set("carbs", String(stagedFood.carbs));
+      fd.set("fat", String(stagedFood.fat));
+      fd.set("quantity", stagedQty);
       await addFood(fd);
+      setStagedFood(null);
       setSearchQuery("");
       setSearchResults([]);
+      setActiveMeal(null);
+    });
+  }
+
+  function handleCreateCustom() {
+    if (!activeMeal || !customName) return;
+    startTransition(async () => {
+      // Save as custom food
+      const cfd = new FormData();
+      cfd.set("name", customName);
+      cfd.set("calories", customCal || "0");
+      cfd.set("protein", customProtein || "0");
+      cfd.set("carbs", customCarbs || "0");
+      cfd.set("fat", customFat || "0");
+      cfd.set("servingSize", customServing || "1");
+      cfd.set("servingUnit", customUnit || "serving");
+      await createCustomFood(cfd);
+
+      // Also add it to today's meal
+      const fd = new FormData();
+      fd.set("mealType", activeMeal);
+      fd.set("name", customName);
+      fd.set("servingSize", customServing || "1");
+      fd.set("servingUnit", customUnit || "serving");
+      fd.set("calories", customCal || "0");
+      fd.set("protein", customProtein || "0");
+      fd.set("carbs", customCarbs || "0");
+      fd.set("fat", customFat || "0");
+      fd.set("quantity", "1");
+      await addFood(fd);
+
+      setShowCustom(false);
+      setCustomName("");
+      setCustomCal("");
+      setCustomProtein("");
+      setCustomCarbs("");
+      setCustomFat("");
+      setCustomServing("1");
+      setCustomUnit("serving");
       setActiveMeal(null);
     });
   }
@@ -104,6 +249,58 @@ export function FoodClient({ meals, totals }: FoodClientProps) {
       const fd = new FormData();
       fd.set("itemId", itemId);
       await removeFood(fd);
+    });
+  }
+
+  function handleStarFood(food: SearchResult) {
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("name", food.description);
+      fd.set("fdcId", food.fdcId);
+      fd.set("servingSize", String(food.servingSize));
+      fd.set("servingUnit", food.servingUnit);
+      fd.set("calories", String(food.calories));
+      fd.set("protein", String(food.protein));
+      fd.set("carbs", String(food.carbs));
+      fd.set("fat", String(food.fat));
+      await favoriteFood(fd);
+    });
+  }
+
+  function handleUnstarFood(favId: string) {
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("favoriteId", favId);
+      await unfavoriteFood(fd);
+    });
+  }
+
+  function handleSaveMeal(mealType: string) {
+    if (!mealName.trim()) return;
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("mealName", mealName);
+      fd.set("mealType", mealType);
+      await saveFavoriteMeal(fd);
+      setSavingMeal(null);
+      setMealName("");
+    });
+  }
+
+  function handleLogFavMeal(mealId: string, mealType: string) {
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("mealId", mealId);
+      fd.set("mealType", mealType);
+      await logFavoriteMeal(fd);
+    });
+  }
+
+  function handleDeleteFavMeal(mealId: string) {
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("mealId", mealId);
+      await deleteFavoriteMeal(fd);
     });
   }
 
@@ -122,15 +319,13 @@ export function FoodClient({ meals, totals }: FoodClientProps) {
       {/* Daily Totals */}
       <div className="grid grid-cols-4 gap-3 mb-8">
         {[
-          { label: "Calories", value: totals.calories, unit: "kcal" },
-          { label: "Protein", value: totals.protein, unit: "g" },
-          { label: "Carbs", value: totals.carbs, unit: "g" },
-          { label: "Fat", value: totals.fat, unit: "g" },
+          { label: "Calories", value: totals.calories, unit: "kcal", icon: Flame },
+          { label: "Protein", value: totals.protein, unit: "g", icon: Beef },
+          { label: "Carbs", value: totals.carbs, unit: "g", icon: Wheat },
+          { label: "Fat", value: totals.fat, unit: "g", icon: Droplet },
         ].map((item) => (
-          <div
-            key={item.label}
-            className="border border-border rounded-lg p-4 text-center"
-          >
+          <div key={item.label} className="bg-card rounded-lg p-4 text-center">
+            <item.icon className="w-5 h-5 text-primary mx-auto mb-2" />
             <p className="text-2xl font-semibold">{item.value}</p>
             <p className="text-xs text-muted-foreground">
               {item.label} ({item.unit})
@@ -139,6 +334,49 @@ export function FoodClient({ meals, totals }: FoodClientProps) {
         ))}
       </div>
 
+      {/* Saved Meals */}
+      {favoriteMeals.length > 0 && (
+        <section className="mb-8">
+          <button
+            onClick={() => setShowFavorites(!showFavorites)}
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3 cursor-pointer hover:text-foreground"
+          >
+            <BookOpen className="w-4 h-4" />
+            Saved Meals ({favoriteMeals.length})
+          </button>
+          {showFavorites && (
+            <div className="bg-card rounded-lg divide-y divide-border">
+              {favoriteMeals.map((meal) => (
+                <div key={meal.id} className="flex items-center justify-between px-4 py-3">
+                  <span className="text-sm font-medium" style={{ color: "var(--app-heading-color)" }}>{meal.name}</span>
+                  <div className="flex items-center gap-2">
+                    {MEAL_TYPES.map((mt) => (
+                      <Button
+                        key={mt.key}
+                        size="xs"
+                        variant="secondary"
+                        disabled={isPending}
+                        onClick={() => handleLogFavMeal(meal.id, mt.key)}
+                      >
+                        + {mt.label}
+                      </Button>
+                    ))}
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={() => handleDeleteFavMeal(meal.id)}
+                      disabled={isPending}
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Meals */}
       {MEAL_TYPES.map(({ key, label }) => (
         <section key={key} className="mb-6">
@@ -146,56 +384,160 @@ export function FoodClient({ meals, totals }: FoodClientProps) {
             <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               {label}
             </h3>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setActiveMeal(activeMeal === key ? null : key)}
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Add
-            </Button>
+            <div className="flex items-center gap-2">
+              {meals[key] && meals[key].length > 0 && (
+                <>
+                  {savingMeal === key ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={mealName}
+                        onChange={(e) => setMealName(e.target.value)}
+                        placeholder="Meal name..."
+                        className="w-36 h-8 text-xs"
+                        autoFocus
+                      />
+                      <Button size="xs" onClick={() => handleSaveMeal(key)} disabled={!mealName.trim() || isPending}>
+                        <Save className="w-3 h-3 mr-1" />
+                        Save
+                      </Button>
+                      <Button size="xs" variant="secondary" onClick={() => { setSavingMeal(null); setMealName(""); }}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      onClick={() => { setSavingMeal(key); setMealName(""); }}
+                    >
+                      <Star className="w-3.5 h-3.5 mr-1" />
+                      Save Meal
+                    </Button>
+                  )}
+                </>
+              )}
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setActiveMeal(activeMeal === key ? null : key)}
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                Add
+              </Button>
+            </div>
           </div>
 
           {/* Search panel */}
           {activeMeal === key && (
-            <div className="border border-border rounded-lg p-4 mb-3 space-y-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  placeholder="Search USDA foods..."
-                  className="pl-9"
-                  autoFocus
-                />
-              </div>
-              {searching && (
-                <p className="text-xs text-muted-foreground">Searching...</p>
-              )}
-              {searchResults.length > 0 && (
-                <div className="max-h-60 overflow-y-auto space-y-1">
-                  {searchResults.map((food) => (
-                    <button
-                      key={food.fdcId}
-                      onClick={() => handleAddFood(food)}
-                      disabled={isPending}
-                      className="w-full text-left px-3 py-2 rounded hover:bg-muted/50 transition-colors"
-                    >
-                      <p className="text-sm font-medium truncate">{food.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {food.calories} cal &middot; {food.protein}p &middot; {food.carbs}c &middot; {food.fat}f
-                        &middot; per {food.servingSize}{food.servingUnit}
-                      </p>
-                    </button>
-                  ))}
+            <div ref={searchRef} className="bg-card rounded-lg p-4 mb-3 space-y-3">
+              {/* Staged food — quantity picker */}
+              {stagedFood ? (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium" style={{ color: "var(--app-heading-color)" }}>{stagedFood.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {stagedFood.calories} cal &middot; {stagedFood.protein}p &middot; {stagedFood.carbs}c &middot; {stagedFood.fat}f
+                    &middot; per {stagedFood.servingSize} {stagedFood.servingUnit}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      value={stagedQty}
+                      onChange={(e) => setStagedQty(e.target.value)}
+                      className="w-20"
+                      autoFocus
+                    />
+                    <span className="text-sm text-muted-foreground">{stagedFood.servingUnit}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={confirmStagedFood} disabled={isPending}>Add</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setStagedFood(null)}>Back</Button>
+                  </div>
                 </div>
+              ) : (
+                <>
+                  {/* Favorite foods quick-add */}
+                  {favoriteFoods.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Favorites</p>
+                      <div className="flex flex-wrap gap-2">
+                        {favoriteFoods.map((fav) => (
+                          <button
+                            key={fav.id}
+                            onClick={() => stageFavoriteFood(fav)}
+                            disabled={isPending}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs cursor-pointer hover:opacity-80 transition-opacity"
+                          >
+                            <Star className="w-3 h-3 text-accent" />
+                            {fav.name}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleUnstarFood(fav.id); }}
+                              className="ml-1 text-muted-foreground hover:text-destructive cursor-pointer"
+                            >
+                              <StarOff className="w-3 h-3" />
+                            </button>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        value={searchQuery}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        placeholder="Search USDA foods..."
+                        className="pl-9"
+                        autoFocus
+                      />
+                    </div>
+                    <Button size="sm" variant="secondary" onClick={() => setShowCustom(true)}>
+                      <PenLine className="w-3.5 h-3.5 mr-1" />
+                      Custom
+                    </Button>
+                  </div>
+                  {searching && (
+                    <p className="text-xs text-muted-foreground">Searching...</p>
+                  )}
+                  {searchResults.length > 0 && (
+                    <div className="max-h-60 overflow-y-auto space-y-1">
+                      {searchResults.map((food) => (
+                        <div key={food.fdcId} className="flex items-center justify-between px-3 py-2 rounded hover:bg-muted/50 transition-colors">
+                          <button
+                            onClick={() => stageSearchResult(food)}
+                            disabled={isPending}
+                            className="flex-1 text-left cursor-pointer"
+                          >
+                            <p className="text-sm font-medium truncate">{food.description}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {food.calories} cal &middot; {food.protein}p &middot; {food.carbs}c &middot; {food.fat}f
+                              &middot; per {food.servingSize}{food.servingUnit}
+                            </p>
+                          </button>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => handleStarFood(food)}
+                            disabled={isPending}
+                            title="Add to favorites"
+                          >
+                            <Star className="w-3.5 h-3.5 text-accent" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
 
           {/* Meal items */}
           {meals[key] && meals[key].length > 0 ? (
-            <div className="border border-border rounded-lg divide-y divide-border">
+            <div className="bg-card rounded-lg divide-y divide-border">
               {meals[key].map((item) => (
                 <div key={item.id} className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-3 min-w-0">
@@ -229,6 +571,56 @@ export function FoodClient({ meals, totals }: FoodClientProps) {
           )}
         </section>
       ))}
+      {/* Custom Food Modal */}
+      <Dialog open={showCustom} onOpenChange={setShowCustom}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Custom Food</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div>
+              <Label htmlFor="custom-name">Name</Label>
+              <Input id="custom-name" value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="e.g. Honeycomb Cereal" className="mt-1" autoFocus />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="custom-serving">Serving Size</Label>
+                <Input id="custom-serving" type="number" step="0.5" value={customServing} onChange={(e) => setCustomServing(e.target.value)} className="mt-1" />
+              </div>
+              <div>
+                <Label htmlFor="custom-unit">Unit</Label>
+                <Input id="custom-unit" value={customUnit} onChange={(e) => setCustomUnit(e.target.value)} placeholder="cup, slice, oz..." className="mt-1" />
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              <div>
+                <Label htmlFor="custom-cal">Calories</Label>
+                <Input id="custom-cal" type="number" value={customCal} onChange={(e) => setCustomCal(e.target.value)} placeholder="0" className="mt-1" />
+              </div>
+              <div>
+                <Label htmlFor="custom-protein">Protein</Label>
+                <Input id="custom-protein" type="number" value={customProtein} onChange={(e) => setCustomProtein(e.target.value)} placeholder="0" className="mt-1" />
+              </div>
+              <div>
+                <Label htmlFor="custom-carbs">Carbs</Label>
+                <Input id="custom-carbs" type="number" value={customCarbs} onChange={(e) => setCustomCarbs(e.target.value)} placeholder="0" className="mt-1" />
+              </div>
+              <div>
+                <Label htmlFor="custom-fat">Fat</Label>
+                <Input id="custom-fat" type="number" value={customFat} onChange={(e) => setCustomFat(e.target.value)} placeholder="0" className="mt-1" />
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2 justify-end">
+              <Button onClick={handleCreateCustom} disabled={!customName || isPending}>
+                Add Food
+              </Button>
+              <Button variant="secondary" onClick={() => setShowCustom(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
