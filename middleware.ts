@@ -43,6 +43,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // PWA/standalone mode: skip homepage, go straight to dashboard or login
+  const isPWA =
+    request.headers.get("sec-fetch-dest") === "document" &&
+    (request.headers.get("x-pwa-mode") === "standalone" ||
+      request.nextUrl.searchParams.has("pwa"));
+  const displayMode = request.cookies.get("pwa-mode")?.value;
+
+  if (pathname === "/" && (isPWA || displayMode === "standalone")) {
+    // Will redirect to /dashboard or /login based on auth below
+  }
+
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   let session: { sub?: string } | null = null;
 
@@ -72,8 +83,12 @@ export async function middleware(request: NextRequest) {
         path: "/",
       });
 
-      // Redirect authenticated users away from auth pages
+      // Redirect authenticated users away from auth pages or homepage in PWA mode
       if (isAuthRoute(pathname)) {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+
+      if (pathname === "/" && (isPWA || displayMode === "standalone")) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
 
@@ -81,6 +96,11 @@ export async function middleware(request: NextRequest) {
     } catch {
       // Token refresh failed, treat as unauthenticated
     }
+  }
+
+  // PWA mode + unauthenticated + homepage → go to login
+  if (pathname === "/" && (isPWA || displayMode === "standalone")) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // Unauthenticated — allow public routes, block everything else
