@@ -1,9 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { DEFAULT_NAV_ITEMS, buildDefaultNavItems, hasDuplicates } from "@/lib/nav-utils";
+import {
+  DEFAULT_NAV_ITEMS,
+  buildDefaultNavItems,
+  hasDuplicates,
+  needsMigration,
+  TRACKING_SECTIONS,
+} from "@/lib/nav-utils";
 
 describe("nav item defaults", () => {
-  it("has 7 default nav items", () => {
-    expect(DEFAULT_NAV_ITEMS).toHaveLength(7);
+  it("has 9 default nav items", () => {
+    expect(DEFAULT_NAV_ITEMS).toHaveLength(9);
   });
 
   it("Dashboard is first, locked, and visible", () => {
@@ -14,12 +20,11 @@ describe("nav item defaults", () => {
     expect(dashboard.visible).toBe(true);
   });
 
-  it("Meditate is second, visible, and unlocked", () => {
-    const meditate = DEFAULT_NAV_ITEMS[1];
-    expect(meditate.label).toBe("Meditate");
-    expect(meditate.sortOrder).toBe(1);
-    expect(meditate.locked).toBe(false);
-    expect(meditate.visible).toBe(true);
+  it("Metrics is second builtin item", () => {
+    const metrics = DEFAULT_NAV_ITEMS[1];
+    expect(metrics.label).toBe("Metrics");
+    expect(metrics.href).toBe("/metrics");
+    expect(metrics.itemType).toBe("builtin");
   });
 
   it("only Dashboard is locked", () => {
@@ -28,12 +33,16 @@ describe("nav item defaults", () => {
     expect(locked[0].label).toBe("Dashboard");
   });
 
-  it("all items are visible by default", () => {
-    expect(DEFAULT_NAV_ITEMS.every((i) => i.visible)).toBe(true);
+  it("has 2 builtin items and 7 tracking_section items", () => {
+    const builtins = DEFAULT_NAV_ITEMS.filter((i) => i.itemType === "builtin");
+    const sections = DEFAULT_NAV_ITEMS.filter((i) => i.itemType === "tracking_section");
+    expect(builtins).toHaveLength(2);
+    expect(sections).toHaveLength(7);
   });
 
-  it("all items are builtin type", () => {
-    expect(DEFAULT_NAV_ITEMS.every((i) => i.itemType === "builtin")).toBe(true);
+  it("Workout starts hidden", () => {
+    const workout = DEFAULT_NAV_ITEMS.find((i) => i.label === "Workout");
+    expect(workout?.visible).toBe(false);
   });
 
   it("sort orders are sequential starting at 0", () => {
@@ -43,12 +52,35 @@ describe("nav item defaults", () => {
   });
 });
 
+describe("TRACKING_SECTIONS", () => {
+  it("has 7 tracking sections", () => {
+    expect(TRACKING_SECTIONS).toHaveLength(7);
+  });
+
+  it("each section has key, label, href, and description", () => {
+    for (const section of TRACKING_SECTIONS) {
+      expect(section.key).toBeTruthy();
+      expect(section.label).toBeTruthy();
+      expect(section.href).toMatch(/^\//);
+      expect(section.description).toBeTruthy();
+    }
+  });
+
+  it("section keys match tracking_section nav item hrefs", () => {
+    const sectionHrefs = TRACKING_SECTIONS.map((s) => s.href);
+    const navSectionHrefs = DEFAULT_NAV_ITEMS
+      .filter((i) => i.itemType === "tracking_section")
+      .map((i) => i.href);
+    expect(sectionHrefs.sort()).toEqual(navSectionHrefs.sort());
+  });
+});
+
 describe("buildDefaultNavItems", () => {
-  it("returns 7 items with deterministic IDs", () => {
+  it("returns 9 items with deterministic IDs", () => {
     const items = buildDefaultNavItems("user-123");
-    expect(items).toHaveLength(7);
+    expect(items).toHaveLength(9);
     expect(items[0].id).toBe("default-user-123-dashboard");
-    expect(items[1].id).toBe("default-user-123-meditate");
+    expect(items[1].id).toBe("default-user-123-metrics");
   });
 
   it("returns same IDs for same userId across calls", () => {
@@ -78,11 +110,10 @@ describe("buildDefaultNavItems", () => {
 });
 
 describe("hasDuplicates", () => {
-  it("returns true when builtin items are duplicated", () => {
+  it("returns true when items are duplicated", () => {
     const items = [
       { href: "/dashboard", itemType: "builtin", referenceId: null },
       { href: "/dashboard", itemType: "builtin", referenceId: null },
-      { href: "/meditate", itemType: "builtin", referenceId: null },
     ];
     expect(hasDuplicates(items)).toBe(true);
   });
@@ -90,33 +121,41 @@ describe("hasDuplicates", () => {
   it("returns false when no duplicates exist", () => {
     const items = [
       { href: "/dashboard", itemType: "builtin", referenceId: null },
-      { href: "/meditate", itemType: "builtin", referenceId: null },
-      { href: "/food", itemType: "builtin", referenceId: null },
+      { href: "/metrics", itemType: "builtin", referenceId: null },
+      { href: "/food", itemType: "tracking_section", referenceId: null },
     ];
     expect(hasDuplicates(items)).toBe(false);
-  });
-
-  it("returns true for metric_category duplicates by referenceId", () => {
-    const items = [
-      { href: "/metrics#health", itemType: "metric_category", referenceId: "cat-1" },
-      { href: "/metrics#health", itemType: "metric_category", referenceId: "cat-1" },
-    ];
-    expect(hasDuplicates(items)).toBe(true);
   });
 
   it("returns false for empty input", () => {
     expect(hasDuplicates([])).toBe(false);
   });
+});
 
-  it("detects duplicates in 10x race condition scenario", () => {
-    const items = [];
-    for (let copy = 0; copy < 10; copy++) {
-      items.push(
-        { href: "/dashboard", itemType: "builtin", referenceId: null },
-        { href: "/meditate", itemType: "builtin", referenceId: null },
-      );
-    }
-    expect(hasDuplicates(items)).toBe(true);
+describe("needsMigration", () => {
+  it("returns true for old-format items (builtin /food, no /metrics)", () => {
+    const items = [
+      { href: "/dashboard", itemType: "builtin" },
+      { href: "/food", itemType: "builtin" },
+      { href: "/meditate", itemType: "builtin" },
+    ];
+    expect(needsMigration(items)).toBe(true);
+  });
+
+  it("returns false for new-format items (has /metrics builtin)", () => {
+    const items = [
+      { href: "/dashboard", itemType: "builtin" },
+      { href: "/metrics", itemType: "builtin" },
+      { href: "/food", itemType: "tracking_section" },
+    ];
+    expect(needsMigration(items)).toBe(false);
+  });
+
+  it("returns false when no old builtins exist", () => {
+    const items = [
+      { href: "/dashboard", itemType: "builtin" },
+    ];
+    expect(needsMigration(items)).toBe(false);
   });
 });
 
