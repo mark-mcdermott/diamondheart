@@ -4,19 +4,23 @@ import { db } from "@/db";
 import { meditationSessions } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
+import { getMeditationStyles, getMeditationPresets } from "@/app/actions/meditation";
 import { MeditateClient } from "./meditate-client";
 
 export default async function MeditatePage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
 
-  const sessions = await db
-    .select()
-    .from(meditationSessions)
-    .where(eq(meditationSessions.userId, session.userId))
-    .orderBy(desc(meditationSessions.date))
-    .limit(200);
+  const [sessions, styles, presets] = await Promise.all([
+    db.select()
+      .from(meditationSessions)
+      .where(eq(meditationSessions.userId, session.userId))
+      .orderBy(desc(meditationSessions.date))
+      .limit(200),
+    getMeditationStyles(session.userId),
+    getMeditationPresets(session.userId),
+  ]);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -24,12 +28,15 @@ export default async function MeditatePage() {
         <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div>
+        <div className="flex-1">
           <h2>Meditate</h2>
           <p className="text-muted-foreground mt-1">Start a session or review your practice</p>
         </div>
+        <Link href="/meditate/edit" className="text-muted-foreground hover:text-foreground">
+          <Pencil className="w-4 h-4" />
+        </Link>
       </div>
-      <MeditateClient sessions={sessions} />
+      <MeditateClient sessions={sessions} styles={styles} presets={presets} />
     </div>
   );
 }

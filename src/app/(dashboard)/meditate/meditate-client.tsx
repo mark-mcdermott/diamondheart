@@ -4,15 +4,19 @@ import { useState, useEffect, useRef, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { logMeditationSession, deleteMeditationSession } from "@/app/actions/meditation";
-import type { MeditationSession } from "@/db/schema";
-import { Play, Pause, RotateCcw, Trash2, Brain, Wind, Scan, Volume2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { logMeditationSession, updateMeditationSession, deleteMeditationSession } from "@/app/actions/meditation";
+import type { MeditationSession, MeditationStyle, MeditationPreset } from "@/db/schema";
+import { Play, Pause, RotateCcw, Trash2, Pencil } from "lucide-react";
+import { LucideIconByName } from "./icon-map";
 
 interface MeditateClientProps {
   sessions: MeditationSession[];
+  styles: MeditationStyle[];
+  presets: MeditationPreset[];
 }
 
-const PRESETS = [
+const DEFAULT_PRESETS = [
   { label: "5 min", seconds: 300 },
   { label: "10 min", seconds: 600 },
   { label: "15 min", seconds: 900 },
@@ -20,11 +24,9 @@ const PRESETS = [
   { label: "30 min", seconds: 1800 },
 ];
 
-const SESSION_TYPES = [
-  { key: "silent", label: "Silent", icon: Volume2 },
-  { key: "guided", label: "Guided", icon: Brain },
-  { key: "breathing", label: "Breathing", icon: Wind },
-  { key: "body-scan", label: "Body Scan", icon: Scan },
+const DEFAULT_STYLES = [
+  { key: "guided", label: "Guided", iconName: "Brain" },
+  { key: "breathing", label: "Breathing", iconName: "Wind" },
 ];
 
 function formatDuration(seconds: number): string {
@@ -41,15 +43,26 @@ function formatDurationShort(seconds: number): string {
   return rm > 0 ? `${h}h ${rm}m` : `${h}h`;
 }
 
-export function MeditateClient({ sessions }: MeditateClientProps) {
+export function MeditateClient({ sessions, styles, presets }: MeditateClientProps) {
+  const resolvedStyles = styles.length > 0
+    ? styles.map((s) => ({ key: s.label.toLowerCase(), label: s.label, iconName: s.iconName }))
+    : DEFAULT_STYLES;
+  const resolvedPresets = presets.length > 0
+    ? presets.map((p) => ({ label: p.label, seconds: p.seconds }))
+    : DEFAULT_PRESETS;
+
   const [isPending, startTransition] = useTransition();
-  const [sessionType, setSessionType] = useState("silent");
+  const [sessionType, setSessionType] = useState(resolvedStyles[0]?.key || "guided");
   const [targetSeconds, setTargetSeconds] = useState(600);
   const [elapsed, setElapsed] = useState(0);
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
   const [notes, setNotes] = useState("");
   const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  const [editSession, setEditSession] = useState<MeditationSession | null>(null);
+  const [editDuration, setEditDuration] = useState("");
+  const [editType, setEditType] = useState("guided");
+  const [editNotes, setEditNotes] = useState("");
 
   useEffect(() => {
     if (running) {
@@ -110,6 +123,28 @@ export function MeditateClient({ sessions }: MeditateClientProps) {
     });
   }
 
+  function openEdit(s: MeditationSession) {
+    setEditSession(s);
+    setEditDuration(String(Math.floor(s.duration / 60)));
+    setEditType(s.type);
+    setEditNotes(s.notes || "");
+  }
+
+  function handleEditSave() {
+    if (!editSession) return;
+    const mins = parseInt(editDuration);
+    if (!mins || mins <= 0) return;
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("sessionId", editSession.id);
+      fd.set("duration", String(mins * 60));
+      fd.set("type", editType);
+      fd.set("notes", editNotes);
+      await updateMeditationSession(fd);
+      setEditSession(null);
+    });
+  }
+
   const progress = targetSeconds > 0 ? Math.min(100, (elapsed / targetSeconds) * 100) : 0;
   const remaining = Math.max(0, targetSeconds - elapsed);
 
@@ -127,7 +162,7 @@ export function MeditateClient({ sessions }: MeditateClientProps) {
         <div className="bg-card rounded-lg p-8 text-center">
           {/* Session type */}
           <div className="flex justify-center gap-2 mb-6">
-            {SESSION_TYPES.map((t) => (
+            {resolvedStyles.map((t) => (
               <Button
                 key={t.key}
                 size="sm"
@@ -135,7 +170,7 @@ export function MeditateClient({ sessions }: MeditateClientProps) {
                 onClick={() => setSessionType(t.key)}
                 disabled={running}
               >
-                <t.icon className="w-3.5 h-3.5 mr-1" />
+                <LucideIconByName name={t.iconName} className="w-3.5 h-3.5 mr-1" />
                 {t.label}
               </Button>
             ))}
@@ -144,7 +179,7 @@ export function MeditateClient({ sessions }: MeditateClientProps) {
           {/* Presets */}
           {!running && !finished && (
             <div className="flex justify-center gap-2 mb-6">
-              {PRESETS.map((p) => (
+              {resolvedPresets.map((p) => (
                 <Button
                   key={p.seconds}
                   size="sm"
@@ -232,11 +267,12 @@ export function MeditateClient({ sessions }: MeditateClientProps) {
           </h3>
           <div className="bg-card rounded-lg divide-y divide-border">
             {todaySessions.map((s) => {
-              const TypeIcon = SESSION_TYPES.find((t) => t.key === s.type)?.icon || Brain;
+              const styleMatch = resolvedStyles.find((t) => t.key === s.type);
+              const iconName = styleMatch?.iconName || "Brain";
               return (
                 <div key={s.id} className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <TypeIcon className="w-4 h-4 text-primary" />
+                    <LucideIconByName name={iconName} className="w-4 h-4 text-primary" />
                     <span className="text-sm font-medium" style={{ color: "var(--app-heading-color)" }}>
                       {formatDurationShort(s.duration)}
                     </span>
@@ -246,9 +282,14 @@ export function MeditateClient({ sessions }: MeditateClientProps) {
                     </span>
                     {s.notes && <span className="text-xs text-muted-foreground">{s.notes}</span>}
                   </div>
-                  <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(s.id)} disabled={isPending}>
-                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon-xs" onClick={() => openEdit(s)} disabled={isPending}>
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(s.id)} disabled={isPending}>
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
               );
             })}
@@ -262,12 +303,13 @@ export function MeditateClient({ sessions }: MeditateClientProps) {
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">History</h3>
           <div className="bg-card rounded-lg divide-y divide-border">
             {olderSessions.slice(0, 50).map((s) => {
-              const TypeIcon = SESSION_TYPES.find((t) => t.key === s.type)?.icon || Brain;
+              const styleMatch = resolvedStyles.find((t) => t.key === s.type);
+              const iconName = styleMatch?.iconName || "Brain";
               const d = new Date(s.date);
               return (
                 <div key={s.id} className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <TypeIcon className="w-4 h-4 text-muted-foreground" />
+                    <LucideIconByName name={iconName} className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm font-medium" style={{ color: "var(--app-heading-color)" }}>
                       {formatDurationShort(s.duration)}
                     </span>
@@ -277,15 +319,59 @@ export function MeditateClient({ sessions }: MeditateClientProps) {
                     </span>
                     {s.notes && <span className="text-xs text-muted-foreground">{s.notes}</span>}
                   </div>
-                  <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(s.id)} disabled={isPending}>
-                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon-xs" onClick={() => openEdit(s)} disabled={isPending}>
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(s.id)} disabled={isPending}>
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
               );
             })}
           </div>
         </section>
       )}
+
+      {/* Edit Modal */}
+      <Dialog open={!!editSession} onOpenChange={(open) => { if (!open) setEditSession(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Session</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div>
+              <Label>Duration (minutes)</Label>
+              <Input type="number" value={editDuration} onChange={(e) => setEditDuration(e.target.value)} className="mt-1" min={1} autoFocus />
+            </div>
+            <div>
+              <Label>Type</Label>
+              <div className="flex gap-2 mt-1">
+                {resolvedStyles.map((t) => (
+                  <Button
+                    key={t.key}
+                    size="sm"
+                    variant={editType === t.key ? "default" : "secondary"}
+                    onClick={() => setEditType(t.key)}
+                  >
+                    <LucideIconByName name={t.iconName} className="w-3.5 h-3.5 mr-1" />
+                    {t.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label>Notes</Label>
+              <Input value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Optional" className="mt-1" />
+            </div>
+            <div className="flex gap-3 pt-2 justify-end">
+              <Button onClick={handleEditSave} disabled={!editDuration || isPending}>Save</Button>
+              <Button variant="secondary" onClick={() => setEditSession(null)}>Cancel</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
