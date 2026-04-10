@@ -9,7 +9,8 @@ export default function HomePage() {
     <>
       <Hero
         title="Diamondheart"
-        logoImage="/logo.png"
+        image="/illustration.png"
+        imageSize="lg"
         description="Mindful tracking for meditation, wellness, and daily habits."
         backgroundImage="/background.png"
         primaryCta={{ label: "Get Started", href: "/signup" }}
