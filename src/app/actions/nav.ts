@@ -5,7 +5,7 @@ import { userNavItems, trackerCategories } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { DEFAULT_NAV_ITEMS, buildDefaultNavItems, hasDuplicates } from "@/lib/nav-utils";
+import { DEFAULT_NAV_ITEMS, buildDefaultNavItems, hasDuplicates, needsMigration, TRACKING_SECTIONS } from "@/lib/nav-utils";
 
 export type ActionResult = {
   success: boolean;
@@ -55,6 +55,53 @@ async function ensureNavItemsPersisted(userId: string) {
   if (items.length > 0 && hasDuplicates(items)) {
     await db.delete(userNavItems).where(eq(userNavItems.userId, userId));
     // Fall through to seed below
+  } else if (items.length > 0 && needsMigration(items)) {
+    // Lazy migration: convert old builtin items to tracking_section
+    const trackingHrefs = TRACKING_SECTIONS.map((s) => s.href);
+    for (const item of items) {
+      if (item.itemType === "builtin" && trackingHrefs.includes(item.href)) {
+        await db
+          .update(userNavItems)
+          .set({ itemType: "tracking_section", updatedAt: new Date() })
+          .where(eq(userNavItems.id, item.id));
+      }
+    }
+    // Insert Metrics builtin item at sortOrder 1 (after Dashboard)
+    const maxSort = items.reduce((max, i) => Math.max(max, i.sortOrder), 0);
+    // Shift everything after Dashboard down by 1
+    for (const item of items) {
+      if (item.sortOrder >= 1) {
+        await db
+          .update(userNavItems)
+          .set({ sortOrder: item.sortOrder + 1, updatedAt: new Date() })
+          .where(eq(userNavItems.id, item.id));
+      }
+    }
+    await db.insert(userNavItems).values({
+      id: crypto.randomUUID(),
+      userId,
+      label: "Metrics",
+      href: "/metrics",
+      itemType: "builtin",
+      sortOrder: 1,
+      visible: true,
+      locked: false,
+    });
+    // Also add Workout if not present
+    const hasWorkout = items.some((i) => i.href === "/workout");
+    if (!hasWorkout) {
+      await db.insert(userNavItems).values({
+        id: crypto.randomUUID(),
+        userId,
+        label: "Workout",
+        href: "/workout",
+        itemType: "tracking_section",
+        sortOrder: maxSort + 2,
+        visible: false,
+        locked: false,
+      });
+    }
+    return db.select().from(userNavItems).where(eq(userNavItems.userId, userId)).orderBy(userNavItems.sortOrder);
   } else if (items.length > 0) {
     return items;
   }
@@ -216,6 +263,41 @@ export async function toggleCategoryInNav(formData: FormData): Promise<ActionRes
   revalidatePath("/settings");
   revalidatePath("/metrics");
   return { success: true };
+}
+
+export async function toggleTrackingSectionInNav(formData: FormData): Promise<ActionResult> {
+  const session = await getCurrentUser();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  const sectionHref = formData.get("sectionHref") as string;
+  if (!sectionHref) return { success: false, error: "Section href is required" };
+
+  const allItems = await ensureNavItemsPersisted(session.userId);
+
+  const item = allItems.find(
+    (i) => i.itemType === "tracking_section" && i.href === sectionHref
+  );
+
+  if (!item) return { success: false, error: "Section not found" };
+
+  const fd = new FormData();
+  fd.set("itemId", item.id);
+  return toggleNavItemVisibility(fd);
+}
+
+export async function getTrackingSectionStatus(userId: string): Promise<Record<string, boolean>> {
+  const items = await getNavItems(userId);
+
+  const status: Record<string, boolean> = {};
+  for (const section of TRACKING_SECTIONS) {
+    const item = items.find(
+      (i) => i.itemType === "tracking_section" && i.href === section.href
+    );
+    // Default to the value from DEFAULT_NAV_ITEMS if not found
+    const defaultItem = DEFAULT_NAV_ITEMS.find((d) => d.href === section.href);
+    status[section.key] = item ? item.visible : (defaultItem?.visible ?? true);
+  }
+  return status;
 }
 
 export async function getCategoryNavStatus(userId: string, categoryIds: string[]) {
