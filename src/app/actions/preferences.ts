@@ -10,6 +10,7 @@ type Result = { success: boolean; error?: string };
 
 const DEFAULT_PREFERENCES = {
   useNetflixUI: false,
+  showSiteName: true,
 } as const;
 
 export async function getUserPreferences(userId: string) {
@@ -25,6 +26,7 @@ export async function getUserPreferences(userId: string) {
 
   return {
     useNetflixUI: prefs.useNetflixUI,
+    showSiteName: prefs.showSiteName,
   };
 }
 
@@ -53,5 +55,33 @@ export async function toggleNetflixUI(formData: FormData): Promise<Result> {
   }
 
   revalidatePath("/entertainment");
+  return { success: true };
+}
+
+export async function toggleSiteName(formData: FormData): Promise<Result> {
+  void formData;
+  const session = await getCurrentUser();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  const [existing] = await db
+    .select()
+    .from(userPreferences)
+    .where(eq(userPreferences.userId, session.userId))
+    .limit(1);
+
+  if (existing) {
+    await db
+      .update(userPreferences)
+      .set({ showSiteName: !existing.showSiteName, updatedAt: new Date() })
+      .where(eq(userPreferences.id, existing.id));
+  } else {
+    await db.insert(userPreferences).values({
+      id: crypto.randomUUID(),
+      userId: session.userId,
+      showSiteName: false,
+    });
+  }
+
+  revalidatePath("/");
   return { success: true };
 }
