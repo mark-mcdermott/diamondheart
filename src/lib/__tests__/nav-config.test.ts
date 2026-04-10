@@ -1,17 +1,9 @@
 import { describe, it, expect } from "vitest";
+import { DEFAULT_NAV_ITEMS, buildDefaultNavItems, hasDuplicates } from "@/lib/nav-utils";
 
 describe("nav item defaults", () => {
-  const DEFAULT_NAV_ITEMS = [
-    { label: "Dashboard", href: "/dashboard", itemType: "builtin", sortOrder: 0, visible: true, locked: true },
-    { label: "Meditate", href: "/meditate", itemType: "builtin", sortOrder: 1, visible: true, locked: false },
-    { label: "Food", href: "/food", itemType: "builtin", sortOrder: 2, visible: true, locked: false },
-    { label: "Tracking", href: "/tracking", itemType: "builtin", sortOrder: 3, visible: true, locked: false },
-    { label: "Medical", href: "/medical", itemType: "builtin", sortOrder: 4, visible: true, locked: false },
-    { label: "Entertainment", href: "/entertainment", itemType: "builtin", sortOrder: 5, visible: true, locked: false },
-  ];
-
-  it("has 6 default nav items", () => {
-    expect(DEFAULT_NAV_ITEMS).toHaveLength(6);
+  it("has 7 default nav items", () => {
+    expect(DEFAULT_NAV_ITEMS).toHaveLength(7);
   });
 
   it("Dashboard is first, locked, and visible", () => {
@@ -51,6 +43,83 @@ describe("nav item defaults", () => {
   });
 });
 
+describe("buildDefaultNavItems", () => {
+  it("returns 7 items with deterministic IDs", () => {
+    const items = buildDefaultNavItems("user-123");
+    expect(items).toHaveLength(7);
+    expect(items[0].id).toBe("default-user-123-dashboard");
+    expect(items[1].id).toBe("default-user-123-meditate");
+  });
+
+  it("returns same IDs for same userId across calls", () => {
+    const a = buildDefaultNavItems("user-abc");
+    const b = buildDefaultNavItems("user-abc");
+    expect(a.map((i) => i.id)).toEqual(b.map((i) => i.id));
+  });
+
+  it("returns different IDs for different userIds", () => {
+    const a = buildDefaultNavItems("user-aaa");
+    const b = buildDefaultNavItems("user-bbb");
+    expect(a[0].id).not.toBe(b[0].id);
+  });
+
+  it("sets userId on all items", () => {
+    const items = buildDefaultNavItems("user-xyz");
+    expect(items.every((i) => i.userId === "user-xyz")).toBe(true);
+  });
+
+  it("preserves all default properties", () => {
+    const items = buildDefaultNavItems("user-123");
+    expect(items[0].label).toBe("Dashboard");
+    expect(items[0].locked).toBe(true);
+    expect(items[0].visible).toBe(true);
+    expect(items[0].href).toBe("/dashboard");
+  });
+});
+
+describe("hasDuplicates", () => {
+  it("returns true when builtin items are duplicated", () => {
+    const items = [
+      { href: "/dashboard", itemType: "builtin", referenceId: null },
+      { href: "/dashboard", itemType: "builtin", referenceId: null },
+      { href: "/meditate", itemType: "builtin", referenceId: null },
+    ];
+    expect(hasDuplicates(items)).toBe(true);
+  });
+
+  it("returns false when no duplicates exist", () => {
+    const items = [
+      { href: "/dashboard", itemType: "builtin", referenceId: null },
+      { href: "/meditate", itemType: "builtin", referenceId: null },
+      { href: "/food", itemType: "builtin", referenceId: null },
+    ];
+    expect(hasDuplicates(items)).toBe(false);
+  });
+
+  it("returns true for metric_category duplicates by referenceId", () => {
+    const items = [
+      { href: "/metrics#health", itemType: "metric_category", referenceId: "cat-1" },
+      { href: "/metrics#health", itemType: "metric_category", referenceId: "cat-1" },
+    ];
+    expect(hasDuplicates(items)).toBe(true);
+  });
+
+  it("returns false for empty input", () => {
+    expect(hasDuplicates([])).toBe(false);
+  });
+
+  it("detects duplicates in 10x race condition scenario", () => {
+    const items = [];
+    for (let copy = 0; copy < 10; copy++) {
+      items.push(
+        { href: "/dashboard", itemType: "builtin", referenceId: null },
+        { href: "/meditate", itemType: "builtin", referenceId: null },
+      );
+    }
+    expect(hasDuplicates(items)).toBe(true);
+  });
+});
+
 describe("nav reorder logic", () => {
   it("checked items stay above unchecked items", () => {
     const items = [
@@ -64,7 +133,6 @@ describe("nav reorder logic", () => {
     const unchecked = items.filter((i) => !i.visible);
     const ordered = [...checked, ...unchecked];
 
-    // All checked should be before unchecked
     const firstUncheckedIdx = ordered.findIndex((i) => !i.visible);
     const lastCheckedIdx = ordered.reduce(
       (max, item, idx) => (item.visible ? idx : max),
@@ -81,7 +149,6 @@ describe("nav reorder logic", () => {
       { id: "4", label: "Hidden", visible: false, locked: false },
     ];
 
-    // Uncheck "Food"
     const updated = items.map((i) =>
       i.id === "3" ? { ...i, visible: false } : i
     );
@@ -91,7 +158,6 @@ describe("nav reorder logic", () => {
 
     expect(reordered[0].label).toBe("Dashboard");
     expect(reordered[1].label).toBe("Meditate");
-    // Unchecked items follow
     expect(reordered[2].visible).toBe(false);
     expect(reordered[3].visible).toBe(false);
   });
@@ -104,7 +170,6 @@ describe("nav reorder logic", () => {
       { id: "4", label: "Hidden", visible: false, locked: false },
     ];
 
-    // Check "Food"
     const updated = items.map((i) =>
       i.id === "3" ? { ...i, visible: true } : i
     );
@@ -116,7 +181,6 @@ describe("nav reorder logic", () => {
     expect(reordered[1].label).toBe("Meditate");
     expect(reordered[2].label).toBe("Food");
     expect(reordered[2].visible).toBe(true);
-    // Only Hidden is unchecked
     expect(reordered[3].label).toBe("Hidden");
     expect(reordered[3].visible).toBe(false);
   });
