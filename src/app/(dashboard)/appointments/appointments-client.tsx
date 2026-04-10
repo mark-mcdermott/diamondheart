@@ -65,7 +65,7 @@ const TYPE_ICONS: Record<string, typeof Stethoscope> = {
 
 const STATUS_STYLES: Record<string, string> = {
   upcoming: "bg-primary/15 text-primary",
-  completed: "bg-green-500/15 text-green-600 dark:text-green-400",
+  completed: "bg-success/15 text-success",
   cancelled: "bg-muted text-muted-foreground",
   missed: "bg-destructive/15 text-destructive",
 };

@@ -28,7 +28,7 @@ export default function ContactPage() {
   if (sent) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <Check className="w-12 h-12 text-green-500 mx-auto mb-4" />
+        <Check className="w-12 h-12 text-success mx-auto mb-4" />
         <h2>Message Sent</h2>
         <p className="text-muted-foreground mt-2">Thanks for reaching out. We'll get back to you soon.</p>
       </div>

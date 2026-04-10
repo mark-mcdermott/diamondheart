@@ -281,7 +281,7 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
                     cy={ringSize / 2}
                     r={ringRadius}
                     fill="none"
-                    stroke={finished ? "#22c55e" : "hsl(var(--primary))"}
+                    stroke={finished ? "var(--app-success)" : "hsl(var(--primary))"}
                     strokeWidth={ringStroke}
                     strokeLinecap="round"
                     strokeDasharray={ringCircumference}
@@ -300,7 +300,7 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
                     cx={ringSize / 2}
                     cy={ringStroke / 2}
                     r={ringStroke / 2 + 2}
-                    fill={finished ? "#22c55e" : "hsl(var(--primary))"}
+                    fill={finished ? "var(--app-success)" : "hsl(var(--primary))"}
                     className="transition-all duration-700 ease-out"
                   />
                 </svg>

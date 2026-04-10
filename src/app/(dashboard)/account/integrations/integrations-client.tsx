@@ -98,7 +98,7 @@ export function IntegrationsClient({ connections, ouraConfigured }: Integrations
                 </div>
               </div>
               {oura?.status === "active" && (
-                <span className="text-xs font-medium text-green-600 bg-green-50 dark:bg-green-950 dark:text-green-400 px-2 py-1 rounded-full">Connected</span>
+                <span className="text-xs font-medium text-success bg-success/10 px-2 py-1 rounded-full">Connected</span>
               )}
             </div>
           </CardHeader>
@@ -143,7 +143,7 @@ export function IntegrationsClient({ connections, ouraConfigured }: Integrations
                 </div>
               </div>
               {healthkit?.status === "active" && (
-                <span className="text-xs font-medium text-green-600 bg-green-50 dark:bg-green-950 dark:text-green-400 px-2 py-1 rounded-full">Connected</span>
+                <span className="text-xs font-medium text-success bg-success/10 px-2 py-1 rounded-full">Connected</span>
               )}
             </div>
           </CardHeader>
