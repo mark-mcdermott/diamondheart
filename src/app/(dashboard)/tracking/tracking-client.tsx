@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { addTrackingItem, updateTrackingCount, updateTrackingItem, deleteTrackingItem } from "@/app/actions/tracking";
 import type { TrackingItem } from "@/db/schema";
 import { Plus, Minus, Pencil, Trash2, Package } from "lucide-react";
+import { TrackingChart } from "./tracking-chart";
 
 interface TrackingClientProps {
   items: TrackingItem[];
@@ -98,6 +99,9 @@ export function TrackingClient({ items }: TrackingClientProps) {
 
   return (
     <>
+      {/* Chart */}
+      <TrackingChart items={items.map((i) => ({ name: i.name, count: i.count, category: i.category }))} />
+
       <div className="flex justify-end mb-6">
         <Button onClick={() => { resetForm(); setShowAdd(true); }}>
           <Plus className="w-4 h-4 mr-2" />

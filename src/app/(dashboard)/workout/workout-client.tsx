@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, lazy, Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,8 @@ interface WorkoutClientProps {
   activeWorkout: SerializedWorkout | null;
   activeSets: WorkoutSet[];
 }
+
+const WorkoutChart = lazy(() => import("./workout-chart").then((m) => ({ default: m.WorkoutChart })));
 
 export function WorkoutClient({
   exercises,
@@ -150,6 +152,11 @@ export function WorkoutClient({
               </Button>
             </div>
           </form>
+
+          {/* Chart */}
+          <Suspense fallback={<div className="h-64 bg-card border border-border rounded-lg animate-pulse mb-8" />}>
+            <WorkoutChart />
+          </Suspense>
 
           {/* Recent Workouts */}
           {recentWorkouts.length > 0 && (
