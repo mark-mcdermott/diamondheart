@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useCallback, useRef, useEffect } from "react";
+import { useState, useTransition, useCallback, useRef, useEffect, lazy, Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,6 +95,8 @@ const MEAL_TYPES = [
   { key: "dinner", label: "Dinner" },
   { key: "snack", label: "Snack" },
 ];
+
+const FoodChart = lazy(() => import("./food-chart").then((m) => ({ default: m.FoodChart })));
 
 export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals }: FoodClientProps) {
   const [isPending, startTransition] = useTransition();
@@ -333,6 +335,11 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals }: Food
           </div>
         ))}
       </div>
+
+      {/* Charts */}
+      <Suspense fallback={<div className="h-64 bg-card border border-border rounded-lg animate-pulse mb-6" />}>
+        <FoodChart totals={totals} />
+      </Suspense>
 
       {/* Saved Meals */}
       {favoriteMeals.length > 0 && (
