@@ -7,6 +7,7 @@ export const users = pgTable('users', {
 	passwordHash: text('password_hash').notNull(),
 	name: text('name'),
 	avatarUrl: text('avatar_url'),
+	defaultTimerSeconds: integer('default_timer_seconds').notNull().default(600),
 	role: text('role').notNull().default('user'),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
@@ -438,3 +439,24 @@ export const meditationPresets = pgTable('meditation_presets', {
 });
 
 export type MeditationPreset = typeof meditationPresets.$inferSelect;
+
+
+// ============================================
+// User Nav Items (per-user nav customization)
+// ============================================
+
+export const userNavItems = pgTable('user_nav_items', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	label: text('label').notNull(),
+	href: text('href').notNull(),
+	itemType: text('item_type').notNull().default('builtin'), // builtin | metric_category
+	referenceId: text('reference_id'), // trackerCategories.id for metric_category type
+	sortOrder: integer('sort_order').notNull().default(0),
+	visible: boolean('visible').notNull().default(true),
+	locked: boolean('locked').notNull().default(false), // can't uncheck or move (dashboard)
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type UserNavItem = typeof userNavItems.$inferSelect;
