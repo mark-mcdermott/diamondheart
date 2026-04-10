@@ -4,12 +4,19 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   addMetric,
   deleteMetric,
   toggleHidden,
   reorderMetrics,
 } from "@/app/actions/tracker";
+import {
+  createCategory,
+  renameCategory,
+  deleteCategory,
+} from "@/app/actions/categories";
+import { toggleCategoryInNav } from "@/app/actions/nav";
 import type { TrackerCategory, TrackerMetric } from "@/db/schema";
 import {
   ArrowLeft,
@@ -19,6 +26,8 @@ import {
   Pencil,
   Trash2,
   GripVertical,
+  Check,
+  X,
 } from "lucide-react";
 import {
   DndContext,
@@ -41,6 +50,7 @@ import { CSS } from "@dnd-kit/utilities";
 interface MetricsClientProps {
   categories: TrackerCategory[];
   metrics: TrackerMetric[];
+  categoryNavStatus: Record<string, boolean>;
 }
 
 const VALUE_TYPES = [
@@ -106,7 +116,8 @@ function SortableMetricRow({
       <div className="flex-1 min-w-0">
         <Link
           href={`/metrics/${metric.id}`}
-          className="text-sm font-medium hover:underline" style={{ color: "var(--app-heading-color)" }}
+          className="text-sm font-medium hover:underline"
+          style={{ color: "var(--app-heading-color)" }}
         >
           {metric.name}
         </Link>
@@ -136,24 +147,142 @@ function SortableMetricRow({
   );
 }
 
-export function MetricsClient({ metrics: serverMetrics }: MetricsClientProps) {
+function CategoryHeader({
+  category,
+  isInNav,
+  isPending,
+  onRename,
+  onDelete,
+  onToggleNav,
+}: {
+  category: TrackerCategory;
+  isInNav: boolean;
+  isPending: boolean;
+  onRename: (id: string, name: string) => void;
+  onDelete: (id: string) => void;
+  onToggleNav: (id: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(category.name);
+
+  function handleSave() {
+    if (editName.trim() && editName.trim() !== category.name) {
+      onRename(category.id, editName.trim());
+    }
+    setEditing(false);
+  }
+
+  return (
+    <div className="flex items-center gap-3 mb-2">
+      {editing ? (
+        <div className="flex items-center gap-2 flex-1">
+          <Input
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            className="h-8 text-sm max-w-xs"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSave();
+              if (e.key === "Escape") setEditing(false);
+            }}
+          />
+          <Button variant="ghost" size="sm" onClick={handleSave} disabled={isPending}>
+            <Check className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      ) : (
+        <>
+          <h3 className="text-lg font-semibold" style={{ color: "var(--app-heading-color)" }}>
+            {category.name}
+          </h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setEditName(category.name);
+              setEditing(true);
+            }}
+            className="h-7 w-7 p-0"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </Button>
+          {category.slug !== "default" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(category.id)}
+              disabled={isPending}
+              className="h-7 w-7 p-0"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-destructive" />
+            </Button>
+          )}
+          <div className="flex-1" />
+          <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+            <Checkbox
+              checked={isInNav}
+              onCheckedChange={() => onToggleNav(category.id)}
+              disabled={isPending}
+            />
+            Show in nav
+          </label>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function MetricsClient({
+  categories: serverCategories,
+  metrics: serverMetrics,
+  categoryNavStatus: serverNavStatus,
+}: MetricsClientProps) {
   const [isPending, startTransition] = useTransition();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState("none");
   const [newUnit, setNewUnit] = useState("");
   const [newGoal, setNewGoal] = useState("1");
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [metrics, setMetrics] = useState(serverMetrics);
+  const [navStatus, setNavStatus] = useState(serverNavStatus);
 
-  // Sync from server when props change (after add/delete/toggle)
+  // Sync from server when props change
   if (serverMetrics !== metrics && serverMetrics.length !== metrics.length) {
     setMetrics(serverMetrics);
   }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
   );
+
+  // Group metrics by category
+  const categoryMap = new Map<string, TrackerCategory>();
+  for (const cat of serverCategories) {
+    categoryMap.set(cat.id, cat);
+  }
+
+  const grouped = new Map<string, TrackerMetric[]>();
+  for (const cat of serverCategories) {
+    grouped.set(cat.id, []);
+  }
+  for (const metric of metrics) {
+    const list = grouped.get(metric.categoryId);
+    if (list) {
+      list.push(metric);
+    } else {
+      // Fallback: put in first category
+      const first = serverCategories[0];
+      if (first) grouped.get(first.id)?.push(metric);
+    }
+  }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -205,21 +334,106 @@ export function MetricsClient({ metrics: serverMetrics }: MetricsClientProps) {
     });
   }
 
+  function handleCreateCategory() {
+    if (!newCategoryName.trim()) return;
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("name", newCategoryName.trim());
+      const result = await createCategory(fd);
+      if (result.success) {
+        setNewCategoryName("");
+        setShowAddCategory(false);
+      }
+    });
+  }
+
+  function handleRenameCategory(categoryId: string, name: string) {
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("categoryId", categoryId);
+      fd.set("name", name);
+      await renameCategory(fd);
+    });
+  }
+
+  function handleDeleteCategory(categoryId: string) {
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("categoryId", categoryId);
+      await deleteCategory(fd);
+    });
+  }
+
+  function handleToggleNav(categoryId: string) {
+    setNavStatus((prev) => ({ ...prev, [categoryId]: !prev[categoryId] }));
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("categoryId", categoryId);
+      await toggleCategoryInNav(fd);
+    });
+  }
+
+  // Build a flat list of all metric IDs for DnD (preserving order across categories)
+  const allMetricIds = metrics.map((m) => m.id);
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
+        <Link
+          href="/dashboard"
+          className="text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="flex-1">
           <h2>Metrics</h2>
-          <p className="text-muted-foreground mt-1">Manage your tracking metrics</p>
+          <p className="text-muted-foreground mt-1">
+            Manage your tracking metrics
+          </p>
         </div>
+        <Button
+          variant="secondary"
+          onClick={() => setShowAddCategory(!showAddCategory)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Section
+        </Button>
         <Button onClick={() => setShowAddForm(!showAddForm)}>
           <Plus className="w-4 h-4 mr-2" />
           Add Metric
         </Button>
       </div>
+
+      {/* Add Category Form */}
+      {showAddCategory && (
+        <div className="border border-border rounded-lg p-4 mb-6 flex items-center gap-3">
+          <Input
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            placeholder="Section name (e.g. Nutrition)"
+            className="max-w-xs"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleCreateCategory();
+              if (e.key === "Escape") setShowAddCategory(false);
+            }}
+          />
+          <Button
+            onClick={handleCreateCategory}
+            disabled={!newCategoryName.trim() || isPending}
+            size="sm"
+          >
+            {isPending ? "Saving..." : "Create"}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowAddCategory(false)}
+          >
+            Cancel
+          </Button>
+        </div>
+      )}
 
       {/* Add Metric Form */}
       {showAddForm && (
@@ -250,7 +464,9 @@ export function MetricsClient({ metrics: serverMetrics }: MetricsClientProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Unit (optional)</label>
+              <label className="block text-sm font-medium mb-1">
+                Unit (optional)
+              </label>
               <Input
                 value={newUnit}
                 onChange={(e) => setNewUnit(e.target.value)}
@@ -258,7 +474,9 @@ export function MetricsClient({ metrics: serverMetrics }: MetricsClientProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Daily Goal</label>
+              <label className="block text-sm font-medium mb-1">
+                Daily Goal
+              </label>
               <Input
                 type="number"
                 min={1}
@@ -278,7 +496,7 @@ export function MetricsClient({ metrics: serverMetrics }: MetricsClientProps) {
         </div>
       )}
 
-      {/* Metrics List */}
+      {/* Metrics grouped by category */}
       {metrics.length === 0 ? (
         <div className="border border-dashed border-border rounded-lg p-8 text-center">
           <p className="text-muted-foreground mb-4">
@@ -292,19 +510,38 @@ export function MetricsClient({ metrics: serverMetrics }: MetricsClientProps) {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={metrics.map((m) => m.id)}
+            items={allMetricIds}
             strategy={verticalListSortingStrategy}
           >
-            <div className="bg-card border border-border rounded-lg divide-y divide-border">
-              {metrics.map((metric) => (
-                <SortableMetricRow
-                  key={metric.id}
-                  metric={metric}
-                  isPending={isPending}
-                  onToggleHidden={handleToggleHidden}
-                  onDelete={handleDelete}
-                />
-              ))}
+            <div className="space-y-8">
+              {serverCategories.map((category) => {
+                const categoryMetrics = grouped.get(category.id) || [];
+                if (categoryMetrics.length === 0) return null;
+
+                return (
+                  <div key={category.id} id={category.slug}>
+                    <CategoryHeader
+                      category={category}
+                      isInNav={navStatus[category.id] ?? false}
+                      isPending={isPending}
+                      onRename={handleRenameCategory}
+                      onDelete={handleDeleteCategory}
+                      onToggleNav={handleToggleNav}
+                    />
+                    <div className="bg-card border border-border rounded-lg divide-y divide-border">
+                      {categoryMetrics.map((metric) => (
+                        <SortableMetricRow
+                          key={metric.id}
+                          metric={metric}
+                          isPending={isPending}
+                          onToggleHidden={handleToggleHidden}
+                          onDelete={handleDelete}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </SortableContext>
         </DndContext>

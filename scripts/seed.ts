@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { users, trackerCategories, trackerMetrics } from "../src/lib/server/db/schema";
+import { users, trackerCategories, trackerMetrics, userNavItems } from "../src/lib/server/db/schema";
 import { hash } from "bcryptjs";
 import { randomUUID, randomBytes } from "crypto";
 import { readFileSync, writeFileSync } from "fs";
@@ -144,16 +144,20 @@ async function seed() {
   console.log("Seeding database...\n");
 
   // --- Users ---
+  await db.delete(userNavItems); // delete nav items first (FK dependency)
   await db.delete(users);
-  console.log("Cleared users.");
+  console.log("Cleared users & nav items.");
 
   const credentials: { email: string; password: string; role: string }[] = [];
+  const userIds: string[] = [];
 
   for (const u of seedUsers) {
     const password = generatePassword();
     const passwordHash = await hash(password, 12);
+    const userId = randomUUID();
+    userIds.push(userId);
     await db.insert(users).values({
-      id: randomUUID(),
+      id: userId,
       email: u.email,
       passwordHash,
       name: u.name,
@@ -206,6 +210,34 @@ async function seed() {
     else onCount++;
   }
   console.log(`  ${onCount} metrics ON, ${offCount} metrics OFF`);
+
+  // --- Nav Items (per user) ---
+  const defaultNavItems = [
+    { label: "Dashboard",     href: "/dashboard",      itemType: "builtin", sortOrder: 0, visible: true,  locked: true },
+    { label: "Meditate",      href: "/meditate",       itemType: "builtin", sortOrder: 1, visible: true,  locked: false },
+    { label: "Food",          href: "/food",           itemType: "builtin", sortOrder: 2, visible: true,  locked: false },
+    { label: "Tracking",      href: "/tracking",       itemType: "builtin", sortOrder: 3, visible: true,  locked: false },
+    { label: "Medical",       href: "/medical",        itemType: "builtin", sortOrder: 4, visible: true,  locked: false },
+    { label: "Entertainment", href: "/entertainment",  itemType: "builtin", sortOrder: 5, visible: true,  locked: false },
+  ];
+
+  let navCount = 0;
+  for (const userId of userIds) {
+    for (const item of defaultNavItems) {
+      await db.insert(userNavItems).values({
+        id: randomUUID(),
+        userId,
+        label: item.label,
+        href: item.href,
+        itemType: item.itemType,
+        sortOrder: item.sortOrder,
+        visible: item.visible,
+        locked: item.locked,
+      });
+      navCount++;
+    }
+  }
+  console.log(`  ${navCount} nav items (${defaultNavItems.length} per user)`);
 
   // --- Write credentials to .secrets ---
   const secretsPath = resolve(import.meta.dirname, "../.secrets");

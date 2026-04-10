@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { trackerCategories, trackerMetrics } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { MetricsClient } from "./metrics-client";
+import { getCategoryNavStatus } from "@/app/actions/nav";
 
 export default async function MetricsPage() {
   const session = await getCurrentUser();
@@ -20,5 +21,16 @@ export default async function MetricsPage() {
     .where(eq(trackerMetrics.archived, false))
     .orderBy(trackerMetrics.sortOrder);
 
-  return <MetricsClient categories={categories} metrics={metrics} />;
+  const categoryNavStatus = await getCategoryNavStatus(
+    session.userId,
+    categories.map((c) => c.id)
+  );
+
+  return (
+    <MetricsClient
+      categories={categories}
+      metrics={metrics}
+      categoryNavStatus={categoryNavStatus}
+    />
+  );
 }
