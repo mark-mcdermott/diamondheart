@@ -5,51 +5,79 @@ import { userNavItems, trackerCategories } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { DEFAULT_NAV_ITEMS, buildDefaultNavItems, hasDuplicates } from "@/lib/nav-utils";
 
 export type ActionResult = {
   success: boolean;
   error?: string;
 };
 
-// Default nav items to seed for new users
-const DEFAULT_NAV_ITEMS = [
-  { label: "Dashboard",     href: "/dashboard",      itemType: "builtin", sortOrder: 0, visible: true,  locked: true },
-  { label: "Meditate",      href: "/meditate",       itemType: "builtin", sortOrder: 1, visible: true,  locked: false },
-  { label: "Food",          href: "/food",           itemType: "builtin", sortOrder: 2, visible: true,  locked: false },
-  { label: "Tracking",      href: "/tracking",       itemType: "builtin", sortOrder: 3, visible: true,  locked: false },
-  { label: "Medical",       href: "/medical",        itemType: "builtin", sortOrder: 4, visible: true,  locked: false },
-  { label: "Entertainment", href: "/entertainment",  itemType: "builtin", sortOrder: 5, visible: true,  locked: false },
-];
-
+/**
+ * READ-ONLY: Get nav items for a user.
+ * Never writes to the DB — returns in-memory defaults if no items exist or if
+ * duplicates are found. This eliminates the race condition where concurrent
+ * requests each try to auto-seed and create duplicate rows.
+ */
 export async function getNavItems(userId: string) {
-  let items = await db
+  const items = await db
     .select()
     .from(userNavItems)
     .where(eq(userNavItems.userId, userId))
     .orderBy(userNavItems.sortOrder);
 
-  // Auto-seed if no nav items exist yet
+  // No items → return virtual defaults (no DB write = no race)
   if (items.length === 0) {
-    for (const item of DEFAULT_NAV_ITEMS) {
-      await db.insert(userNavItems).values({
-        id: crypto.randomUUID(),
-        userId,
-        label: item.label,
-        href: item.href,
-        itemType: item.itemType,
-        sortOrder: item.sortOrder,
-        visible: item.visible,
-        locked: item.locked,
-      });
-    }
-    items = await db
-      .select()
-      .from(userNavItems)
-      .where(eq(userNavItems.userId, userId))
-      .orderBy(userNavItems.sortOrder);
+    return buildDefaultNavItems(userId);
+  }
+
+  // Duplicates exist → clean them up, return virtual defaults
+  if (hasDuplicates(items)) {
+    await db.delete(userNavItems).where(eq(userNavItems.userId, userId));
+    return buildDefaultNavItems(userId);
   }
 
   return items;
+}
+
+/**
+ * Ensure nav items are persisted in the DB for a user.
+ * Called before mutations (toggle, reorder) to materialize virtual defaults.
+ * Returns the persisted items.
+ */
+async function ensureNavItemsPersisted(userId: string) {
+  const items = await db
+    .select()
+    .from(userNavItems)
+    .where(eq(userNavItems.userId, userId))
+    .orderBy(userNavItems.sortOrder);
+
+  // Clean up dupes if they exist
+  if (items.length > 0 && hasDuplicates(items)) {
+    await db.delete(userNavItems).where(eq(userNavItems.userId, userId));
+    // Fall through to seed below
+  } else if (items.length > 0) {
+    return items;
+  }
+
+  // Seed defaults
+  for (const item of DEFAULT_NAV_ITEMS) {
+    await db.insert(userNavItems).values({
+      id: crypto.randomUUID(),
+      userId,
+      label: item.label,
+      href: item.href,
+      itemType: item.itemType,
+      sortOrder: item.sortOrder,
+      visible: item.visible,
+      locked: item.locked,
+    });
+  }
+
+  return db
+    .select()
+    .from(userNavItems)
+    .where(eq(userNavItems.userId, userId))
+    .orderBy(userNavItems.sortOrder);
 }
 
 export async function toggleNavItemVisibility(formData: FormData): Promise<ActionResult> {
@@ -59,29 +87,19 @@ export async function toggleNavItemVisibility(formData: FormData): Promise<Actio
   const itemId = formData.get("itemId") as string;
   if (!itemId) return { success: false, error: "Item ID is required" };
 
-  const [item] = await db
-    .select()
-    .from(userNavItems)
-    .where(and(eq(userNavItems.id, itemId), eq(userNavItems.userId, session.userId)))
-    .limit(1);
+  // Ensure items are persisted before mutating
+  const allItems = await ensureNavItemsPersisted(session.userId);
 
+  const item = allItems.find(i => i.id === itemId);
   if (!item) return { success: false, error: "Item not found" };
   if (item.locked) return { success: false, error: "Cannot toggle locked item" };
 
   const newVisible = !item.visible;
 
-  // Get all items to recompute sort order
-  const allItems = await db
-    .select()
-    .from(userNavItems)
-    .where(eq(userNavItems.userId, session.userId))
-    .orderBy(userNavItems.sortOrder);
-
   // Separate into checked and unchecked
   const checked = allItems.filter(i => i.id === itemId ? newVisible : i.visible);
   const unchecked = allItems.filter(i => i.id === itemId ? !newVisible : !i.visible);
 
-  // If toggling ON, put at bottom of checked items. If toggling OFF, put at top of unchecked items.
   const reordered = [...checked, ...unchecked];
 
   for (let i = 0; i < reordered.length; i++) {
@@ -114,6 +132,9 @@ export async function reorderNavItems(formData: FormData): Promise<ActionResult>
     return { success: false, error: "Invalid IDs" };
   }
 
+  // Ensure items are persisted before mutating
+  await ensureNavItemsPersisted(session.userId);
+
   for (let i = 0; i < ids.length; i++) {
     await db
       .update(userNavItems)
@@ -132,6 +153,9 @@ export async function toggleCategoryInNav(formData: FormData): Promise<ActionRes
   const categoryId = formData.get("categoryId") as string;
   if (!categoryId) return { success: false, error: "Category ID is required" };
 
+  // Ensure items are persisted before mutating
+  await ensureNavItemsPersisted(session.userId);
+
   // Check if a nav item already exists for this category
   const [existing] = await db
     .select()
@@ -144,12 +168,10 @@ export async function toggleCategoryInNav(formData: FormData): Promise<ActionRes
     .limit(1);
 
   if (existing) {
-    // Toggle visibility - use the same reorder logic as toggleNavItemVisibility
     const fd = new FormData();
     fd.set("itemId", existing.id);
     return toggleNavItemVisibility(fd);
   } else {
-    // Create a new nav item for this category
     const [category] = await db
       .select()
       .from(trackerCategories)
@@ -158,7 +180,6 @@ export async function toggleCategoryInNav(formData: FormData): Promise<ActionRes
 
     if (!category) return { success: false, error: "Category not found" };
 
-    // Find the position: after last visible item
     const allItems = await db
       .select()
       .from(userNavItems)
@@ -170,10 +191,8 @@ export async function toggleCategoryInNav(formData: FormData): Promise<ActionRes
       -1
     );
 
-    // Insert after last visible, shift unchecked items down
     const insertAt = lastVisibleIndex + 1;
 
-    // Shift items at and after insertAt
     for (let i = allItems.length - 1; i >= insertAt; i--) {
       await db
         .update(userNavItems)
