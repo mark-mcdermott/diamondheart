@@ -125,6 +125,14 @@ export function Nav({
           )}
           {user && (
             <>
+              <AvatarMenu
+                user={{
+                  displayName: user.name || user.email,
+                  email: user.email,
+                  avatarUrl: user.avatarUrl,
+                }}
+                notificationCount={notificationCount}
+              />
               <Link
                 href="/notifications"
                 className="relative text-foreground transition-colors hover:text-black dark:hover:text-white px-2 py-1.5 -mx-2 rounded-md"
@@ -134,14 +142,6 @@ export function Nav({
                   <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-red-500" />
                 )}
               </Link>
-              <AvatarMenu
-                user={{
-                  displayName: user.name || user.email,
-                  email: user.email,
-                  avatarUrl: user.avatarUrl,
-                }}
-                notificationCount={notificationCount}
-              />
             </>
           )}
           {showThemeToggle && <ThemeToggle />}
@@ -152,6 +152,14 @@ export function Nav({
           {showThemeToggle && <ThemeToggle />}
           {user && (
             <>
+              <AvatarMenu
+                user={{
+                  displayName: user.name || user.email,
+                  email: user.email,
+                  avatarUrl: user.avatarUrl,
+                }}
+                notificationCount={notificationCount}
+              />
               <Link
                 href="/notifications"
                 className="relative text-foreground transition-colors hover:text-black dark:hover:text-white"
@@ -161,14 +169,6 @@ export function Nav({
                   <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500" />
                 )}
               </Link>
-              <AvatarMenu
-                user={{
-                  displayName: user.name || user.email,
-                  email: user.email,
-                  avatarUrl: user.avatarUrl,
-                }}
-                notificationCount={notificationCount}
-              />
             </>
           )}
           <Sheet open={open} onOpenChange={setOpen}>

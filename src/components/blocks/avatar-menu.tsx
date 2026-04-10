@@ -48,9 +48,6 @@ export function AvatarMenu({ user, notificationCount = 0 }: AvatarMenuProps) {
             </span>
           )}
         </span>
-        <span className="hidden text-sm font-medium lg:inline">
-          {user.displayName}
-        </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <div className="px-2 py-1.5">
