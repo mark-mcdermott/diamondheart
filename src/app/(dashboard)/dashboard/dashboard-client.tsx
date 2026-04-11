@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { EmptyState } from "@/components/ui/empty-state";
 import { quickLog } from "@/app/actions/tracker";
+import { WeeklyChart } from "./weekly-chart";
 import type { TrackerMetric } from "@/db/schema";
 import {
   Plus,
@@ -57,6 +58,7 @@ interface DashboardClientProps {
   recentEntries: Entry[];
   foodTotals: { calories: number; protein: number; carbs: number; fat: number };
   mealSummaries: Record<string, MealSummary>;
+  sparklines: Record<string, { date: string; value: number }[]>;
 }
 
 // Icon mapping
@@ -157,7 +159,7 @@ function buildSparkline(metricId: string, recentEntries: Entry[]): number[] {
 }
 
 // Mini sparkline SVG
-function Sparkline({ data, color, completed }: { data: number[]; color: string; completed: boolean }) {
+function InlineSparkline({ data, color, completed }: { data: number[]; color: string; completed: boolean }) {
   const max = Math.max(...data, 1);
   const h = 28;
   const w = 64;
@@ -192,47 +194,7 @@ function Sparkline({ data, color, completed }: { data: number[]; color: string; 
   );
 }
 
-// Water tracking dots
-function WaterDots({
-  current,
-  goal,
-  onAdd,
-  pending,
-}: {
-  current: number;
-  goal: number;
-  onAdd: () => void;
-  pending: boolean;
-}) {
-  const dots = Math.max(goal, 8);
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      {Array.from({ length: dots }).map((_, i) => (
-        <button
-          key={i}
-          className={`
-            w-7 h-7 rounded-full transition-all duration-300 cursor-pointer border-0
-            ${i < current
-              ? "bg-[var(--app-primary)] scale-100"
-              : "bg-secondary scale-90 hover:scale-100 hover:bg-border"
-            }
-          `}
-          style={{
-            transitionDelay: `${i * 30}ms`,
-          }}
-          disabled={i < current || pending}
-          onClick={onAdd}
-          title={`${i + 1} of ${goal}`}
-        />
-      ))}
-      <span className="text-sm font-mono text-muted-foreground ml-1">
-        {current}/{goal}
-      </span>
-    </div>
-  );
-}
-
-export function DashboardClient({ metrics, todayEntries, recentEntries, foodTotals, mealSummaries }: DashboardClientProps) {
+export function DashboardClient({ metrics, todayEntries, recentEntries, foodTotals, mealSummaries, sparklines }: DashboardClientProps) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [entryMetric, setEntryMetric] = useState<TrackerMetric | null>(null);
   const [entryValue, setEntryValue] = useState("");
@@ -381,7 +343,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                           </span>
                         </div>
                       </div>
-                      <Sparkline data={sparkData} color="var(--app-primary)" completed={completed} />
+                      <InlineSparkline data={sparkData} color="var(--app-primary)" completed={completed} />
                     </div>
 
                     {/* Progress bar */}
@@ -445,6 +407,9 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
               })}
             </div>
           </section>
+
+          {/* Weekly Overview Chart */}
+          <WeeklyChart metrics={metrics} sparklines={sparklines} />
 
           {/* Counters */}
           {counterMetrics.length > 0 && (

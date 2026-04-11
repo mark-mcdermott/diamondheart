@@ -7,7 +7,7 @@ import {
   foodLog,
   foodLogItems,
 } from "@/db/schema";
-import { eq, and, gte, lt, lte, desc } from "drizzle-orm";
+import { eq, and, gte, lt, lte, desc, sql } from "drizzle-orm";
 import { DashboardClient } from "./dashboard-client";
 
 export default async function DashboardPage() {
@@ -58,6 +58,28 @@ export default async function DashboardPage() {
     .where(gte(trackerEntries.date, weekAgo))
     .orderBy(desc(trackerEntries.date))
     .limit(20);
+
+  // Fetch 7-day sparkline data per metric (daily aggregates)
+  const sparklineData = await db
+    .select({
+      metricId: trackerEntries.metricId,
+      date: sql<string>`DATE(${trackerEntries.date})`,
+      total: sql<number>`COALESCE(SUM(CASE WHEN ${trackerEntries.value} ~ '^[0-9.]+$' THEN CAST(${trackerEntries.value} AS NUMERIC) ELSE 1 END), 0)`,
+    })
+    .from(trackerEntries)
+    .where(gte(trackerEntries.date, weekAgo))
+    .groupBy(trackerEntries.metricId, sql`DATE(${trackerEntries.date})`)
+    .orderBy(sql`DATE(${trackerEntries.date})`);
+
+  // Group sparkline data by metricId
+  const sparklines: Record<string, { date: string; value: number }[]> = {};
+  for (const row of sparklineData) {
+    if (!sparklines[row.metricId]) sparklines[row.metricId] = [];
+    sparklines[row.metricId].push({
+      date: String(row.date),
+      value: Number(row.total),
+    });
+  }
 
   // Fetch today's food data
   const todayFood = await db
@@ -115,6 +137,7 @@ export default async function DashboardPage() {
       }))}
       foodTotals={foodTotals}
       mealSummaries={mealSummaries}
+      sparklines={sparklines}
     />
   );
 }
