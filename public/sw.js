@@ -28,6 +28,48 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// Push: show notification when push message received
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+
+  const data = event.data.json();
+  const options = {
+    body: data.body || "",
+    icon: data.icon || "/icons/icon-192.png",
+    badge: data.badge || "/icons/icon-192.png",
+    data: data.data || {},
+    vibrate: [100, 50, 100],
+    tag: "diamondheart-notification",
+    renotify: true,
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || "Diamondheart", options)
+  );
+});
+
+// Notification click: open the app to the relevant page
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const href = event.notification.data?.href || "/dashboard";
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clients) => {
+        // Focus existing window if available
+        for (const client of clients) {
+          if (client.url.includes(self.registration.scope) && "focus" in client) {
+            client.navigate(href);
+            return client.focus();
+          }
+        }
+        // Open new window
+        return self.clients.openWindow(href);
+      })
+  );
+});
+
 // Fetch: network-first for pages/API, cache-first for static assets
 self.addEventListener("fetch", (event) => {
   const { request } = event;

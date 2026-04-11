@@ -5,6 +5,7 @@ import { notifications } from "@/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { sendPushToUser } from "@/lib/server/web-push";
 
 type Result = { success: boolean; error?: string };
 
@@ -93,4 +94,7 @@ export async function createNotification({
     href: href ?? null,
     referenceId: referenceId ?? null,
   });
+
+  // Send push notification (non-blocking — don't fail if push fails)
+  sendPushToUser(userId, { title, body, href }).catch(() => {});
 }
