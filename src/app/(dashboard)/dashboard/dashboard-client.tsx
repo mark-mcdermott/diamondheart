@@ -59,6 +59,7 @@ interface DashboardClientProps {
   foodTotals: { calories: number; protein: number; carbs: number; fat: number };
   mealSummaries: Record<string, MealSummary>;
   sparklines: Record<string, { date: string; value: number }[]>;
+  dashboardSections: string[];
 }
 
 // Icon mapping
@@ -194,7 +195,7 @@ function InlineSparkline({ data, color, completed }: { data: number[]; color: st
   );
 }
 
-export function DashboardClient({ metrics, todayEntries, recentEntries, foodTotals, mealSummaries, sparklines }: DashboardClientProps) {
+export function DashboardClient({ metrics, todayEntries, recentEntries, foodTotals, mealSummaries, sparklines, dashboardSections }: DashboardClientProps) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [entryMetric, setEntryMetric] = useState<TrackerMetric | null>(null);
   const [entryValue, setEntryValue] = useState("");
@@ -290,7 +291,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
       ) : (
         <>
           {/* Goal Cards */}
-          <section className="mb-12 fade-section" style={{ animationDelay: "120ms" }}>
+          {dashboardSections.includes("goals") && <section className="mb-12 fade-section" style={{ animationDelay: "120ms" }}>
             <h3 className="text-xs font-medium text-muted-foreground uppercase mb-5" style={{ letterSpacing: "0.1em" }}>
               Today&apos;s Goals
             </h3>
@@ -406,13 +407,13 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                 );
               })}
             </div>
-          </section>
+          </section>}
 
           {/* Weekly Overview Chart */}
           <WeeklyChart metrics={metrics} sparklines={sparklines} />
 
           {/* Counters */}
-          {counterMetrics.length > 0 && (
+          {dashboardSections.includes("counters") && counterMetrics.length > 0 && (
             <section className="mb-12 -mt-4 fade-section" style={{ animationDelay: "180ms" }}>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
                 {counterMetrics.map((metric, index) => {
@@ -459,7 +460,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
           )}
 
           {/* Nourishment (Food) */}
-          <section className="mb-12 fade-section" style={{ animationDelay: "240ms" }}>
+          {dashboardSections.includes("food") && <section className="mb-12 fade-section" style={{ animationDelay: "240ms" }}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-xs font-medium text-muted-foreground uppercase" style={{ letterSpacing: "0.1em" }}>
                 Nourishment
@@ -518,10 +519,10 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                 );
               })}
             </div>
-          </section>
+          </section>}
 
           {/* Recent Activity */}
-          {recentNonToday.length > 0 && (
+          {dashboardSections.includes("recent") && recentNonToday.length > 0 && (
             <section className="fade-section" style={{ animationDelay: "300ms" }}>
               <h3 className="text-xs font-medium text-muted-foreground uppercase mb-5" style={{ letterSpacing: "0.1em" }}>
                 Recent Activity
