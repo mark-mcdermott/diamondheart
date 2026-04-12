@@ -4,18 +4,10 @@ import { db } from "@/db";
 import { userPreferences } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
+import { DEFAULT_DASHBOARD_SECTIONS } from "@/lib/config/dashboard-sections";
 import { revalidatePath } from "next/cache";
 
 type Result = { success: boolean; error?: string };
-
-export const DASHBOARD_SECTIONS = [
-  { key: "goals", label: "Today's Goals" },
-  { key: "counters", label: "Counters" },
-  { key: "food", label: "Food" },
-  { key: "recent", label: "Recent Activity" },
-];
-
-const DEFAULT_DASHBOARD_SECTIONS = ["goals", "counters", "food", "recent"];
 
 const DEFAULT_PREFERENCES = {
   useNetflixUI: false,

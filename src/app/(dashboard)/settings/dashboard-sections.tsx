@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { updateDashboardSections, DASHBOARD_SECTIONS } from "@/app/actions/preferences";
+import { updateDashboardSections } from "@/app/actions/preferences";
+import { DASHBOARD_SECTIONS } from "@/lib/config/dashboard-sections";
 import {
   DndContext,
   closestCenter,
