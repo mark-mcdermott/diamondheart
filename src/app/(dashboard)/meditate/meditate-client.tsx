@@ -267,26 +267,26 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
             {isActive ? (
               /* Running/paused/finished: show ring */
               <div className="relative inline-flex items-center justify-center" style={{ width: ringSize, height: ringSize }}>
-                <svg width={ringSize} height={ringSize} className="-rotate-90">
+                <svg width={ringSize} height={ringSize} className="-rotate-90" style={{ overflow: "visible" }}>
                   <circle
                     cx={ringSize / 2}
                     cy={ringSize / 2}
                     r={ringRadius}
                     fill="none"
-                    stroke="hsl(var(--muted))"
                     strokeWidth={ringStroke}
+                    style={{ stroke: "var(--app-border)" }}
                   />
                   <circle
                     cx={ringSize / 2}
                     cy={ringSize / 2}
                     r={ringRadius}
                     fill="none"
-                    stroke={finished ? "var(--app-success)" : "hsl(var(--primary))"}
                     strokeWidth={ringStroke}
                     strokeLinecap="round"
                     strokeDasharray={ringCircumference}
                     strokeDashoffset={ringOffset}
                     className="transition-all duration-700 ease-out"
+                    style={{ stroke: finished ? "var(--app-success)" : "var(--app-primary)" }}
                   />
                 </svg>
                 {/* Dot at progress tip */}
@@ -294,14 +294,14 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
                   width={ringSize}
                   height={ringSize}
                   className="absolute inset-0"
-                  style={{ transform: `rotate(${(progress / 100) * 360 - 90}deg)` }}
+                  style={{ transform: `rotate(${(progress / 100) * 360}deg)`, overflow: "visible" }}
                 >
                   <circle
                     cx={ringSize / 2}
                     cy={ringStroke / 2}
-                    r={ringStroke / 2 + 2}
-                    fill={finished ? "var(--app-success)" : "hsl(var(--primary))"}
+                    r={ringStroke / 2 + 4}
                     className="transition-all duration-700 ease-out"
+                    style={{ fill: finished ? "var(--app-success)" : "var(--app-primary)" }}
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
