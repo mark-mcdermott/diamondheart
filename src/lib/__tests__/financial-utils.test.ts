@@ -9,8 +9,8 @@ import {
   INVESTMENT_TYPES,
   RETIREMENT_PLAN_TYPES,
   PROPERTY_TYPES,
+  calculateRetirementProjection,
 } from "@/lib/financial-utils";
-import { calculateRetirementProjection } from "@/app/actions/financial";
 
 describe("formatCents", () => {
   it("formats positive cents as USD currency", () => {

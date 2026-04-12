@@ -32,12 +32,11 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { formatCents, RETIREMENT_PLAN_TYPES } from "@/lib/financial-utils";
+import { formatCents, RETIREMENT_PLAN_TYPES, calculateRetirementProjection } from "@/lib/financial-utils";
 import {
   addRetirementPlan,
   updateRetirementPlan,
   deleteRetirementPlan,
-  calculateRetirementProjection,
 } from "@/app/actions/financial";
 import type { FinancialRetirementPlan } from "@/db/schema";
 

@@ -75,3 +75,49 @@ export function accountTypeLabel(type: string): string {
 export function investmentTypeLabel(type: string): string {
   return INVESTMENT_TYPES.find((t) => t.value === type)?.label ?? type;
 }
+
+export function calculateRetirementProjection(params: {
+  currentBalance: number;
+  monthlyContribution: number;
+  employerMatchPercent: number;
+  annualReturnPercent: number;
+  currentAge: number;
+  retirementAge: number;
+  inflationRate?: number;
+}) {
+  const {
+    currentBalance,
+    monthlyContribution,
+    employerMatchPercent,
+    annualReturnPercent,
+    currentAge,
+    retirementAge,
+    inflationRate = 0.03,
+  } = params;
+
+  const yearsToRetirement = retirementAge - currentAge;
+  if (yearsToRetirement <= 0) return { projectedBalance: currentBalance, yearlyProjections: [] };
+
+  const monthlyReturn = annualReturnPercent / 12;
+  const totalMonthlyContribution = monthlyContribution * (1 + employerMatchPercent);
+
+  let balance = currentBalance;
+  const yearlyProjections: Array<{ age: number; balance: number; balanceInflationAdjusted: number }> = [];
+
+  for (let year = 1; year <= yearsToRetirement; year++) {
+    for (let month = 0; month < 12; month++) {
+      balance = balance * (1 + monthlyReturn) + totalMonthlyContribution;
+    }
+    const inflationAdjusted = balance / Math.pow(1 + inflationRate, year);
+    yearlyProjections.push({
+      age: currentAge + year,
+      balance: Math.round(balance * 100) / 100,
+      balanceInflationAdjusted: Math.round(inflationAdjusted * 100) / 100,
+    });
+  }
+
+  return {
+    projectedBalance: Math.round(balance * 100) / 100,
+    yearlyProjections,
+  };
+}
