@@ -32,7 +32,7 @@ export function FeatureCards({ title, subtitle, features }: FeatureCardsProps) {
             )}
           </div>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger-children">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 stagger-children">
           {features.map((feature) => (
             <div key={feature.title} className="bg-card rounded-2xl border border-border p-7 card-texture transition-all duration-300 hover:border-primary/30 hover:shadow-md">
               <div className="flex items-center gap-3 mb-4">

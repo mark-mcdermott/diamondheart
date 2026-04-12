@@ -35,7 +35,7 @@ export function ImageFeatures({
 
   const featuresEl = (
     <div
-      className={`flex flex-col flex-wrap lg:py-6 -mb-10 lg:w-1/2 lg:text-left text-center ${
+      className={`flex flex-col flex-wrap lg:py-6 -mb-10 w-full lg:w-1/2 lg:text-left text-center ${
         imagePosition === "left" ? "lg:pl-12" : "lg:pr-12"
       }`}
     >
