@@ -8,6 +8,16 @@ import { revalidatePath } from "next/cache";
 
 type Result = { success: boolean; error?: string };
 
+function parseIntOrNull(value: FormDataEntryValue | null): number | null {
+  if (typeof value !== "string" || value.length === 0) return null;
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+function stringOrNull(value: FormDataEntryValue | null): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
 export async function addEntertainment(formData: FormData): Promise<Result> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
@@ -21,22 +31,21 @@ export async function addEntertainment(formData: FormData): Promise<Result> {
     userId: session.userId,
     type,
     title,
-    creator: (formData.get("creator") as string) || null,
+    creator: stringOrNull(formData.get("creator")),
     status: (formData.get("status") as string) || "completed",
-    rating: formData.get("rating") ? parseInt(formData.get("rating") as string) : null,
-    notes: (formData.get("notes") as string) || null,
+    rating: parseIntOrNull(formData.get("rating")),
+    notes: stringOrNull(formData.get("notes")),
     startDate: formData.get("startDate") ? new Date(formData.get("startDate") as string) : null,
     endDate: formData.get("endDate") ? new Date(formData.get("endDate") as string) : null,
-    tmdbId: formData.get("tmdbId") ? parseInt(formData.get("tmdbId") as string) : null,
-    posterPath: (formData.get("posterPath") as string) || null,
-    backdropPath: (formData.get("backdropPath") as string) || null,
-    overview: (formData.get("overview") as string) || null,
-    releaseDate: (formData.get("releaseDate") as string) || null,
-    genres: (formData.get("genres") as string) || null,
-    seasonCount: formData.get("seasonCount") ? parseInt(formData.get("seasonCount") as string) : null,
-    episodeCount: formData.get("episodeCount") ? parseInt(formData.get("episodeCount") as string) : null,
-    runtime: formData.get("runtime") ? parseInt(formData.get("runtime") as string) : null,
-    voteAverage: (formData.get("voteAverage") as string) || null,
+    imdbId: stringOrNull(formData.get("imdbId")),
+    posterUrl: stringOrNull(formData.get("posterUrl")),
+    overview: stringOrNull(formData.get("overview")),
+    releaseDate: stringOrNull(formData.get("releaseDate")),
+    genres: stringOrNull(formData.get("genres")),
+    seasonCount: parseIntOrNull(formData.get("seasonCount")),
+    episodeCount: parseIntOrNull(formData.get("episodeCount")),
+    runtime: parseIntOrNull(formData.get("runtime")),
+    voteAverage: stringOrNull(formData.get("voteAverage")),
   });
 
   revalidatePath("/entertainment");
@@ -50,9 +59,7 @@ export async function updateEntertainment(formData: FormData): Promise<Result> {
   const itemId = formData.get("itemId") as string;
   if (!itemId) return { success: false, error: "Item ID required" };
 
-  const updates: Record<string, unknown> = {
-    updatedAt: new Date(),
-  };
+  const updates: Record<string, unknown> = { updatedAt: new Date() };
 
   const title = formData.get("title") as string;
   if (title) updates.title = title;
@@ -60,40 +67,34 @@ export async function updateEntertainment(formData: FormData): Promise<Result> {
   const status = formData.get("status") as string;
   if (status) updates.status = status;
 
-  const ratingStr = formData.get("rating") as string;
-  updates.rating = ratingStr ? parseInt(ratingStr) : null;
+  updates.rating = parseIntOrNull(formData.get("rating"));
+  updates.notes = stringOrNull(formData.get("notes"));
 
-  updates.notes = (formData.get("notes") as string) || null;
+  const imdbId = stringOrNull(formData.get("imdbId"));
+  if (imdbId) updates.imdbId = imdbId;
 
-  // TMDB fields
-  const tmdbId = formData.get("tmdbId") as string;
-  if (tmdbId) updates.tmdbId = parseInt(tmdbId);
+  const posterUrl = stringOrNull(formData.get("posterUrl"));
+  if (posterUrl) updates.posterUrl = posterUrl;
 
-  const posterPath = formData.get("posterPath") as string;
-  if (posterPath) updates.posterPath = posterPath;
-
-  const backdropPath = formData.get("backdropPath") as string;
-  if (backdropPath) updates.backdropPath = backdropPath;
-
-  const overview = formData.get("overview") as string;
+  const overview = stringOrNull(formData.get("overview"));
   if (overview) updates.overview = overview;
 
-  const releaseDate = formData.get("releaseDate") as string;
+  const releaseDate = stringOrNull(formData.get("releaseDate"));
   if (releaseDate) updates.releaseDate = releaseDate;
 
-  const genres = formData.get("genres") as string;
+  const genres = stringOrNull(formData.get("genres"));
   if (genres) updates.genres = genres;
 
-  const seasonCount = formData.get("seasonCount") as string;
-  if (seasonCount) updates.seasonCount = parseInt(seasonCount);
+  const seasonCount = parseIntOrNull(formData.get("seasonCount"));
+  if (seasonCount !== null) updates.seasonCount = seasonCount;
 
-  const episodeCount = formData.get("episodeCount") as string;
-  if (episodeCount) updates.episodeCount = parseInt(episodeCount);
+  const episodeCount = parseIntOrNull(formData.get("episodeCount"));
+  if (episodeCount !== null) updates.episodeCount = episodeCount;
 
-  const runtime = formData.get("runtime") as string;
-  if (runtime) updates.runtime = parseInt(runtime);
+  const runtime = parseIntOrNull(formData.get("runtime"));
+  if (runtime !== null) updates.runtime = runtime;
 
-  const voteAverage = formData.get("voteAverage") as string;
+  const voteAverage = stringOrNull(formData.get("voteAverage"));
   if (voteAverage) updates.voteAverage = voteAverage;
 
   await db.update(entertainmentItems)
