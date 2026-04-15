@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -627,6 +628,10 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add to Library</DialogTitle>
+            <DialogDescription className="sr-only">
+              Review details and pick a status before saving this title to your
+              library.
+            </DialogDescription>
           </DialogHeader>
           {addingResult && (
             <div className="space-y-4 mt-2">
@@ -724,6 +729,13 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
         <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
           {selectedItem && (
             <>
+              <DialogHeader className="sr-only">
+                <DialogTitle>{selectedItem.title}</DialogTitle>
+                <DialogDescription>
+                  Edit status, rating, notes, and watched episodes for this
+                  title.
+                </DialogDescription>
+              </DialogHeader>
               {/* Hero (uses poster as backdrop since OMDB has no separate backdrop) */}
               {selectedItem.posterUrl ? (
                 <div className="relative w-full h-48 sm:h-56 overflow-hidden">
@@ -752,9 +764,9 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
                 </div>
               ) : (
                 <div className="px-6 pt-6">
-                  <DialogHeader>
-                    <DialogTitle>{selectedItem.title}</DialogTitle>
-                  </DialogHeader>
+                  <h3 className="text-lg leading-none font-semibold font-display">
+                    {selectedItem.title}
+                  </h3>
                 </div>
               )}
 
