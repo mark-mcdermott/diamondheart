@@ -35,7 +35,8 @@ export async function GET(
   }
 
   const url = `https://www.omdbapi.com/?i=${encodeURIComponent(id)}&plot=full&apikey=${apiKey}`;
-  const response = await fetch(url);
+  // OMDb metadata changes rarely — cache server-side for a week to stay well under the free tier.
+  const response = await fetch(url, { next: { revalidate: 604800 } });
   if (!response.ok) {
     return NextResponse.json(
       { error: "Failed to fetch from OMDB" },
