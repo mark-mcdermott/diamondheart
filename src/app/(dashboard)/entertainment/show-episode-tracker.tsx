@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { ChevronDown, Loader2, Check } from "lucide-react";
+import Image from "next/image";
+import { ChevronDown, Loader2, Check, Film } from "lucide-react";
 import {
   getWatchedEpisodes,
   setEpisodeWatched,
@@ -26,12 +27,18 @@ interface ShowEpisodeTrackerProps {
   seasonCount: number;
 }
 
+// Module-level poster cache so the same episode isn't re-fetched across modal opens.
+const posterCache = new Map<string, string | null>();
+
 export function ShowEpisodeTracker({
   seriesImdbId,
   seasonCount,
 }: ShowEpisodeTrackerProps) {
   const [watched, setWatched] = useState<Set<string>>(new Set());
   const [seasons, setSeasons] = useState<Map<number, SeasonState>>(new Map());
+  const [posters, setPosters] = useState<Map<string, string | null>>(
+    () => new Map(posterCache),
+  );
   const [openSeason, setOpenSeason] = useState<number | null>(null);
   const [, startTransition] = useTransition();
 
@@ -48,6 +55,25 @@ export function ShowEpisodeTracker({
     };
   }, [seriesImdbId]);
 
+  async function loadPosters(episodes: Episode[]) {
+    const missing = episodes.filter((e) => !posterCache.has(e.imdbId));
+    await Promise.allSettled(
+      missing.map(async (ep) => {
+        try {
+          const res = await fetch(`/api/omdb/${encodeURIComponent(ep.imdbId)}`);
+          const url = res.ok
+            ? ((await res.json()).posterUrl as string | null)
+            : null;
+          posterCache.set(ep.imdbId, url);
+          setPosters((prev) => new Map(prev).set(ep.imdbId, url));
+        } catch {
+          posterCache.set(ep.imdbId, null);
+          setPosters((prev) => new Map(prev).set(ep.imdbId, null));
+        }
+      }),
+    );
+  }
+
   async function loadSeason(season: number) {
     if (seasons.get(season)?.episodes) return;
     setSeasons((prev) => {
@@ -60,15 +86,17 @@ export function ShowEpisodeTracker({
         `/api/omdb/season?seriesId=${encodeURIComponent(seriesImdbId)}&season=${season}`,
       );
       const data = await res.json();
+      const episodes: Episode[] = data.episodes || [];
       setSeasons((prev) => {
         const next = new Map(prev);
         next.set(season, {
           loading: false,
-          episodes: data.episodes || [],
+          episodes,
           error: data.error ?? null,
         });
         return next;
       });
+      loadPosters(episodes);
     } catch {
       setSeasons((prev) => {
         const next = new Map(prev);
@@ -93,7 +121,6 @@ export function ShowEpisodeTracker({
 
   function toggleEpisode(ep: Episode, season: number) {
     const isWatched = watched.has(ep.imdbId);
-    // Optimistic update
     setWatched((prev) => {
       const next = new Set(prev);
       if (isWatched) next.delete(ep.imdbId);
@@ -170,6 +197,8 @@ export function ShowEpisodeTracker({
                     )}
                   {episodes.map((ep) => {
                     const isWatched = watched.has(ep.imdbId);
+                    const poster = posters.get(ep.imdbId);
+                    const posterLoading = !posters.has(ep.imdbId);
                     return (
                       <button
                         key={ep.imdbId}
@@ -186,6 +215,28 @@ export function ShowEpisodeTracker({
                         >
                           {isWatched && <Check className="w-3.5 h-3.5" />}
                         </span>
+                        <div
+                          className={`relative w-16 aspect-video rounded overflow-hidden bg-muted flex-shrink-0 transition-opacity ${
+                            isWatched ? "opacity-60" : ""
+                          }`}
+                        >
+                          {poster ? (
+                            <Image
+                              src={poster}
+                              alt=""
+                              fill
+                              sizes="64px"
+                              className="object-cover"
+                              unoptimized
+                            />
+                          ) : posterLoading ? (
+                            <div className="absolute inset-0 animate-pulse bg-muted-foreground/10" />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Film className="w-4 h-4 text-muted-foreground/60" />
+                            </div>
+                          )}
+                        </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-baseline gap-2">
                             <span className="text-xs font-mono text-muted-foreground flex-shrink-0">
