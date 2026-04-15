@@ -18,6 +18,7 @@ import { hash } from "bcryptjs";
 import { randomUUID, randomBytes } from "crypto";
 import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
+import { seedBuiltInExercises, seedDemoDataForUser } from "./seed-demo-data";
 
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql);
@@ -175,6 +176,7 @@ async function seed() {
       passwordHash,
       name: u.name,
       role: u.role,
+      avatarUrl: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(u.name)}&backgroundColor=8b5cf6,6366f1,ec4899&backgroundType=gradientLinear`,
     });
     credentials.push({ email: u.email, password, role: u.role });
     console.log(`  Created ${u.role.padEnd(5)} ${u.email}`);
@@ -390,6 +392,18 @@ async function seed() {
     });
   }
   console.log(`  Financial data seeded for ${financeUserIds.length} users`);
+
+  // --- Built-in exercise library (shared across all users) ---
+  console.log("\nSeeding built-in exercise library...");
+  const exerciseIdsByName = await seedBuiltInExercises(db);
+  console.log(`  ${exerciseIdsByName.size} exercises in library`);
+
+  // --- Demo data for the test user (entertainment, meditation, food, etc.) ---
+  console.log("\nSeeding demo data for user@diamondheart.app...");
+  const testUserIndex = seedUsers.findIndex((u) => u.email === "user@diamondheart.app");
+  if (testUserIndex === -1) throw new Error("Test user not found in seedUsers");
+  await seedDemoDataForUser(db, userIds[testUserIndex], exerciseIdsByName);
+  console.log("  Demo data ready");
 
   // --- Write credentials to .secrets ---
   const secretsPath = resolve(import.meta.dirname, "../.secrets");
