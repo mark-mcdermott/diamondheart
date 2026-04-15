@@ -38,22 +38,26 @@ interface NetflixClientProps {
   items: EntertainmentItem[];
 }
 
-interface TmdbResult {
-  id: number;
+interface OmdbResult {
+  imdbId: string;
   title: string;
-  poster_path: string | null;
-  backdrop_path: string | null;
-  overview: string;
-  release_date: string;
-  vote_average: number;
-  media_type: string;
+  year: string;
+  type: "movie" | "show";
+  posterUrl: string | null;
 }
 
-interface TmdbDetails extends TmdbResult {
+interface OmdbDetails {
+  imdbId: string;
+  title: string;
+  type: "movie" | "show";
+  year: string | null;
+  posterUrl: string | null;
+  overview: string | null;
+  releaseDate: string | null;
   genres: string[];
   runtime: number | null;
-  number_of_seasons: number | null;
-  number_of_episodes: number | null;
+  seasonCount: number | null;
+  imdbRating: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -118,12 +122,12 @@ function RatingStars({
 }
 
 function PosterCard({
-  posterPath,
+  posterUrl,
   title,
   onClick,
   overlay,
 }: {
-  posterPath: string | null;
+  posterUrl: string | null;
   title: string;
   onClick?: () => void;
   overlay?: React.ReactNode;
@@ -135,9 +139,9 @@ function PosterCard({
       className="group relative flex-shrink-0 w-[140px] sm:w-[160px] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
     >
       <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-muted transition-transform duration-200 group-hover:scale-105">
-        {posterPath ? (
+        {posterUrl ? (
           <Image
-            src={`https://image.tmdb.org/t/p/w500${posterPath}`}
+            src={posterUrl}
             alt={title}
             fill
             sizes="160px"
@@ -254,7 +258,7 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
   const [isPending, startTransition] = useTransition();
   const [items, setItems] = useState(serverItems);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<TmdbResult[]>([]);
+  const [searchResults, setSearchResults] = useState<OmdbResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [activeType, setActiveType] = useState("all");
 
@@ -266,17 +270,17 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
   const [detailStatus, setDetailStatus] = useState("completed");
   const [detailNotes, setDetailNotes] = useState("");
 
-  // Add dialog state (from TMDB search result)
-  const [addingResult, setAddingResult] = useState<TmdbResult | null>(null);
+  // Add dialog state (from OMDB search result)
+  const [addingResult, setAddingResult] = useState<OmdbResult | null>(null);
   const [addStatus, setAddStatus] = useState("queued");
-  const [addDetails, setAddDetails] = useState<TmdbDetails | null>(null);
+  const [addDetails, setAddDetails] = useState<OmdbDetails | null>(null);
 
   // Sync server items into local state
   useEffect(() => {
     setItems(serverItems);
   }, [serverItems]);
 
-  // Debounced TMDB search
+  // Debounced OMDB search
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -286,23 +290,25 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
     const timeout = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const [movieRes, tvRes] = await Promise.all([
+        const [movieRes, showRes] = await Promise.all([
           fetch(
-            `/api/tmdb/search?query=${encodeURIComponent(searchQuery)}&type=movie`
+            `/api/omdb/search?query=${encodeURIComponent(searchQuery)}&type=movie`
           ),
           fetch(
-            `/api/tmdb/search?query=${encodeURIComponent(searchQuery)}&type=tv`
+            `/api/omdb/search?query=${encodeURIComponent(searchQuery)}&type=show`
           ),
         ]);
         const movieData = await movieRes.json();
-        const tvData = await tvRes.json();
-        const combined = [
+        const showData = await showRes.json();
+        const combined: OmdbResult[] = [
           ...(movieData.results || []),
-          ...(tvData.results || []),
-        ].sort(
-          (a: TmdbResult, b: TmdbResult) =>
-            (b.vote_average || 0) - (a.vote_average || 0)
-        );
+          ...(showData.results || []),
+        ];
+        // Prefer results with posters
+        combined.sort((a, b) => {
+          if (!!a.posterUrl === !!b.posterUrl) return 0;
+          return a.posterUrl ? -1 : 1;
+        });
         setSearchResults(combined);
       } catch {
         setSearchResults([]);
@@ -314,7 +320,7 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
     return () => clearTimeout(timeout);
   }, [searchQuery]);
 
-  // Fetch TMDB details when opening add dialog
+  // Fetch OMDB details when opening add dialog
   useEffect(() => {
     if (!addingResult) {
       setAddDetails(null);
@@ -323,9 +329,8 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(
-          `/api/tmdb/${addingResult.id}?type=${addingResult.media_type}`
-        );
+        const res = await fetch(`/api/omdb/${encodeURIComponent(addingResult.imdbId)}`);
+        if (!res.ok) return;
         const data = await res.json();
         if (!cancelled) setAddDetails(data);
       } catch {
@@ -339,7 +344,7 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
 
   // ------- Handlers -------
 
-  function handleAddFromTmdb() {
+  function handleAddFromOmdb() {
     if (!addingResult) return;
     const result = addingResult;
     const details = addDetails;
@@ -347,22 +352,18 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
     startTransition(async () => {
       const fd = new FormData();
       fd.set("title", result.title);
-      fd.set("type", result.media_type === "tv" ? "show" : "movie");
+      fd.set("type", result.type);
       fd.set("status", addStatus);
-      fd.set("tmdbId", String(result.id));
-      if (result.poster_path) fd.set("posterPath", result.poster_path);
-      if (result.backdrop_path) fd.set("backdropPath", result.backdrop_path);
-      if (result.overview) fd.set("overview", result.overview);
-      if (result.release_date) fd.set("releaseDate", result.release_date);
-      if (result.vote_average)
-        fd.set("voteAverage", String(result.vote_average));
-      if (details?.genres?.length)
-        fd.set("genres", details.genres.join(", "));
+      fd.set("imdbId", result.imdbId);
+      if (result.posterUrl) fd.set("posterUrl", result.posterUrl);
+      if (details?.overview) fd.set("overview", details.overview);
+      if (details?.releaseDate) fd.set("releaseDate", details.releaseDate);
+      else if (result.year) fd.set("releaseDate", result.year);
+      if (details?.imdbRating) fd.set("voteAverage", details.imdbRating);
+      if (details?.genres?.length) fd.set("genres", details.genres.join(", "));
       if (details?.runtime) fd.set("runtime", String(details.runtime));
-      if (details?.number_of_seasons)
-        fd.set("seasonCount", String(details.number_of_seasons));
-      if (details?.number_of_episodes)
-        fd.set("episodeCount", String(details.number_of_episodes));
+      if (details?.seasonCount)
+        fd.set("seasonCount", String(details.seasonCount));
 
       await addEntertainment(fd);
       setAddingResult(null);
@@ -417,9 +418,9 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
 
   const isSearchActive = searchQuery.trim().length > 0;
 
-  // Check if a TMDB result is already in library
-  const libraryTmdbIds = new Set(
-    items.filter((i) => i.tmdbId).map((i) => i.tmdbId)
+  // Check if an OMDB result is already in library
+  const libraryImdbIds = new Set(
+    items.filter((i) => i.imdbId).map((i) => i.imdbId)
   );
 
   return (
@@ -492,11 +493,11 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
               {searchResults.slice(0, 18).map((result) => {
-                const inLibrary = libraryTmdbIds.has(result.id);
+                const inLibrary = libraryImdbIds.has(result.imdbId);
                 return (
-                  <div key={`${result.media_type}-${result.id}`} className="relative">
+                  <div key={result.imdbId} className="relative">
                     <PosterCard
-                      posterPath={result.poster_path}
+                      posterUrl={result.posterUrl}
                       title={result.title}
                       onClick={() => {
                         if (!inLibrary) {
@@ -528,10 +529,10 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
                     )}
                     <div className="flex items-center gap-1 mt-0.5 px-0.5">
                       <span className="text-[10px] text-muted-foreground">
-                        {result.release_date?.slice(0, 4) || "N/A"}
+                        {result.year?.slice(0, 4) || "N/A"}
                       </span>
                       <span className="text-[10px] text-muted-foreground uppercase">
-                        {result.media_type === "tv" ? "TV" : "Movie"}
+                        {result.type === "show" ? "TV" : "Movie"}
                       </span>
                     </div>
                   </div>
@@ -566,7 +567,7 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
               {watching.map((item) => (
                 <PosterCard
                   key={item.id}
-                  posterPath={item.posterPath}
+                  posterUrl={item.posterUrl}
                   title={item.title}
                   onClick={() => openDetail(item)}
                 />
@@ -579,7 +580,7 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
               {queued.map((item) => (
                 <PosterCard
                   key={item.id}
-                  posterPath={item.posterPath}
+                  posterUrl={item.posterUrl}
                   title={item.title}
                   onClick={() => openDetail(item)}
                 />
@@ -592,7 +593,7 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
               {completed.map((item) => (
                 <PosterCard
                   key={item.id}
-                  posterPath={item.posterPath}
+                  posterUrl={item.posterUrl}
                   title={item.title}
                   onClick={() => openDetail(item)}
                 />
@@ -605,7 +606,7 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
               {dropped.map((item) => (
                 <PosterCard
                   key={item.id}
-                  posterPath={item.posterPath}
+                  posterUrl={item.posterUrl}
                   title={item.title}
                   onClick={() => openDetail(item)}
                 />
@@ -615,7 +616,7 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
         </>
       )}
 
-      {/* Add from TMDB dialog */}
+      {/* Add from OMDB dialog */}
       <Dialog
         open={!!addingResult}
         onOpenChange={(open) => {
@@ -629,10 +630,10 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
           {addingResult && (
             <div className="space-y-4 mt-2">
               <div className="flex gap-4">
-                {addingResult.poster_path ? (
+                {addingResult.posterUrl ? (
                   <div className="relative w-20 aspect-[2/3] rounded overflow-hidden flex-shrink-0">
                     <Image
-                      src={`https://image.tmdb.org/t/p/w500${addingResult.poster_path}`}
+                      src={addingResult.posterUrl}
                       alt={addingResult.title}
                       fill
                       sizes="80px"
@@ -653,25 +654,25 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
                     {addingResult.title}
                   </h4>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {addingResult.release_date?.slice(0, 4) || "N/A"} &middot;{" "}
-                    {addingResult.media_type === "tv" ? "TV Show" : "Movie"}
+                    {addingResult.year?.slice(0, 4) || "N/A"} &middot;{" "}
+                    {addingResult.type === "show" ? "TV Show" : "Movie"}
                   </p>
                   {addDetails?.genres && addDetails.genres.length > 0 && (
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {addDetails.genres.join(", ")}
                     </p>
                   )}
-                  {addingResult.vote_average > 0 && (
+                  {addDetails?.imdbRating && (
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      TMDB: {addingResult.vote_average.toFixed(1)}/10
+                      IMDb: {addDetails.imdbRating}/10
                     </p>
                   )}
                 </div>
               </div>
 
-              {addingResult.overview && (
+              {addDetails?.overview && (
                 <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
-                  {addingResult.overview}
+                  {addDetails.overview}
                 </p>
               )}
 
@@ -692,7 +693,7 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
 
               <div className="flex gap-3 pt-2 justify-end">
                 <Button
-                  onClick={handleAddFromTmdb}
+                  onClick={handleAddFromOmdb}
                   disabled={isPending}
                   size="sm"
                 >
@@ -722,22 +723,28 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
         <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
           {selectedItem && (
             <>
-              {/* Backdrop */}
-              {selectedItem.backdropPath ? (
-                <div className="relative w-full h-48 sm:h-56">
-                  <Image
-                    src={`https://image.tmdb.org/t/p/w1280${selectedItem.backdropPath}`}
-                    alt={selectedItem.title}
-                    fill
-                    sizes="(max-width: 640px) 100vw, 512px"
-                    className="object-cover"
-                    unoptimized
+              {/* Hero (uses poster as backdrop since OMDB has no separate backdrop) */}
+              {selectedItem.posterUrl ? (
+                <div className="relative w-full h-48 sm:h-56 overflow-hidden">
+                  <div
+                    className="absolute inset-0 bg-center bg-cover blur-xl scale-110 opacity-60"
+                    style={{ backgroundImage: `url(${selectedItem.posterUrl})` }}
                   />
+                  <div className="absolute inset-0 flex items-center justify-center p-4">
+                    <div className="relative h-full aspect-[2/3]">
+                      <Image
+                        src={selectedItem.posterUrl}
+                        alt={selectedItem.title}
+                        fill
+                        sizes="(max-width: 640px) 40vw, 180px"
+                        className="object-contain drop-shadow-lg"
+                        unoptimized
+                      />
+                    </div>
+                  </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4">
-                    <h3
-                      className="text-xl font-bold text-white drop-shadow-md"
-                    >
+                    <h3 className="text-xl font-bold text-white drop-shadow-md">
                       {selectedItem.title}
                     </h3>
                   </div>
@@ -767,7 +774,7 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
                     </span>
                   )}
                   {selectedItem.voteAverage && (
-                    <span>TMDB: {parseFloat(selectedItem.voteAverage).toFixed(1)}/10</span>
+                    <span>IMDb: {selectedItem.voteAverage}/10</span>
                   )}
                 </div>
 
