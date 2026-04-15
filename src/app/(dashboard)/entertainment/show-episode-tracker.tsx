@@ -1,0 +1,224 @@
+"use client";
+
+import { useEffect, useState, useTransition } from "react";
+import { ChevronDown, Loader2, Check } from "lucide-react";
+import {
+  getWatchedEpisodes,
+  setEpisodeWatched,
+} from "@/app/actions/show-episodes";
+
+interface Episode {
+  imdbId: string;
+  title: string;
+  episode: number | null;
+  airDate: string | null;
+  imdbRating: string | null;
+}
+
+interface SeasonState {
+  loading: boolean;
+  episodes: Episode[] | null;
+  error: string | null;
+}
+
+interface ShowEpisodeTrackerProps {
+  seriesImdbId: string;
+  seasonCount: number;
+}
+
+export function ShowEpisodeTracker({
+  seriesImdbId,
+  seasonCount,
+}: ShowEpisodeTrackerProps) {
+  const [watched, setWatched] = useState<Set<string>>(new Set());
+  const [seasons, setSeasons] = useState<Map<number, SeasonState>>(new Map());
+  const [openSeason, setOpenSeason] = useState<number | null>(null);
+  const [, startTransition] = useTransition();
+
+  // Load already-watched episodes once.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const rows = await getWatchedEpisodes(seriesImdbId);
+      if (cancelled) return;
+      setWatched(new Set(rows.map((r) => r.episodeImdbId)));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [seriesImdbId]);
+
+  async function loadSeason(season: number) {
+    if (seasons.get(season)?.episodes) return;
+    setSeasons((prev) => {
+      const next = new Map(prev);
+      next.set(season, { loading: true, episodes: null, error: null });
+      return next;
+    });
+    try {
+      const res = await fetch(
+        `/api/omdb/season?seriesId=${encodeURIComponent(seriesImdbId)}&season=${season}`,
+      );
+      const data = await res.json();
+      setSeasons((prev) => {
+        const next = new Map(prev);
+        next.set(season, {
+          loading: false,
+          episodes: data.episodes || [],
+          error: data.error ?? null,
+        });
+        return next;
+      });
+    } catch {
+      setSeasons((prev) => {
+        const next = new Map(prev);
+        next.set(season, {
+          loading: false,
+          episodes: [],
+          error: "Failed to load",
+        });
+        return next;
+      });
+    }
+  }
+
+  function toggleSeason(season: number) {
+    if (openSeason === season) {
+      setOpenSeason(null);
+      return;
+    }
+    setOpenSeason(season);
+    loadSeason(season);
+  }
+
+  function toggleEpisode(ep: Episode, season: number) {
+    const isWatched = watched.has(ep.imdbId);
+    // Optimistic update
+    setWatched((prev) => {
+      const next = new Set(prev);
+      if (isWatched) next.delete(ep.imdbId);
+      else next.add(ep.imdbId);
+      return next;
+    });
+
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("seriesImdbId", seriesImdbId);
+      fd.set("episodeImdbId", ep.imdbId);
+      fd.set("watched", isWatched ? "false" : "true");
+      fd.set("season", String(season));
+      if (ep.episode !== null) fd.set("episode", String(ep.episode));
+      if (ep.title) fd.set("title", ep.title);
+      if (ep.airDate) fd.set("airDate", ep.airDate);
+      await setEpisodeWatched(fd);
+    });
+  }
+
+  const seasonsList = Array.from({ length: seasonCount }, (_, i) => i + 1);
+
+  return (
+    <div className="space-y-2">
+      <h4 className="text-sm font-semibold text-foreground">Episodes</h4>
+      <div className="space-y-1.5">
+        {seasonsList.map((season) => {
+          const state = seasons.get(season);
+          const isOpen = openSeason === season;
+          const episodes = state?.episodes ?? [];
+          const watchedInSeason = episodes.filter((e) =>
+            watched.has(e.imdbId),
+          ).length;
+          const totalInSeason = episodes.length;
+
+          return (
+            <div
+              key={season}
+              className="border border-border rounded-lg overflow-hidden"
+            >
+              <button
+                type="button"
+                onClick={() => toggleSeason(season)}
+                className="w-full flex items-center justify-between px-3 py-2 bg-card hover:bg-muted transition-colors cursor-pointer"
+              >
+                <span className="text-sm font-medium">Season {season}</span>
+                <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {totalInSeason > 0 && (
+                    <span>
+                      {watchedInSeason}/{totalInSeason}
+                    </span>
+                  )}
+                  {state?.loading && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  />
+                </span>
+              </button>
+              {isOpen && (
+                <div className="divide-y divide-border border-t border-border">
+                  {state?.error && (
+                    <p className="px-3 py-2 text-xs text-destructive">
+                      {state.error}
+                    </p>
+                  )}
+                  {!state?.loading &&
+                    episodes.length === 0 &&
+                    !state?.error && (
+                      <p className="px-3 py-2 text-xs text-muted-foreground">
+                        No episodes found.
+                      </p>
+                    )}
+                  {episodes.map((ep) => {
+                    const isWatched = watched.has(ep.imdbId);
+                    return (
+                      <button
+                        key={ep.imdbId}
+                        type="button"
+                        onClick={() => toggleEpisode(ep, season)}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-muted transition-colors cursor-pointer"
+                      >
+                        <span
+                          className={`flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                            isWatched
+                              ? "bg-primary border-primary text-primary-foreground"
+                              : "border-border"
+                          }`}
+                        >
+                          {isWatched && <Check className="w-3.5 h-3.5" />}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-xs font-mono text-muted-foreground flex-shrink-0">
+                              {ep.episode !== null
+                                ? `E${String(ep.episode).padStart(2, "0")}`
+                                : "—"}
+                            </span>
+                            <span
+                              className={`text-sm truncate ${
+                                isWatched
+                                  ? "text-muted-foreground line-through"
+                                  : ""
+                              }`}
+                            >
+                              {ep.title}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
+                            {ep.airDate && <span>{ep.airDate}</span>}
+                            {ep.imdbRating && (
+                              <span>IMDb {ep.imdbRating}</span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

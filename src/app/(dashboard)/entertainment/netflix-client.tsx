@@ -18,6 +18,7 @@ import {
   deleteEntertainment,
 } from "@/app/actions/entertainment";
 import type { EntertainmentItem } from "@/db/schema";
+import { ShowEpisodeTracker } from "./show-episode-tracker";
 import {
   Search,
   Plus,
@@ -824,6 +825,17 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
                     rows={3}
                   />
                 </div>
+
+                {/* Episode tracker (shows only) */}
+                {selectedItem.type === "show" &&
+                  selectedItem.imdbId &&
+                  selectedItem.seasonCount &&
+                  selectedItem.seasonCount > 0 && (
+                    <ShowEpisodeTracker
+                      seriesImdbId={selectedItem.imdbId}
+                      seasonCount={selectedItem.seasonCount}
+                    />
+                  )}
 
                 {/* Actions */}
                 <div className="flex items-center justify-between pt-2">

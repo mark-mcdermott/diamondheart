@@ -433,6 +433,21 @@ export const entertainmentItems = pgTable('entertainment_items', {
 
 export type EntertainmentItem = typeof entertainmentItems.$inferSelect;
 
+// A row here means the user marked this episode watched. Absence = unwatched.
+export const showEpisodes = pgTable('show_episodes', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	seriesImdbId: text('series_imdb_id').notNull(),
+	episodeImdbId: text('episode_imdb_id').notNull(),
+	season: integer('season').notNull(),
+	episode: integer('episode').notNull(),
+	title: text('title'),
+	airDate: text('air_date'),
+	watchedAt: timestamp('watched_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type ShowEpisode = typeof showEpisodes.$inferSelect;
+
 
 // ============================================
 // Meditation Sessions
