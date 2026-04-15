@@ -39,6 +39,7 @@ export function ShowEpisodeTracker({
   const [posters, setPosters] = useState<Map<string, string | null>>(
     () => new Map(posterCache),
   );
+  const [brokenPosters, setBrokenPosters] = useState<Set<string>>(new Set());
   const [openSeason, setOpenSeason] = useState<number | null>(null);
   const [, startTransition] = useTransition();
 
@@ -197,7 +198,11 @@ export function ShowEpisodeTracker({
                     )}
                   {episodes.map((ep) => {
                     const isWatched = watched.has(ep.imdbId);
-                    const poster = posters.get(ep.imdbId);
+                    const rawPoster = posters.get(ep.imdbId);
+                    const poster =
+                      rawPoster && !brokenPosters.has(ep.imdbId)
+                        ? rawPoster
+                        : null;
                     const posterLoading = !posters.has(ep.imdbId);
                     return (
                       <button
@@ -228,6 +233,11 @@ export function ShowEpisodeTracker({
                               sizes="64px"
                               className="object-cover"
                               unoptimized
+                              onError={() =>
+                                setBrokenPosters((prev) =>
+                                  new Set(prev).add(ep.imdbId),
+                                )
+                              }
                             />
                           ) : posterLoading ? (
                             <div className="absolute inset-0 animate-pulse bg-muted-foreground/10" />
