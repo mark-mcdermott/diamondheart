@@ -10,7 +10,7 @@ import { revalidatePath } from "next/cache";
 type Result = { success: boolean; error?: string };
 
 const DEFAULT_PREFERENCES = {
-  useNetflixUI: false,
+  useNetflixUI: true,
   showSiteName: true,
 } as const;
 
@@ -52,7 +52,7 @@ export async function toggleNetflixUI(formData: FormData): Promise<Result> {
     await db.insert(userPreferences).values({
       id: crypto.randomUUID(),
       userId: session.userId,
-      useNetflixUI: true,
+      useNetflixUI: false,
     });
   }
 
