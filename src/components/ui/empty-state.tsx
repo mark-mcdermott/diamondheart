@@ -28,6 +28,7 @@ export function EmptyState({
           src="/illustration.png"
           alt=""
           className="h-32 w-auto object-contain mb-6 opacity-60"
+          style={{ filter: "drop-shadow(0 10px 30px rgba(255, 160, 120, 0.25))" }}
         />
       ) : Icon ? (
         <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mb-5">
