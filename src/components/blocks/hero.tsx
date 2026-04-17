@@ -44,7 +44,7 @@ export function Hero({
             style={{
               animation: "fade-in-up 0.8s var(--ease-settle) backwards",
               animationDelay: "100ms",
-              background: "radial-gradient(circle at 50% 35%, rgba(255, 248, 240, 0.55) 0%, rgba(255, 248, 240, 0.3) 45%, rgba(255, 248, 240, 0.1) 70%, transparent 90%)",
+              background: "radial-gradient(circle at 50% 35%, rgba(255,248,240,0.45), transparent 90%), radial-gradient(circle at center, transparent 60%, rgba(0,0,0,0.08) 100%)",
             }}
           >
             <img
