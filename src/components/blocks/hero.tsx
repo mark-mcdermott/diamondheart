@@ -39,19 +39,11 @@ export function Hero({
     >
       <div className="hero-content relative z-10 flex flex-col items-center">
         {image && (
-          <div
-            className="mb-8 flex justify-center"
-            style={{
-              animation: "fade-in-up 0.8s var(--ease-settle) backwards",
-              animationDelay: "100ms",
-              background: "radial-gradient(circle at 50% 35%, rgba(255,248,240,0.45), transparent 90%), radial-gradient(circle at center, transparent 60%, rgba(0,0,0,0.08) 100%)",
-            }}
-          >
+          <div className="mb-8 flex justify-center" style={{ animation: "fade-in-up 0.8s var(--ease-settle) backwards", animationDelay: "100ms" }}>
             <img
               src={image}
               alt=""
               className={`hero-image ${imageSizeClass[imageSize]} object-contain`}
-              style={{ filter: "drop-shadow(0 10px 30px rgba(255, 160, 120, 0.25))" }}
             />
           </div>
         )}
