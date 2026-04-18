@@ -250,6 +250,7 @@
 	}
 
 	.hero p {
+		color: rgba(44, 34, 29, 0.78);
 		text-shadow: 0 1px 3px rgba(252, 252, 253, 0.14);
 	}
 
