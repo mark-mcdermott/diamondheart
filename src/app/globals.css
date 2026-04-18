@@ -245,6 +245,14 @@
 		background: radial-gradient(70% 60%, #1A1614, rgba(26, 22, 20, 0.95), rgba(26, 22, 20, 0.85));
 	}
 
+	.hero h1 {
+		text-shadow: 0 2px 12px rgba(252, 252, 253, 0.35);
+	}
+
+	.hero p {
+		text-shadow: 0 1px 8px rgba(252, 252, 253, 0.25);
+	}
+
 	.hero-content {
 		width: 100%;
 		max-width: 36rem;
