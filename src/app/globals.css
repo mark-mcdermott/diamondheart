@@ -250,7 +250,8 @@
 	}
 
 	.hero p {
-		color: rgba(44, 34, 29, 0.78) !important;
+		color: rgba(44, 34, 29, 0.82) !important;
+		line-height: 1.65;
 		text-shadow: 0 1px 3px rgba(252, 252, 253, 0.14);
 	}
 
@@ -265,7 +266,8 @@
 		position: absolute;
 		inset: -2rem -3rem;
 		background: radial-gradient(ellipse at center, rgba(252, 252, 253, 0.42) 0%, rgba(252, 252, 253, 0.22) 38%, rgba(252, 252, 253, 0.08) 62%, rgba(252, 252, 253, 0) 82%);
-		filter: blur(18px);
+		filter: blur(22px);
+		opacity: 0.88;
 		z-index: -1;
 		pointer-events: none;
 	}
