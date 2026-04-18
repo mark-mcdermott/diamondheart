@@ -246,16 +246,27 @@
 	}
 
 	.hero h1 {
-		text-shadow: 0 2px 12px rgba(252, 252, 253, 0.35);
+		text-shadow: 0 1px 4px rgba(252, 252, 253, 0.18);
 	}
 
 	.hero p {
-		text-shadow: 0 1px 8px rgba(252, 252, 253, 0.25);
+		text-shadow: 0 1px 3px rgba(252, 252, 253, 0.14);
 	}
 
 	.hero-content {
+		position: relative;
 		width: 100%;
 		max-width: 36rem;
+	}
+
+	.hero-content::before {
+		content: "";
+		position: absolute;
+		inset: -2rem -3rem;
+		background: radial-gradient(ellipse at center, rgba(252, 252, 253, 0.42) 0%, rgba(252, 252, 253, 0.22) 38%, rgba(252, 252, 253, 0.08) 62%, rgba(252, 252, 253, 0) 82%);
+		filter: blur(18px);
+		z-index: -1;
+		pointer-events: none;
 	}
 }
 
