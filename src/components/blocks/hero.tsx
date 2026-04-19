@@ -39,7 +39,7 @@ export function Hero({
     >
       <div className="hero-content relative z-10 flex flex-col items-center">
         {image && (
-          <div className="mb-8 flex justify-center" style={{ animation: "fade-in-up 0.8s var(--ease-settle) backwards", animationDelay: "100ms", transform: "translateY(4rem)" }}>
+          <div className="mb-8 flex justify-center" style={{ animation: "mascot-enter 0.8s var(--ease-settle) both", animationDelay: "100ms" }}>
             <img
               src={image}
               alt=""

@@ -438,10 +438,16 @@
 	100% { box-shadow: 0 0 0 0 transparent; }
 }
 
-/* Mascot entrance: fade in only */
-@keyframes mascot-fade-in {
-	from { opacity: 0; }
-	to { opacity: 1; }
+/* Mascot entrance: fade in + slide up, always offset by 4rem */
+@keyframes mascot-enter {
+	from {
+		opacity: 0;
+		transform: translateY(calc(4rem + 8px));
+	}
+	to {
+		opacity: 1;
+		transform: translateY(4rem);
+	}
 }
 
 /* Gentle float on the image itself */
