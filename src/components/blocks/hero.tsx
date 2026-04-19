@@ -34,7 +34,7 @@ export function Hero({
 }: HeroProps) {
   return (
     <section
-      className={`hero relative flex flex-col items-center justify-start px-4 pt-24 pb-16 text-center sm:pt-28 sm:pb-24 ${backgroundImage ? "hero-with-bg" : ""}`}
+      className={`hero relative flex flex-col items-center justify-start px-4 pt-32 pb-12 text-center sm:pt-40 sm:pb-20 ${backgroundImage ? "hero-with-bg" : ""}`}
       style={backgroundImage ? { "--hero-bg-url": `url(${backgroundImage})` } as React.CSSProperties : undefined}
     >
       <div className="hero-content relative z-10 flex flex-col items-center">
