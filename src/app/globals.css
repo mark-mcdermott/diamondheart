@@ -245,26 +245,37 @@
 		background: radial-gradient(70% 60%, #1A1614, rgba(26, 22, 20, 0.95), rgba(26, 22, 20, 0.85));
 	}
 
+	.hero-content {
+		--hero-scale: clamp(0.55, calc(100vh / 900), 1);
+		position: relative;
+		width: 100%;
+		max-width: 36rem;
+	}
+
 	.hero-image {
-		height: clamp(8rem, 22vh, 16rem) !important;
+		height: calc(16rem * var(--hero-scale)) !important;
 	}
 
 	.hero h1 {
-		font-size: clamp(1.5rem, 5vh, 3.75rem);
+		font-size: calc(3.75rem * var(--hero-scale));
 		text-shadow: 0 1px 4px rgba(252, 252, 253, 0.18);
 	}
 
 	.hero p {
 		color: rgba(44, 34, 29, 0.82) !important;
-		font-size: clamp(0.875rem, 2vh, 1.125rem);
+		font-size: calc(1.125rem * var(--hero-scale));
 		line-height: 1.65;
 		text-shadow: 0 1px 3px rgba(252, 252, 253, 0.14);
 	}
 
-	.hero-content {
-		position: relative;
-		width: 100%;
-		max-width: 36rem;
+	.hero .hero-content > div {
+		margin-bottom: calc(2rem * var(--hero-scale));
+		margin-top: calc(1.25rem * var(--hero-scale));
+	}
+
+	.hero button, .hero a[class*="btn"], .hero [data-slot="button"] {
+		font-size: calc(1rem * var(--hero-scale));
+		padding: calc(0.625rem * var(--hero-scale)) calc(1.5rem * var(--hero-scale));
 	}
 
 	.hero-content::before {
