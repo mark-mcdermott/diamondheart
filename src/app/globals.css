@@ -438,6 +438,24 @@
 	100% { box-shadow: 0 0 0 0 transparent; }
 }
 
+/* Mascot entrance: fade in and drift down to resting position */
+@keyframes mascot-enter {
+	from {
+		opacity: 0;
+		transform: translateY(2rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(4rem);
+	}
+}
+
+/* Gentle float after landing */
+@keyframes mascot-float {
+	0%, 100% { transform: translateY(4rem); }
+	50% { transform: translateY(3.6rem); }
+}
+
 /* Fade-in for sections */
 @keyframes fade-in-up {
 	from {
