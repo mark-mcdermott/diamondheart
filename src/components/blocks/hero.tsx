@@ -39,7 +39,7 @@ export function Hero({
     >
       <div className="hero-content relative z-10 flex flex-col items-center">
         {image && (
-          <div className="mb-8 flex justify-center" style={{ animation: "mascot-fade-in 1.2s ease-out both", transform: "translateY(4rem)" }}>
+          <div className="mb-8 flex justify-center" style={{ animation: "fade-in-up 0.8s var(--ease-settle) backwards", animationDelay: "100ms", transform: "translateY(4rem)" }}>
             <img
               src={image}
               alt=""
@@ -95,7 +95,7 @@ export function Hero({
               </Button>
             )}
             {secondaryCta && (
-              <Button asChild variant="outline" size="lg" className="bg-transparent hover:bg-[rgba(165,90,54,0.08)]" style={{ color: "#B06A46", borderColor: "rgba(165, 90, 54, 0.35)" }}>
+              <Button asChild variant="outline" size="lg" className="bg-transparent hover:bg-[rgba(165,90,54,0.08)]" style={{ color: "#d45818", borderColor: "rgba(165, 90, 54, 0.35)" }}>
                 <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
               </Button>
             )}
