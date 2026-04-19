@@ -245,12 +245,18 @@
 		background: radial-gradient(70% 60%, #1A1614, rgba(26, 22, 20, 0.95), rgba(26, 22, 20, 0.85));
 	}
 
+	.hero-image {
+		height: clamp(8rem, 22vh, 16rem) !important;
+	}
+
 	.hero h1 {
+		font-size: clamp(1.5rem, 5vh, 3.75rem);
 		text-shadow: 0 1px 4px rgba(252, 252, 253, 0.18);
 	}
 
 	.hero p {
 		color: rgba(44, 34, 29, 0.82) !important;
+		font-size: clamp(0.875rem, 2vh, 1.125rem);
 		line-height: 1.65;
 		text-shadow: 0 1px 3px rgba(252, 252, 253, 0.14);
 	}
