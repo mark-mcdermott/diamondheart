@@ -95,7 +95,7 @@ export function Hero({
               </Button>
             )}
             {secondaryCta && (
-              <Button asChild variant="outline" size="lg" className="bg-transparent hover:bg-[rgba(165,90,54,0.08)]" style={{ color: "#d45818", borderColor: "rgba(165, 90, 54, 0.35)" }}>
+              <Button asChild variant="outline" size="lg" className="bg-transparent hover:bg-[rgba(165,90,54,0.08)]" style={{ color: "#9A4F2E", borderColor: "rgba(154, 79, 46, 0.5)" }}>
                 <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
               </Button>
             )}
