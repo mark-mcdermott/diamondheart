@@ -39,11 +39,12 @@ export function Hero({
     >
       <div className="hero-content relative z-10 flex flex-col items-center">
         {image && (
-          <div className="mb-8 flex justify-center" style={{ animation: "mascot-enter 1.2s ease-out both, mascot-float 4s ease-in-out 15s infinite" }}>
+          <div className="mb-8 flex justify-center" style={{ animation: "mascot-fade-in 1.2s ease-out both", transform: "translateY(4rem)" }}>
             <img
               src={image}
               alt=""
               className={`hero-image ${imageSizeClass[imageSize]} object-contain`}
+              style={{ animation: "mascot-float 4s ease-in-out 15s infinite" }}
             />
           </div>
         )}
