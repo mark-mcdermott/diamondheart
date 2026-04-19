@@ -11,7 +11,7 @@ export default function HomePage() {
         title="Diamondheart"
         image="/illustration.png"
         imageSize="lg"
-        description="Mindful tracking for meditation, wellness, and daily habits."
+        description="Tracking for meditation, wellness & daily habits."
         backgroundImage="/background.png"
         primaryCta={{ label: "Get Started", href: "/signup" }}
         secondaryCta={{ label: "Learn More", href: "/about" }}
