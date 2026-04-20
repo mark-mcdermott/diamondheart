@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { EntertainmentClient } from "./entertainment-client";
 import { NetflixClient } from "./netflix-client";
 import { getUserPreferences } from "@/app/actions/preferences";
+import { PageViewToggle } from "@/components/ui/view-toggle";
 
 export default async function EntertainmentPage() {
   const session = await getCurrentUser();
@@ -45,10 +46,11 @@ export default async function EntertainmentPage() {
         <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div>
+        <div className="flex-1">
           <h2>Entertainment</h2>
           <p className="text-muted-foreground mt-1">Track shows, movies, books, and music</p>
         </div>
+        <PageViewToggle defaultRange="week" available={["week", "month", "year"]} />
       </div>
       <EntertainmentClient items={items} />
     </div>
