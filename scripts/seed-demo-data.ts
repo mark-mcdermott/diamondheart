@@ -589,6 +589,104 @@ async function fetchOmdbPoster(imdbId: string): Promise<string | null> {
   }
 }
 
+export type SeededEpisode = {
+  imdbId: string;
+  title: string;
+  episode: number;
+  airDate: string | null;
+};
+
+type OmdbEpisode = {
+  imdbID?: string;
+  Title?: string;
+  Episode?: string;
+  Released?: string;
+};
+
+export function parseOmdbSeasonResponse(data: unknown): SeededEpisode[] {
+  if (!data || typeof data !== "object") return [];
+  const episodes = (data as { Episodes?: unknown }).Episodes;
+  if (!Array.isArray(episodes)) return [];
+  return episodes.flatMap((raw: OmdbEpisode) => {
+    const episode = raw.Episode ? parseInt(raw.Episode, 10) : NaN;
+    if (!raw.imdbID || !Number.isInteger(episode)) return [];
+    return [{
+      imdbId: raw.imdbID,
+      title: raw.Title ?? `Episode ${episode}`,
+      episode,
+      airDate: raw.Released && raw.Released !== "N/A" ? raw.Released : null,
+    }];
+  });
+}
+
+async function fetchOmdbSeasonEpisodes(
+  seriesImdbId: string,
+  season: number,
+): Promise<SeededEpisode[]> {
+  const apiKey = process.env.OMDB_API_KEY;
+  if (!apiKey) return [];
+  try {
+    const res = await fetch(
+      `https://www.omdbapi.com/?i=${seriesImdbId}&Season=${season}&apikey=${apiKey}`,
+    );
+    return parseOmdbSeasonResponse(await res.json());
+  } catch {
+    return [];
+  }
+}
+
+// Hardcoded fallbacks for when OMDB_API_KEY is missing (offline / CI seeds).
+// Keys are `${seriesImdbId}-s${season}` and values are verified IMDb episode IDs.
+const EPISODE_FALLBACKS: Record<string, SeededEpisode[]> = {
+  "tt0903747-s1": [
+    { imdbId: "tt0959621", title: "Pilot", episode: 1, airDate: "2008-01-20" },
+    { imdbId: "tt1054724", title: "Cat's in the Bag...", episode: 2, airDate: "2008-01-27" },
+    { imdbId: "tt1054725", title: "...And the Bag's in the River", episode: 3, airDate: "2008-02-10" },
+    { imdbId: "tt1054726", title: "Cancer Man", episode: 4, airDate: "2008-02-17" },
+    { imdbId: "tt1054727", title: "Gray Matter", episode: 5, airDate: "2008-02-24" },
+  ],
+};
+
+type ShowEpisodeSeedConfig = {
+  seasons: number[];
+};
+
+// Mark episodes as watched for shows the demo user has engaged with.
+// Mirrors the 'status' column: 'completed' → all seasons, 'watching' → S1,
+// 'queued' → nothing (absence = unwatched per schema comment).
+const SHOW_EPISODE_SEEDS: Record<string, ShowEpisodeSeedConfig> = {
+  "tt0903747": { seasons: [1] },      // Breaking Bad (watching)
+  "tt11280740": { seasons: [1] },     // Severance (watching)
+  "tt14452776": { seasons: [1, 2, 3] }, // The Bear (completed)
+};
+
+async function seedWatchedEpisodes(db: Db, userId: string) {
+  for (const [seriesImdbId, config] of Object.entries(SHOW_EPISODE_SEEDS)) {
+    for (const season of config.seasons) {
+      let episodes = await fetchOmdbSeasonEpisodes(seriesImdbId, season);
+      if (episodes.length === 0) {
+        episodes = EPISODE_FALLBACKS[`${seriesImdbId}-s${season}`] ?? [];
+      }
+      if (episodes.length === 0) {
+        console.log(`  (skipped ${seriesImdbId} S${season} — no OMDB_API_KEY and no fallback)`);
+        continue;
+      }
+      for (const ep of episodes) {
+        await db.insert(showEpisodes).values({
+          id: randomUUID(),
+          userId,
+          seriesImdbId,
+          episodeImdbId: ep.imdbId,
+          season,
+          episode: ep.episode,
+          title: ep.title,
+          airDate: ep.airDate,
+        });
+      }
+    }
+  }
+}
+
 async function seedEntertainment(db: Db, userId: string) {
   const items: {
     type: string;
@@ -630,26 +728,7 @@ async function seedEntertainment(db: Db, userId: string) {
     });
   }
 
-  // Mark Breaking Bad S1 as watched
-  const bbEpisodes = [
-    { imdbId: "tt0959621", title: "Pilot", episode: 1, airDate: "2008-01-20" },
-    { imdbId: "tt1054724", title: "Cat's in the Bag...", episode: 2, airDate: "2008-01-27" },
-    { imdbId: "tt1054725", title: "...And the Bag's in the River", episode: 3, airDate: "2008-02-10" },
-    { imdbId: "tt1054726", title: "Cancer Man", episode: 4, airDate: "2008-02-17" },
-    { imdbId: "tt1054727", title: "Gray Matter", episode: 5, airDate: "2008-02-24" },
-  ];
-  for (const ep of bbEpisodes) {
-    await db.insert(showEpisodes).values({
-      id: randomUUID(),
-      userId,
-      seriesImdbId: "tt0903747",
-      episodeImdbId: ep.imdbId,
-      season: 1,
-      episode: ep.episode,
-      title: ep.title,
-      airDate: ep.airDate,
-    });
-  }
+  await seedWatchedEpisodes(db, userId);
 }
 
 async function seedNotifications(db: Db, userId: string) {
