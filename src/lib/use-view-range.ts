@@ -2,34 +2,63 @@
 
 import { useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { isViewRange, type ViewRange } from "@/lib/view-range";
+import {
+  isViewRange,
+  parseAnchorDate,
+  toISODateAnchor,
+  type ViewRange,
+} from "@/lib/view-range";
 
 /**
- * Reads the current view from `?view=` and returns a setter that updates the URL
- * without scrolling. Omits the query param when the selection matches `defaultRange`
- * to keep default URLs clean.
+ * Reads `?view=` and `?date=` from the URL and returns getters + setters that
+ * update them without scrolling. Omits a param when the selection matches the
+ * default, so clean URLs stay clean.
+ *
+ * - `view` falls back to `defaultRange` if missing or invalid.
+ * - `anchor` is `null` (live) when `?date=` is missing or invalid; otherwise a
+ *   local-midnight Date parsed from YYYY-MM-DD.
  */
 export function useViewRange(defaultRange: ViewRange = "day"): {
   view: ViewRange;
+  anchor: Date | null;
   setView: (next: ViewRange) => void;
+  setAnchor: (next: Date | null) => void;
 } {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
-  const raw = params.get("view");
-  const view: ViewRange = isViewRange(raw) ? raw : defaultRange;
+  const rawView = params.get("view");
+  const view: ViewRange = isViewRange(rawView) ? rawView : defaultRange;
+  const anchor = parseAnchorDate(params.get("date"));
+
+  const writeParams = useCallback(
+    (next: URLSearchParams) => {
+      const query = next.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [router, pathname],
+  );
 
   const setView = useCallback(
     (next: ViewRange) => {
       const nextParams = new URLSearchParams(params.toString());
       if (next === defaultRange) nextParams.delete("view");
       else nextParams.set("view", next);
-      const query = nextParams.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      writeParams(nextParams);
     },
-    [router, pathname, params, defaultRange],
+    [params, defaultRange, writeParams],
   );
 
-  return { view, setView };
+  const setAnchor = useCallback(
+    (next: Date | null) => {
+      const nextParams = new URLSearchParams(params.toString());
+      if (next === null) nextParams.delete("date");
+      else nextParams.set("date", toISODateAnchor(next));
+      writeParams(nextParams);
+    },
+    [params, writeParams],
+  );
+
+  return { view, anchor, setView, setAnchor };
 }
