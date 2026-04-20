@@ -9,6 +9,7 @@ import {
 } from "@/app/actions/nav";
 import { toggleNetflixUI, toggleSiteName } from "@/app/actions/preferences";
 import { toggleMeditationFeedVisibility } from "@/app/actions/feed";
+import { toggleShowNameWhenMeditating } from "@/app/actions/presence";
 import type { UserNavItem } from "@/db/schema";
 import { ArrowLeft, GripVertical, Lock, Download } from "lucide-react";
 import { PushToggle } from "@/components/blocks/push-toggle";
@@ -36,6 +37,7 @@ interface SettingsClientProps {
   useNetflixUI: boolean;
   showSiteName: boolean;
   showMeditationInFeed: boolean;
+  showNameWhenMeditating: boolean;
   dashboardSections: string[];
 }
 
@@ -113,10 +115,11 @@ function SortableNavItem({
   );
 }
 
-export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSiteName: initialShowSiteName, showMeditationInFeed: initialShowInFeed, dashboardSections }: SettingsClientProps) {
+export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSiteName: initialShowSiteName, showMeditationInFeed: initialShowInFeed, showNameWhenMeditating: initialShowName, dashboardSections }: SettingsClientProps) {
   const [netflixUI, setNetflixUI] = useState(useNetflixUI);
   const [siteName, setSiteName] = useState(initialShowSiteName);
   const [showInFeed, setShowInFeed] = useState(initialShowInFeed);
+  const [showName, setShowName] = useState(initialShowName);
   const [isPending, startTransition] = useTransition();
   const [items, setItems] = useState(serverNavItems);
 
@@ -253,8 +256,8 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
         >
           Community
         </h3>
-        <div className="bg-card border border-border rounded-lg px-4 py-3">
-          <label className="flex items-start gap-3 cursor-pointer">
+        <div className="bg-card border border-border rounded-lg divide-y divide-border">
+          <label className="flex items-start gap-3 cursor-pointer px-4 py-3">
             <Checkbox
               checked={showInFeed}
               onCheckedChange={() => {
@@ -276,6 +279,32 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
               <p className="text-xs text-muted-foreground mt-0.5">
                 When on, your completed sessions show up on the Community page
                 so other members can see you meditated. Uncheck to hide.
+              </p>
+            </div>
+          </label>
+          <label className="flex items-start gap-3 cursor-pointer px-4 py-3">
+            <Checkbox
+              checked={showName}
+              onCheckedChange={() => {
+                setShowName((prev) => !prev);
+                startTransition(async () => {
+                  const fd = new FormData();
+                  await toggleShowNameWhenMeditating(fd);
+                });
+              }}
+              className="mt-0.5"
+            />
+            <div>
+              <span
+                className="text-sm font-medium"
+                style={{ color: "var(--app-heading-color)" }}
+              >
+                Show my name while I&rsquo;m meditating
+              </span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                When on, your name and avatar appear in the &ldquo;meditating
+                now&rdquo; row while your timer is running. Turn off to appear
+                anonymously &mdash; you&rsquo;re still counted, just unnamed.
               </p>
             </div>
           </label>
