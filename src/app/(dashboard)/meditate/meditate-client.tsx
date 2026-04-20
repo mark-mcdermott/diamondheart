@@ -10,6 +10,8 @@ import type { MeditationSession, MeditationStyle, MeditationPreset } from "@/db/
 import { Play, Pause, RotateCcw, Trash2, Pencil } from "lucide-react";
 import { hapticHeavy } from "@/lib/haptics";
 import { LucideIconByName } from "./icon-map";
+import { useViewRange } from "@/lib/use-view-range";
+import { filterByViewRange, viewRangeStart, VIEW_RANGES } from "@/lib/view-range";
 
 interface MeditateClientProps {
   sessions: MeditationSession[];
@@ -75,6 +77,8 @@ function parseTimeInput(value: string): number | null {
 const MeditateChart = lazy(() => import("./meditate-chart").then((m) => ({ default: m.MeditateChart })));
 
 export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds = 600 }: MeditateClientProps) {
+  const { view } = useViewRange("day");
+  const viewLabel = VIEW_RANGES.find((r) => r.value === view)?.label ?? "Day";
   const resolvedStyles = styles.length > 0
     ? styles.map((s) => ({ key: s.label.toLowerCase(), label: s.label, iconName: s.iconName }))
     : DEFAULT_STYLES;
@@ -234,11 +238,14 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
   }
 
   // Group sessions by date
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const today = viewRangeStart("day", now);
   const todaySessions = sessions.filter((s) => new Date(s.date) >= today);
   const olderSessions = sessions.filter((s) => new Date(s.date) < today);
   const todayTotal = todaySessions.reduce((acc, s) => acc + s.duration, 0);
+
+  const rangedSessions = filterByViewRange(sessions, view, now);
+  const rangedTotal = rangedSessions.reduce((acc, s) => acc + s.duration, 0);
 
   return (
     <>
@@ -457,78 +464,123 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
         <MeditateChart />
       </Suspense>
 
-      {/* Today's stats */}
-      {todaySessions.length > 0 && (
-        <section className="mb-8">
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
-            Today &middot; {todaySessions.length} {todaySessions.length === 1 ? "session" : "sessions"} &middot; {formatDurationShort(todayTotal)}
-          </h3>
-          <div className="bg-card rounded-lg divide-y divide-border">
-            {todaySessions.map((s) => {
-              const styleMatch = resolvedStyles.find((t) => t.key === s.type);
-              const iconName = styleMatch?.iconName || "Brain";
-              return (
-                <div key={s.id} className="flex items-center justify-between px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <LucideIconByName name={iconName} className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium" style={{ color: "var(--app-heading-color)" }}>
-                      {formatDurationShort(s.duration)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{s.type}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(s.date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                    {s.notes && <span className="text-xs text-muted-foreground">{s.notes}</span>}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon-xs" onClick={() => openEdit(s)} disabled={isPending}>
-                      <Pencil className="w-3 h-3" />
-                    </Button>
-                    <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(s.id)} disabled={isPending}>
-                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+      {view === "day" ? (
+        <>
+          {/* Today's stats */}
+          {todaySessions.length > 0 && (
+            <section className="mb-8">
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
+                Today &middot; {todaySessions.length} {todaySessions.length === 1 ? "session" : "sessions"} &middot; {formatDurationShort(todayTotal)}
+              </h3>
+              <div className="bg-card rounded-lg divide-y divide-border">
+                {todaySessions.map((s) => {
+                  const styleMatch = resolvedStyles.find((t) => t.key === s.type);
+                  const iconName = styleMatch?.iconName || "Brain";
+                  return (
+                    <div key={s.id} className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <LucideIconByName name={iconName} className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium" style={{ color: "var(--app-heading-color)" }}>
+                          {formatDurationShort(s.duration)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{s.type}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(s.date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                        {s.notes && <span className="text-xs text-muted-foreground">{s.notes}</span>}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon-xs" onClick={() => openEdit(s)} disabled={isPending}>
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(s.id)} disabled={isPending}>
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
-      {/* History */}
-      {olderSessions.length > 0 && (
+          {/* History */}
+          {olderSessions.length > 0 && (
+            <section>
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">History</h3>
+              <div className="bg-card rounded-lg divide-y divide-border">
+                {olderSessions.slice(0, 50).map((s) => {
+                  const styleMatch = resolvedStyles.find((t) => t.key === s.type);
+                  const iconName = styleMatch?.iconName || "Brain";
+                  const d = new Date(s.date);
+                  return (
+                    <div key={s.id} className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <LucideIconByName name={iconName} className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm font-medium" style={{ color: "var(--app-heading-color)" }}>
+                          {formatDurationShort(s.duration)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{s.type}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
+                        {s.notes && <span className="text-xs text-muted-foreground">{s.notes}</span>}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon-xs" onClick={() => openEdit(s)} disabled={isPending}>
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(s.id)} disabled={isPending}>
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+        </>
+      ) : (
         <section>
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">History</h3>
-          <div className="bg-card rounded-lg divide-y divide-border">
-            {olderSessions.slice(0, 50).map((s) => {
-              const styleMatch = resolvedStyles.find((t) => t.key === s.type);
-              const iconName = styleMatch?.iconName || "Brain";
-              const d = new Date(s.date);
-              return (
-                <div key={s.id} className="flex items-center justify-between px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <LucideIconByName name={iconName} className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-medium" style={{ color: "var(--app-heading-color)" }}>
-                      {formatDurationShort(s.duration)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{s.type}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </span>
-                    {s.notes && <span className="text-xs text-muted-foreground">{s.notes}</span>}
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
+            {viewLabel} &middot; {rangedSessions.length} {rangedSessions.length === 1 ? "session" : "sessions"}
+            {rangedSessions.length > 0 && <> &middot; {formatDurationShort(rangedTotal)}</>}
+          </h3>
+          {rangedSessions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No sessions in this range yet.</p>
+          ) : (
+            <div className="bg-card rounded-lg divide-y divide-border">
+              {rangedSessions.slice(0, 100).map((s) => {
+                const styleMatch = resolvedStyles.find((t) => t.key === s.type);
+                const iconName = styleMatch?.iconName || "Brain";
+                const d = new Date(s.date);
+                return (
+                  <div key={s.id} className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <LucideIconByName name={iconName} className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium" style={{ color: "var(--app-heading-color)" }}>
+                        {formatDurationShort(s.duration)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{s.type}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </span>
+                      {s.notes && <span className="text-xs text-muted-foreground">{s.notes}</span>}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon-xs" onClick={() => openEdit(s)} disabled={isPending}>
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(s.id)} disabled={isPending}>
+                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon-xs" onClick={() => openEdit(s)} disabled={isPending}>
-                      <Pencil className="w-3 h-3" />
-                    </Button>
-                    <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(s.id)} disabled={isPending}>
-                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
 

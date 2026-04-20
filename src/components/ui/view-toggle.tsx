@@ -1,40 +1,48 @@
-import Link from "next/link";
-import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
+"use client";
 
-interface ToggleOption {
-  label: string;
-  href: string;
-  icon?: LucideIcon;
-}
+import { cn } from "@/lib/utils";
+import { VIEW_RANGES, type ViewRange } from "@/lib/view-range";
 
 interface ViewToggleProps {
-  options: [ToggleOption, ToggleOption];
-  activeHref: string;
+  value: ViewRange;
+  onChange: (next: ViewRange) => void;
+  /** Subset of ranges to expose. Defaults to all four. */
+  available?: readonly ViewRange[];
   className?: string;
 }
 
-export function ViewToggle({ options, activeHref, className }: ViewToggleProps) {
+export function ViewToggle({ value, onChange, available, className }: ViewToggleProps) {
+  const allowed = available ?? VIEW_RANGES.map((r) => r.value);
+  const ranges = VIEW_RANGES.filter((r) => allowed.includes(r.value));
+
+  if (ranges.length <= 1) return null;
+
   return (
-    <div className={cn("inline-flex rounded-lg bg-muted p-1", className)} role="tablist">
-      {options.map((option) => {
-        const isActive = option.href === activeHref;
+    <div
+      role="tablist"
+      aria-label="Change view range"
+      className={cn("inline-flex items-center gap-0.5 rounded-full bg-muted p-0.5", className)}
+    >
+      {ranges.map(({ value: v, label, icon: Icon }) => {
+        const active = value === v;
         return (
-          <Link
-            key={option.href}
-            href={option.href}
+          <button
+            key={v}
+            type="button"
             role="tab"
-            aria-selected={isActive}
+            aria-selected={active}
+            aria-label={label}
+            title={label}
+            onClick={() => onChange(v)}
             className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors no-underline",
-              isActive
+              "inline-flex items-center justify-center w-8 h-8 rounded-full transition-colors cursor-pointer",
+              active
                 ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {option.icon && <option.icon className="h-4 w-4" />}
-            {option.label}
-          </Link>
+            <Icon className="w-4 h-4" aria-hidden />
+          </button>
         );
       })}
     </div>
