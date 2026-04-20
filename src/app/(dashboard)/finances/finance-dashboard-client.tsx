@@ -75,8 +75,9 @@ export function FinanceDashboardClient({
   monthlyIncome,
   categories,
 }: Props) {
-  const totalMonthlyExpenses = monthlySpending.reduce((sum, row) => sum + row.totalCents, 0);
-  const savingsRate = monthlyIncome > 0 ? ((monthlyIncome - totalMonthlyExpenses) / monthlyIncome) * 100 : 0;
+  const totalMonthlyExpenses = monthlySpending.reduce((sum, row) => sum + Number(row.totalCents), 0);
+  const income = Number(monthlyIncome);
+  const savingsRate = income > 0 ? ((income - totalMonthlyExpenses) / income) * 100 : 0;
 
   const investmentValue = investments.reduce((sum, inv) => {
     const shares = parseFloat(inv.shares) || 0;
@@ -131,7 +132,7 @@ export function FinanceDashboardClient({
         <Card>
           <CardContent className="pt-4 pb-4">
             <p className="text-xs text-muted-foreground">Income this month</p>
-            <p className="text-lg font-semibold text-emerald-500">{formatCentsCompact(monthlyIncome)}</p>
+            <p className="text-lg font-semibold text-emerald-500">{formatCentsCompact(income)}</p>
           </CardContent>
         </Card>
         <Card>
