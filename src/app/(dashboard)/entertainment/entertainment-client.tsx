@@ -9,6 +9,8 @@ import { addEntertainment, updateEntertainment, deleteEntertainment } from "@/ap
 import { EmptyState } from "@/components/ui/empty-state";
 import type { EntertainmentItem } from "@/db/schema";
 import { Plus, Trash2, Pencil, Tv, Film, BookOpen, Music, Gamepad2, Podcast, Star } from "lucide-react";
+import { useViewRange } from "@/lib/use-view-range";
+import { viewRangeStart, VIEW_RANGES } from "@/lib/view-range";
 
 interface EntertainmentClientProps {
   items: EntertainmentItem[];
@@ -56,6 +58,14 @@ function RatingStars({ rating, onRate }: { rating: number | null; onRate?: (r: n
 const EntertainmentChart = lazy(() => import("./entertainment-chart").then((m) => ({ default: m.EntertainmentChart })));
 
 export function EntertainmentClient({ items }: EntertainmentClientProps) {
+  const { view } = useViewRange("week");
+  const viewLabel = VIEW_RANGES.find((r) => r.value === view)?.label ?? "Week";
+  const cutoff = viewRangeStart(view);
+  const rangedItems = items.filter((i) => {
+    const d = typeof i.updatedAt === "string" ? new Date(i.updatedAt) : i.updatedAt;
+    return d >= cutoff;
+  });
+
   const [isPending, startTransition] = useTransition();
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<EntertainmentItem | null>(null);
@@ -121,7 +131,7 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
     setNotes(item.notes || "");
   }
 
-  const filtered = items.filter((i) => i.type === activeType);
+  const filtered = rangedItems.filter((i) => i.type === activeType);
 
   return (
     <>
@@ -133,7 +143,7 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
       {/* Type tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
         {TYPES.map((t) => {
-          const count = items.filter((i) => i.type === t.key).length;
+          const count = rangedItems.filter((i) => i.type === t.key).length;
           return (
             <Button
               key={t.key}
@@ -157,8 +167,8 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
 
       {filtered.length === 0 ? (
         <EmptyState
-          title="Nothing here yet"
-          description="Add your first show, movie, book, or game to start tracking."
+          title={`No activity in the last ${viewLabel.toLowerCase()}`}
+          description="Switch to a wider range or add something new to your library."
         />
       ) : (
         <div className="bg-card rounded-lg divide-y divide-border">
