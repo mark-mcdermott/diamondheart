@@ -126,7 +126,7 @@ export function WorkoutChart() {
             <Line
               type="monotone"
               dataKey="duration"
-              stroke={CHART_COLORS.blue}
+              stroke={CHART_COLORS.sage}
               strokeWidth={2}
               dot={{ r: range === "week" ? 4 : 0 }}
               connectNulls
