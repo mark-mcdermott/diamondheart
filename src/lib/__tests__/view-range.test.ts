@@ -3,8 +3,6 @@ import {
   VIEW_RANGES,
   VIEW_RANGE_VALUES,
   isViewRange,
-  viewRangeStart,
-  filterByViewRange,
   viewRangeBounds,
   viewRangeLabel,
   shiftAnchor,
@@ -221,30 +219,3 @@ describe("filterByBounds", () => {
   });
 });
 
-// --- legacy API coverage (kept until all pages migrate) ---
-
-describe("viewRangeStart (legacy trailing window)", () => {
-  it("day starts at local midnight of now", () => {
-    const start = viewRangeStart("day", ANCHOR);
-    expect(start.getHours()).toBe(0);
-    expect(start.getDate()).toBe(15);
-  });
-
-  it("week starts 6 days before now", () => {
-    const start = viewRangeStart("week", ANCHOR);
-    expect(start.getDate()).toBe(9);
-  });
-});
-
-describe("filterByViewRange (legacy)", () => {
-  const items = [
-    { id: "earlier-today", date: new Date(2026, 3, 15, 8, 0, 0) },
-    { id: "three-days-ago", date: new Date(2026, 3, 12, 10, 0, 0) },
-    { id: "two-weeks-ago", date: new Date(2026, 3, 1, 10, 0, 0) },
-  ];
-
-  it("week keeps items within 7 trailing days", () => {
-    const result = filterByViewRange(items, "week", ANCHOR).map((i) => i.id);
-    expect(result).toEqual(["earlier-today", "three-days-ago"]);
-  });
-});
