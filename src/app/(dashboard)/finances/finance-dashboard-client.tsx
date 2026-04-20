@@ -110,7 +110,7 @@ export function FinanceDashboardClient({
         <CardContent className="pt-6">
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-1">Net Worth</p>
-            <p className={`text-4xl font-bold ${netWorth.netWorthCents >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+            <p className={`text-4xl font-bold ${netWorth.netWorthCents >= 0 ? "text-emerald-500" : "text-[#f8383f]"}`}>
               {formatCents(netWorth.netWorthCents)}
             </p>
             <div className="flex justify-center gap-8 mt-4 text-sm">
@@ -120,7 +120,7 @@ export function FinanceDashboardClient({
               </div>
               <div>
                 <span className="text-muted-foreground">Liabilities </span>
-                <span className="text-red-500 font-medium">{formatCentsCompact(netWorth.totalLiabilitiesCents)}</span>
+                <span className="text-[#f8383f] font-medium">{formatCentsCompact(netWorth.totalLiabilitiesCents)}</span>
               </div>
             </div>
           </div>
@@ -138,13 +138,13 @@ export function FinanceDashboardClient({
         <Card>
           <CardContent className="pt-4 pb-4">
             <p className="text-xs text-muted-foreground">Spending this month</p>
-            <p className="text-lg font-semibold text-red-500">{formatCentsCompact(totalMonthlyExpenses)}</p>
+            <p className="text-lg font-semibold text-[#f8383f]">{formatCentsCompact(totalMonthlyExpenses)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-4">
             <p className="text-xs text-muted-foreground">Savings rate</p>
-            <p className={`text-lg font-semibold ${savingsRate >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+            <p className={`text-lg font-semibold ${savingsRate >= 0 ? "text-emerald-500" : "text-[#f8383f]"}`}>
               {savingsRate.toFixed(0)}%
             </p>
           </CardContent>
@@ -224,7 +224,7 @@ export function FinanceDashboardClient({
                       </p>
                     </div>
                   </div>
-                  <p className={`text-sm font-medium ${account.balanceCents >= 0 ? "" : "text-red-500"}`}>
+                  <p className={`text-sm font-medium ${account.balanceCents >= 0 ? "" : "text-[#f8383f]"}`}>
                     {formatCents(account.balanceCents)}
                   </p>
                 </div>
@@ -302,7 +302,7 @@ export function FinanceDashboardClient({
                         </p>
                       </div>
                     </div>
-                    <p className={`text-sm font-medium ${tx.amountCents >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                    <p className={`text-sm font-medium ${tx.amountCents >= 0 ? "text-emerald-500" : "text-[#f8383f]"}`}>
                       {tx.amountCents >= 0 ? "+" : ""}
                       {formatCents(tx.amountCents)}
                     </p>

@@ -39,7 +39,7 @@ type Props = {
 };
 
 function budgetColor(pct: number): string {
-  if (pct >= 100) return "text-red-500";
+  if (pct >= 100) return "text-[#f8383f]";
   if (pct >= 75) return "text-yellow-500";
   return "text-emerald-500";
 }
@@ -166,7 +166,7 @@ export function BudgetsClient({ budgets, categories, monthlySpending }: Props) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-red-500"
+                        className="h-7 w-7 text-muted-foreground hover:text-[#f8383f]"
                         disabled={isPending}
                         onClick={() => handleDeleteBudget(budget.id)}
                       >
