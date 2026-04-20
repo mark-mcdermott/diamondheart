@@ -7,7 +7,7 @@ import Link from "next/link";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { getMeditationStyles, getMeditationPresets, getDefaultTimerSeconds } from "@/app/actions/meditation";
 import { MeditateClient } from "./meditate-client";
-import { MeditateViewToggle } from "./meditate-view-toggle";
+import { PageViewToggle } from "@/components/ui/view-toggle";
 
 export default async function MeditatePage() {
   const session = await getCurrentUser();
@@ -34,7 +34,7 @@ export default async function MeditatePage() {
           <h2>Meditate</h2>
           <p className="text-muted-foreground mt-1">Start a session or review your practice</p>
         </div>
-        <MeditateViewToggle />
+        <PageViewToggle />
         <Link href="/meditate/edit" className="text-muted-foreground hover:text-foreground">
           <Pencil className="w-4 h-4" />
         </Link>

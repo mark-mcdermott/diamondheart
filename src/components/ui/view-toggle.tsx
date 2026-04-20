@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { VIEW_RANGES, type ViewRange } from "@/lib/view-range";
+import { useViewRange } from "@/lib/use-view-range";
 
 interface ViewToggleProps {
   value: ViewRange;
@@ -47,4 +48,19 @@ export function ViewToggle({ value, onChange, available, className }: ViewToggle
       })}
     </div>
   );
+}
+
+interface PageViewToggleProps {
+  defaultRange?: ViewRange;
+  available?: readonly ViewRange[];
+  className?: string;
+}
+
+/**
+ * Header-ready wrapper that binds ViewToggle to the ?view= URL param.
+ * Drop this into a page header to add Day/Week/Month/Year navigation.
+ */
+export function PageViewToggle({ defaultRange = "day", available, className }: PageViewToggleProps) {
+  const { view, setView } = useViewRange(defaultRange);
+  return <ViewToggle value={view} onChange={setView} available={available} className={className} />;
 }
