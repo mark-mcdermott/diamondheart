@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "identifier": "app.diamondheart.desktop",
   "build": {
-    "frontendDist": "../out",
+    "frontendDist": "https://diamondheart.app",
     "devUrl": "http://localhost:3000",
     "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build"
+    "beforeBuildCommand": ""
   },
   "app": {
     "windows": [
