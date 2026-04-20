@@ -305,6 +305,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                 max={`${todayMidnight.getFullYear()}-${String(todayMidnight.getMonth() + 1).padStart(2, "0")}-${String(todayMidnight.getDate()).padStart(2, "0")}`}
                 onChange={handleDatePick}
                 className="absolute top-full right-0 opacity-0 w-0 h-0 pointer-events-none"
+                style={{ accentColor: "var(--app-primary, #C4653A)" }}
                 tabIndex={-1}
               />
             </div>
