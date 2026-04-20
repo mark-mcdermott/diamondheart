@@ -92,34 +92,33 @@ export function toDateKey(date: Date | string, range: TimeRange): string {
   return d.toISOString().slice(0, 10);
 }
 
-// Chart color palette matching the app's design system
 export const CHART_COLORS = {
-  primary: "#a57cf4",
-  secondary: "#fad2e6",
-  accent: "#fa40f2",
-  blue: "#3b82f6",
-  green: "#22c55e",
-  amber: "#f59e0b",
-  rose: "#f43f5e",
-  cyan: "#06b6d4",
-  indigo: "#6366f1",
-  emerald: "#10b981",
+  primary: "#C4653A",
+  secondary: "#D4A574",
+  accent: "#B5694B",
+  green: "#5B8C5A",
+  amber: "#D4964A",
+  rose: "#C75B4A",
+  sage: "#6B8F71",
+  clay: "#8B7355",
+  copper: "#A0785A",
+  moss: "#7A9E7E",
 };
 
 export const MACRO_COLORS = {
-  protein: "#3b82f6",
-  carbs: "#f59e0b",
-  fat: "#f43f5e",
-  calories: "#a57cf4",
+  protein: "#5B8C5A",
+  carbs: "#D4964A",
+  fat: "#C75B4A",
+  calories: "#C4653A",
 };
 
 export const CHART_PALETTE = [
   CHART_COLORS.primary,
-  CHART_COLORS.blue,
   CHART_COLORS.green,
   CHART_COLORS.amber,
+  CHART_COLORS.clay,
   CHART_COLORS.rose,
-  CHART_COLORS.cyan,
-  CHART_COLORS.indigo,
-  CHART_COLORS.emerald,
+  CHART_COLORS.sage,
+  CHART_COLORS.copper,
+  CHART_COLORS.moss,
 ];
