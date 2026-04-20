@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -33,6 +34,8 @@ import {
   Footprints,
   Clock,
   ChevronRight,
+  ChevronLeft,
+  Calendar,
   type LucideIcon,
 } from "lucide-react";
 
@@ -60,6 +63,7 @@ interface DashboardClientProps {
   mealSummaries: Record<string, MealSummary>;
   sparklines: Record<string, { date: string; value: number }[]>;
   dashboardSections: string[];
+  selectedDate: string;
 }
 
 // Icon mapping
@@ -195,12 +199,37 @@ function InlineSparkline({ data, color, completed }: { data: number[]; color: st
   );
 }
 
-export function DashboardClient({ metrics, todayEntries, recentEntries, foodTotals, mealSummaries, sparklines, dashboardSections }: DashboardClientProps) {
+export function DashboardClient({ metrics, todayEntries, recentEntries, foodTotals, mealSummaries, sparklines, dashboardSections, selectedDate }: DashboardClientProps) {
+  const router = useRouter();
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [entryMetric, setEntryMetric] = useState<TrackerMetric | null>(null);
   const [entryValue, setEntryValue] = useState("");
   const [, startTransition] = useTransition();
   const [settledIds, setSettledIds] = useState<Set<string>>(new Set());
+
+  const [year, month, day] = selectedDate.split("-").map(Number);
+  const viewDate = new Date(year, month - 1, day);
+  const now = new Date();
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const isToday = viewDate.getTime() === todayMidnight.getTime();
+  const isFuture = viewDate > todayMidnight;
+  const yesterdayMidnight = new Date(todayMidnight);
+  yesterdayMidnight.setDate(yesterdayMidnight.getDate() - 1);
+  const isYesterday = viewDate.getTime() === yesterdayMidnight.getTime();
+
+  function navDate(offset: number) {
+    const d = new Date(viewDate);
+    d.setDate(d.getDate() + offset);
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    router.push(`/dashboard?date=${iso}`);
+  }
+
+  function handleDatePick(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.value) router.push(`/dashboard?date=${e.target.value}`);
+  }
+
+  const dateLabel = isToday ? "Today" : isYesterday ? "Yesterday" : formatDate(viewDate).split(",")[0];
 
   const completedCount = metrics.filter((m) => isGoalMet(m, todayEntries)).length;
   const overallProgress = metrics.length > 0
@@ -240,11 +269,44 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
       <div className="flex items-start justify-between mb-10 fade-section">
         <div>
           <p className="text-sm text-muted-foreground font-medium mb-1 tracking-wide uppercase" style={{ fontSize: "11px", letterSpacing: "0.08em" }}>
-            Today
+            {dateLabel}
           </p>
-          <h2 className="text-3xl sm:text-4xl font-display mb-2" style={{ fontWeight: 500 }}>
-            {formatDate(new Date())}
-          </h2>
+          <div className="flex items-center gap-2 mb-2">
+            <button
+              type="button"
+              onClick={() => navDate(-1)}
+              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h2 className="text-3xl sm:text-4xl font-display" style={{ fontWeight: 500 }}>
+              {formatDate(viewDate)}
+            </h2>
+            <button
+              type="button"
+              onClick={() => navDate(1)}
+              disabled={isFuture || isToday}
+              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default disabled:hover:bg-transparent"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => dateInputRef.current?.showPicker()}
+              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer ml-1"
+            >
+              <Calendar className="w-4 h-4" />
+            </button>
+            <input
+              ref={dateInputRef}
+              type="date"
+              value={selectedDate}
+              max={`${todayMidnight.getFullYear()}-${String(todayMidnight.getMonth() + 1).padStart(2, "0")}-${String(todayMidnight.getDate()).padStart(2, "0")}`}
+              onChange={handleDatePick}
+              className="sr-only"
+              tabIndex={-1}
+            />
+          </div>
           <p className="text-sm text-muted-foreground">
             {completedCount} of {metrics.length} practices complete
           </p>

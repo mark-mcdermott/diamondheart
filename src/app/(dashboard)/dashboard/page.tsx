@@ -11,15 +11,29 @@ import { eq, and, gte, lt, lte, desc, sql } from "drizzle-orm";
 import { DashboardClient } from "./dashboard-client";
 import { getUserPreferences } from "@/app/actions/preferences";
 
-export default async function DashboardPage() {
+function parseDate(dateStr: string | undefined): Date {
+  if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const parsed = new Date(y, m - 1, d);
+    if (!isNaN(parsed.getTime())) return parsed;
+  }
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
 
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const weekAgo = new Date(today);
+  const { date: dateParam } = await searchParams;
+  const selectedDate = parseDate(dateParam);
+  const nextDay = new Date(selectedDate);
+  nextDay.setDate(nextDay.getDate() + 1);
+  const weekAgo = new Date(selectedDate);
   weekAgo.setDate(weekAgo.getDate() - 7);
 
   const metrics = await db
@@ -43,8 +57,8 @@ export default async function DashboardPage() {
     .from(trackerEntries)
     .where(
       and(
-        gte(trackerEntries.date, today),
-        lt(trackerEntries.date, tomorrow)
+        gte(trackerEntries.date, selectedDate),
+        lt(trackerEntries.date, nextDay)
       )
     );
 
@@ -60,7 +74,6 @@ export default async function DashboardPage() {
     .orderBy(desc(trackerEntries.date))
     .limit(20);
 
-  // Fetch 7-day sparkline data per metric (daily aggregates)
   const sparklineData = await db
     .select({
       metricId: trackerEntries.metricId,
@@ -72,7 +85,6 @@ export default async function DashboardPage() {
     .groupBy(trackerEntries.metricId, sql`DATE(${trackerEntries.date})`)
     .orderBy(sql`DATE(${trackerEntries.date})`);
 
-  // Group sparkline data by metricId
   const sparklines: Record<string, { date: string; value: number }[]> = {};
   for (const row of sparklineData) {
     if (!sparklines[row.metricId]) sparklines[row.metricId] = [];
@@ -82,7 +94,6 @@ export default async function DashboardPage() {
     });
   }
 
-  // Fetch today's food data
   const todayFood = await db
     .select({
       mealType: foodLog.mealType,
@@ -98,8 +109,8 @@ export default async function DashboardPage() {
     .where(
       and(
         eq(foodLog.userId, session.userId),
-        gte(foodLog.date, today),
-        lte(foodLog.date, tomorrow)
+        gte(foodLog.date, selectedDate),
+        lte(foodLog.date, nextDay)
       )
     );
 
@@ -127,6 +138,8 @@ export default async function DashboardPage() {
 
   const prefs = await getUserPreferences(session.userId);
 
+  const dateISO = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
+
   return (
     <DashboardClient
       metrics={metrics}
@@ -142,6 +155,7 @@ export default async function DashboardPage() {
       mealSummaries={mealSummaries}
       sparklines={sparklines}
       dashboardSections={prefs.dashboardSections}
+      selectedDate={dateISO}
     />
   );
 }
