@@ -19,6 +19,7 @@ import {
   List,
   X,
   Pulse,
+  UsersThree,
   type Icon as PhosphorIcon,
 } from "@phosphor-icons/react";
 import { Sheet, SheetContent, SheetClose } from "@/components/ui/sheet";
@@ -58,6 +59,7 @@ interface SidebarNavProps {
 const iconMap: Record<string, PhosphorIcon> = {
   "/dashboard": SquaresFour,
   "/metrics": ChartBar,
+  "/feed": UsersThree,
   "/meditate": FlowerLotus,
   "/food": ForkKnife,
   "/tracking": Compass,

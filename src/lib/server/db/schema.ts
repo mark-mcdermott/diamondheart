@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, jsonb, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, jsonb, integer, unique } from 'drizzle-orm/pg-core';
 
 // Users table for authentication
 export const users = pgTable('users', {
@@ -487,6 +487,17 @@ export const meditationPresets = pgTable('meditation_presets', {
 
 export type MeditationPreset = typeof meditationPresets.$inferSelect;
 
+export const meditationReactions = pgTable('meditation_reactions', {
+	id: text('id').primaryKey(),
+	sessionId: text('session_id').notNull().references(() => meditationSessions.id, { onDelete: 'cascade' }),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+}, (t) => [
+	unique('meditation_reactions_session_user_unique').on(t.sessionId, t.userId)
+]);
+
+export type MeditationReaction = typeof meditationReactions.$inferSelect;
+
 
 // ============================================
 // User Nav Items (per-user nav customization)
@@ -537,6 +548,7 @@ export const userPreferences = pgTable('user_preferences', {
 	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
 	useNetflixUI: boolean('use_netflix_ui').notNull().default(true),
 	showSiteName: boolean('show_site_name').notNull().default(true),
+	showMeditationInFeed: boolean('show_meditation_in_feed').notNull().default(true),
 	dashboardSections: jsonb('dashboard_sections'), // ordered list of visible section keys
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()

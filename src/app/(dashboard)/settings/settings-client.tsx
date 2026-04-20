@@ -8,6 +8,7 @@ import {
   reorderNavItems,
 } from "@/app/actions/nav";
 import { toggleNetflixUI, toggleSiteName } from "@/app/actions/preferences";
+import { toggleMeditationFeedVisibility } from "@/app/actions/feed";
 import type { UserNavItem } from "@/db/schema";
 import { ArrowLeft, GripVertical, Lock, Download } from "lucide-react";
 import { PushToggle } from "@/components/blocks/push-toggle";
@@ -34,6 +35,7 @@ interface SettingsClientProps {
   navItems: UserNavItem[];
   useNetflixUI: boolean;
   showSiteName: boolean;
+  showMeditationInFeed: boolean;
   dashboardSections: string[];
 }
 
@@ -111,9 +113,10 @@ function SortableNavItem({
   );
 }
 
-export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSiteName: initialShowSiteName, dashboardSections }: SettingsClientProps) {
+export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSiteName: initialShowSiteName, showMeditationInFeed: initialShowInFeed, dashboardSections }: SettingsClientProps) {
   const [netflixUI, setNetflixUI] = useState(useNetflixUI);
   const [siteName, setSiteName] = useState(initialShowSiteName);
+  const [showInFeed, setShowInFeed] = useState(initialShowInFeed);
   const [isPending, startTransition] = useTransition();
   const [items, setItems] = useState(serverNavItems);
 
@@ -236,6 +239,43 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
               <p className="text-xs text-muted-foreground mt-0.5">
                 Show movies and TV shows with cover art in a Netflix-style grid
                 instead of a simple list
+              </p>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      {/* Community Section */}
+      <section className="mb-8">
+        <h3
+          className="text-lg font-semibold mb-4"
+          style={{ color: "var(--app-heading-color)" }}
+        >
+          Community
+        </h3>
+        <div className="bg-card border border-border rounded-lg px-4 py-3">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <Checkbox
+              checked={showInFeed}
+              onCheckedChange={() => {
+                setShowInFeed((prev) => !prev);
+                startTransition(async () => {
+                  const fd = new FormData();
+                  await toggleMeditationFeedVisibility(fd);
+                });
+              }}
+              className="mt-0.5"
+            />
+            <div>
+              <span
+                className="text-sm font-medium"
+                style={{ color: "var(--app-heading-color)" }}
+              >
+                Share my meditations in the community feed
+              </span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                When on, your completed sessions show up on the Community page
+                so other members can see you meditated. Uncheck to hide.
               </p>
             </div>
           </label>

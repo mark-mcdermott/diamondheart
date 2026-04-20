@@ -3,16 +3,17 @@ import type { UserNavItem } from "@/db/schema";
 // Default nav items — the canonical list
 // "builtin" items are core app pages. "tracking_section" items are toggleable tracking systems.
 export const DEFAULT_NAV_ITEMS = [
-  { label: "Dashboard",     href: "/dashboard",      itemType: "builtin",          sortOrder: 0, visible: true,  locked: true },
-  { label: "Metrics",       href: "/metrics",        itemType: "builtin",          sortOrder: 1, visible: true,  locked: false },
-  { label: "Meditate",      href: "/meditate",       itemType: "tracking_section", sortOrder: 2, visible: true,  locked: false },
-  { label: "Food",          href: "/food",           itemType: "tracking_section", sortOrder: 3, visible: true,  locked: false },
-  { label: "Tracking",      href: "/tracking",       itemType: "tracking_section", sortOrder: 4, visible: true,  locked: false },
-  { label: "Medical",       href: "/medical",        itemType: "tracking_section", sortOrder: 5, visible: true,  locked: false },
-  { label: "Appointments",  href: "/appointments",   itemType: "tracking_section", sortOrder: 6, visible: true,  locked: false },
-  { label: "Entertainment", href: "/entertainment",  itemType: "tracking_section", sortOrder: 7, visible: true,  locked: false },
-  { label: "Workout",       href: "/workout",        itemType: "tracking_section", sortOrder: 8, visible: false, locked: false },
-  { label: "Finances",      href: "/finances",       itemType: "tracking_section", sortOrder: 9, visible: true,  locked: false },
+  { label: "Dashboard",     href: "/dashboard",      itemType: "builtin",          sortOrder: 0,  visible: true,  locked: true },
+  { label: "Metrics",       href: "/metrics",        itemType: "builtin",          sortOrder: 1,  visible: true,  locked: false },
+  { label: "Community",     href: "/feed",           itemType: "builtin",          sortOrder: 2,  visible: true,  locked: false },
+  { label: "Meditate",      href: "/meditate",       itemType: "tracking_section", sortOrder: 3,  visible: true,  locked: false },
+  { label: "Food",          href: "/food",           itemType: "tracking_section", sortOrder: 4,  visible: true,  locked: false },
+  { label: "Tracking",      href: "/tracking",       itemType: "tracking_section", sortOrder: 5,  visible: true,  locked: false },
+  { label: "Medical",       href: "/medical",        itemType: "tracking_section", sortOrder: 6,  visible: true,  locked: false },
+  { label: "Appointments",  href: "/appointments",   itemType: "tracking_section", sortOrder: 7,  visible: true,  locked: false },
+  { label: "Entertainment", href: "/entertainment",  itemType: "tracking_section", sortOrder: 8,  visible: true,  locked: false },
+  { label: "Workout",       href: "/workout",        itemType: "tracking_section", sortOrder: 9,  visible: false, locked: false },
+  { label: "Finances",      href: "/finances",       itemType: "tracking_section", sortOrder: 10, visible: true,  locked: false },
 ];
 
 // Section keys for tracking systems (used by Metrics page toggles)
