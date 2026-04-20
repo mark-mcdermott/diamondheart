@@ -159,7 +159,7 @@ function PosterCard({
           </div>
         )}
         {/* Title overlay on hover */}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 to-transparent p-2 pt-6 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black from-50% to-transparent p-2 pt-8 opacity-0 group-hover:opacity-100 transition-opacity">
           <p className="text-white text-xs font-medium leading-tight line-clamp-2">
             {title}
           </p>
