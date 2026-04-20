@@ -395,7 +395,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                   <div
                     key={metric.id}
                     className={`
-                      relative bg-card rounded-2xl border border-border p-4 card-texture
+                      relative bg-card rounded-2xl p-4 card-texture shadow-none
                       transition-all duration-300
                       ${isSettling ? "animate-settle" : ""}
                     `}
