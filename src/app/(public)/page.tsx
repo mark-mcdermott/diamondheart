@@ -1,9 +1,10 @@
 import { Hero } from "@/components/blocks/hero";
-import { FeatureCards } from "@/components/blocks/feature-cards";
-import { ImageFeatures } from "@/components/blocks/image-features";
-import { FeatureGrid } from "@/components/blocks/feature-grid";
+import { Manifesto } from "@/components/blocks/manifesto";
+import { Showcase } from "@/components/blocks/showcase";
+import { Journey } from "@/components/blocks/journey";
+import { PullQuote } from "@/components/blocks/pull-quote";
+import { ClosingCta } from "@/components/blocks/closing-cta";
 import { NativeRedirect } from "@/components/native-redirect";
-import { Activity, Users, GitBranch, Flag, Moon, Shield } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -19,37 +20,69 @@ export default function HomePage() {
         secondaryCta={{ label: "Learn More", href: "/about" }}
       />
 
-      <FeatureCards
-        title="Track What Matters Most"
-        subtitle="Mindful Living"
-        features={[
-          { icon: Activity, title: "Daily Practice", description: "Build consistent meditation and wellness habits with gentle tracking that respects your journey.", href: "/about" },
-          { icon: Users, title: "Community", description: "Connect with like-minded practitioners and share your growth in a supportive, mindful space.", href: "/about" },
-          { icon: GitBranch, title: "Personal Growth", description: "Visualize your progress over time and discover patterns that deepen your self-awareness.", href: "/about" },
+      <Manifesto
+        eyebrow="A quieter tracker"
+        lead="Presence is a practice, not a streak."
+        body="Most apps turn wellness into a scoreboard. Diamondheart is built the opposite way — a calm companion that notices what your practice already is, and gives you room to let it grow."
+      />
+
+      <Showcase
+        eyebrow="Practice, in motion"
+        beats={[
+          {
+            numeral: "01",
+            kicker: "Breath",
+            heading: "Sit, breathe, log. That's the whole loop.",
+            body: "Open Diamondheart, pick a practice, and let the timer hold the space. When you're done, a single tap records what you felt — nothing more is asked of you.",
+          },
+          {
+            numeral: "02",
+            kicker: "Rhythm",
+            heading: "A week of small moments, held together.",
+            body: "Meditation, movement, sleep, water, stillness. Diamondheart stitches the small daily things into a rhythm you can actually see — gentle, never guilt-inducing.",
+          },
+          {
+            numeral: "03",
+            kicker: "Insight",
+            heading: "Patterns you'd never spot on your own.",
+            body: "Over weeks, the app reflects your practice back to you: when you show up, when you drift, what brings you back. It's mirror, not coach.",
+          },
         ]}
       />
 
-      <ImageFeatures
-        image="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&h=600&fit=crop"
-        imageAlt="Meditation practice"
-        features={[
-          { icon: Activity, title: "Meditation Tracking", description: "Log your sessions, set intentions, and watch your practice deepen over weeks and months.", href: "/about" },
-          { icon: GitBranch, title: "Habit Patterns", description: "Discover connections between your daily habits and overall wellbeing through intuitive visualizations.", href: "/about" },
-          { icon: Users, title: "Mindful Reminders", description: "Gentle nudges to help you stay present and connected to your practice throughout the day.", href: "/about" },
+      <Journey
+        eyebrow="Three phases"
+        headline="However deep your practice goes, the app follows — not the other way around."
+        phases={[
+          {
+            numeral: "01",
+            title: "Arrive",
+            body: "Short sessions. Low stakes. Diamondheart meets you at two minutes a day and grows from there.",
+          },
+          {
+            numeral: "02",
+            title: "Attend",
+            body: "Notice the texture of your week — what anchors you, what pulls you away. Adjust without judgment.",
+          },
+          {
+            numeral: "03",
+            title: "Abide",
+            body: "Practice stops feeling like a task. The app fades to the background. The diamond stays.",
+          },
         ]}
       />
 
-      <FeatureGrid
-        title="Everything You Need"
-        description="Simple, thoughtful tools to support your meditation practice and daily wellness journey."
-        features={[
-          { icon: Activity, title: "Session Logging", description: "Track meditation sessions with duration, type, and personal notes." },
-          { icon: GitBranch, title: "Progress Insights", description: "Visualize your practice streaks and growth patterns over time." },
-          { icon: Users, title: "Community Support", description: "Connect with practitioners who share your path and intentions." },
-          { icon: Flag, title: "Goal Setting", description: "Set meaningful milestones for your meditation and wellness journey." },
-          { icon: Moon, title: "Sleep & Rest", description: "Monitor your sleep patterns and their connection to your practice." },
-          { icon: Shield, title: "Private & Secure", description: "Your personal data stays private with end-to-end encryption." },
-        ]}
+      <PullQuote
+        quote="Your practice is already happening. Diamondheart just helps you see it."
+        caption="— the founding idea"
+      />
+
+      <ClosingCta
+        eyebrow="Begin today"
+        headline="A quieter way to tend your practice."
+        body="Free to start. No streaks to break. No pressure to perform. Just a calm place to come back to, day after day."
+        primaryCta={{ label: "Get Started", href: "/signup" }}
+        secondaryCta={{ label: "Read the philosophy", href: "/about" }}
       />
     </>
   );
