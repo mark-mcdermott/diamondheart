@@ -31,13 +31,13 @@ export default async function WorkoutPage({
 
   const allExercises = [...builtInExercises, ...customExercises];
 
-  // Recent workouts
+  // Recent workouts — pull up to a year's worth so client-side view filtering has data
   const recentWorkouts = await db
     .select()
     .from(workouts)
     .where(eq(workouts.userId, userId))
     .orderBy(desc(workouts.date))
-    .limit(10);
+    .limit(500);
 
   // Active workout with sets
   let activeWorkout = null;
