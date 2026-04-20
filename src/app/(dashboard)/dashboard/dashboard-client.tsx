@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { EmptyState } from "@/components/ui/empty-state";
 import { quickLog } from "@/app/actions/tracker";
+import { hapticTap, hapticSuccess } from "@/lib/haptics";
 import { WeeklyChart } from "./weekly-chart";
 import type { TrackerMetric } from "@/db/schema";
 import {
@@ -251,12 +252,13 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
 
   function handleQuickLog(metricId: string) {
     setPendingId(metricId);
+    hapticTap();
     startTransition(async () => {
       const fd = new FormData();
       fd.set("metricId", metricId);
       fd.set("value", "done");
       await quickLog(fd);
-      // Trigger settle animation
+      hapticSuccess();
       setSettledIds((prev) => new Set(prev).add(metricId));
       setTimeout(() => setSettledIds((prev) => {
         const next = new Set(prev);

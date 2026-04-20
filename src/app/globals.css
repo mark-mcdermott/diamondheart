@@ -3,6 +3,14 @@
 /* Exclude markdown files from Tailwind content scanning */
 @source not "../**/*.md";
 
+/* Safe area insets for mobile notch/dynamic island */
+html {
+	padding-top: env(safe-area-inset-top);
+	padding-bottom: env(safe-area-inset-bottom);
+	padding-left: env(safe-area-inset-left);
+	padding-right: env(safe-area-inset-right);
+}
+
 /* CSS Variables */
 :root {
 	accent-color: var(--app-primary, #C4653A);

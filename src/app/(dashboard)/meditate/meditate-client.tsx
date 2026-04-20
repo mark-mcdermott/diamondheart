@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { logMeditationSession, updateMeditationSession, deleteMeditationSession } from "@/app/actions/meditation";
 import type { MeditationSession, MeditationStyle, MeditationPreset } from "@/db/schema";
 import { Play, Pause, RotateCcw, Trash2, Pencil } from "lucide-react";
+import { hapticHeavy } from "@/lib/haptics";
 import { LucideIconByName } from "./icon-map";
 
 interface MeditateClientProps {
@@ -110,6 +111,7 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
             setRunning(false);
             setFinished(true);
             clearInterval(intervalRef.current);
+            hapticHeavy();
           }
           return next;
         });
