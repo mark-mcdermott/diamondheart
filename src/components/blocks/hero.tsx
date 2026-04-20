@@ -90,7 +90,7 @@ export function Hero({
             style={{ animation: "fade-in-up 0.8s var(--ease-settle) backwards", animationDelay: "500ms" }}
           >
             {primaryCta && (
-              <Button asChild size="lg">
+              <Button asChild size="lg" className="hover:!bg-[#e86529] hover:!brightness-100">
                 <Link href={primaryCta.href}>{primaryCta.label}</Link>
               </Button>
             )}
