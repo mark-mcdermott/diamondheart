@@ -1,5 +1,6 @@
 import { Nav } from "@/components/blocks/nav";
 import { Footer } from "@/components/blocks/footer";
+import { NativeHide } from "@/components/native-hide";
 import { defaultNavLinks } from "@/lib/config/nav";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/db";
@@ -26,9 +27,13 @@ export default async function PublicLayout({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Nav logo="💎💜" links={defaultNavLinks} user={user} showThemeToggle />
+      <NativeHide>
+        <Nav logo="💎💜" links={defaultNavLinks} user={user} showThemeToggle />
+      </NativeHide>
       <main className="flex flex-1 flex-col">{children}</main>
-      <Footer siteName="Diamondheart" logoImage="/logo.png" />
+      <NativeHide>
+        <Footer siteName="Diamondheart" logoImage="/logo.png" />
+      </NativeHide>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { ThemeProvider } from "./theme-provider";
 import { ServiceWorkerRegister } from "@/components/blocks/sw-register";
 import { PWADetector } from "@/components/blocks/pwa-detector";
 import { PWAInstallPrompt } from "@/components/blocks/pwa-install-prompt";
+import { NativeInit } from "@/components/native-init";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -48,6 +49,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <NativeInit />
           <ServiceWorkerRegister />
           <PWADetector />
           <PWAInstallPrompt />
