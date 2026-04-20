@@ -8,6 +8,7 @@ import { ArrowLeft, Pencil } from "lucide-react";
 import { getMeditationStyles, getMeditationPresets, getDefaultTimerSeconds } from "@/app/actions/meditation";
 import { MeditateClient } from "./meditate-client";
 import { PageViewToggle } from "@/components/ui/view-toggle";
+import { DateNavigator } from "@/components/ui/date-navigator";
 
 export default async function MeditatePage() {
   const session = await getCurrentUser();
@@ -18,7 +19,7 @@ export default async function MeditatePage() {
       .from(meditationSessions)
       .where(eq(meditationSessions.userId, session.userId))
       .orderBy(desc(meditationSessions.date))
-      .limit(200),
+      .limit(1000),
     getMeditationStyles(session.userId),
     getMeditationPresets(session.userId),
     getDefaultTimerSeconds(session.userId),
@@ -34,6 +35,7 @@ export default async function MeditatePage() {
           <h2>Meditate</h2>
           <p className="text-muted-foreground mt-1">Start a session or review your practice</p>
         </div>
+        <DateNavigator />
         <PageViewToggle />
         <Link href="/meditate/edit" className="text-muted-foreground hover:text-foreground">
           <Pencil className="w-4 h-4" />

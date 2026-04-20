@@ -5,9 +5,17 @@ import {
   isViewRange,
   viewRangeStart,
   filterByViewRange,
+  viewRangeBounds,
+  viewRangeLabel,
+  shiftAnchor,
+  isCurrentPeriod,
+  parseAnchorDate,
+  toISODateAnchor,
+  filterByBounds,
 } from "@/lib/view-range";
 
-const ANCHOR = new Date("2026-04-15T12:00:00Z");
+// Wednesday, Apr 15 2026, 12:00 local time
+const ANCHOR = new Date(2026, 3, 15, 12, 0, 0);
 
 describe("VIEW_RANGES", () => {
   it("exposes day, week, month, year in order", () => {
@@ -35,87 +43,208 @@ describe("isViewRange", () => {
   );
 });
 
-describe("viewRangeStart", () => {
-  it("day starts at local midnight of today", () => {
-    const start = viewRangeStart("day", ANCHOR);
+describe("viewRangeBounds (calendar-aligned)", () => {
+  it("day bounds cover exactly the anchor's local calendar day", () => {
+    const { start, end } = viewRangeBounds("day", ANCHOR);
+    expect(start.getFullYear()).toBe(2026);
+    expect(start.getMonth()).toBe(3); // April
+    expect(start.getDate()).toBe(15);
     expect(start.getHours()).toBe(0);
-    expect(start.getMinutes()).toBe(0);
-    const expected = new Date(ANCHOR);
-    expected.setHours(0, 0, 0, 0);
-    expect(start.getTime()).toBe(expected.getTime());
+    expect(end.getDate()).toBe(16);
+    expect(end.getHours()).toBe(0);
   });
 
-  it("week starts 6 days before today at midnight (7-day inclusive window)", () => {
-    const start = viewRangeStart("week", ANCHOR);
-    const expected = new Date(ANCHOR);
-    expected.setHours(0, 0, 0, 0);
-    expected.setDate(expected.getDate() - 6);
-    expect(start.getTime()).toBe(expected.getTime());
+  it("week is ISO: Monday start, Sunday end-exclusive", () => {
+    const { start, end } = viewRangeBounds("week", ANCHOR);
+    expect(start.getDay()).toBe(1); // Monday
+    expect(start.getDate()).toBe(13); // Mon Apr 13
+    expect(end.getDate()).toBe(20); // Next Monday (exclusive)
+    expect(end.getTime() - start.getTime()).toBe(7 * 24 * 60 * 60 * 1000);
   });
 
-  it("month starts 29 days before today", () => {
-    const start = viewRangeStart("month", ANCHOR);
-    const expected = new Date(ANCHOR);
-    expected.setHours(0, 0, 0, 0);
-    expected.setDate(expected.getDate() - 29);
-    expect(start.getTime()).toBe(expected.getTime());
+  it("week starting on a Sunday anchor uses the ISO week (prev Monday)", () => {
+    // Sunday Apr 19 2026
+    const sunday = new Date(2026, 3, 19, 12, 0, 0);
+    const { start, end } = viewRangeBounds("week", sunday);
+    expect(start.getDate()).toBe(13); // Mon Apr 13
+    expect(end.getDate()).toBe(20);
   });
 
-  it("year starts 364 days before today", () => {
-    const start = viewRangeStart("year", ANCHOR);
-    const expected = new Date(ANCHOR);
-    expected.setHours(0, 0, 0, 0);
-    expected.setDate(expected.getDate() - 364);
-    expect(start.getTime()).toBe(expected.getTime());
+  it("week starting on a Monday anchor stays on that Monday", () => {
+    const monday = new Date(2026, 3, 13, 12, 0, 0);
+    const { start } = viewRangeBounds("week", monday);
+    expect(start.getDate()).toBe(13);
+  });
+
+  it("month covers the anchor's calendar month", () => {
+    const { start, end } = viewRangeBounds("month", ANCHOR);
+    expect(start.getDate()).toBe(1);
+    expect(start.getMonth()).toBe(3); // April
+    expect(end.getDate()).toBe(1);
+    expect(end.getMonth()).toBe(4); // May 1 exclusive
+  });
+
+  it("year covers Jan 1 through next Jan 1", () => {
+    const { start, end } = viewRangeBounds("year", ANCHOR);
+    expect(start.getFullYear()).toBe(2026);
+    expect(start.getMonth()).toBe(0);
+    expect(start.getDate()).toBe(1);
+    expect(end.getFullYear()).toBe(2027);
+    expect(end.getMonth()).toBe(0);
+    expect(end.getDate()).toBe(1);
   });
 
   it("does not mutate the provided anchor", () => {
     const copy = new Date(ANCHOR);
-    viewRangeStart("week", copy);
+    viewRangeBounds("week", copy);
     expect(copy.getTime()).toBe(ANCHOR.getTime());
   });
 });
 
-describe("filterByViewRange", () => {
+describe("viewRangeLabel", () => {
+  it("returns live labels when anchor is null", () => {
+    expect(viewRangeLabel("day", null)).toBe("Today");
+    expect(viewRangeLabel("week", null)).toBe("This week");
+    expect(viewRangeLabel("month", null)).toBe("This month");
+    expect(viewRangeLabel("year", null)).toBe("This year");
+  });
+
+  it("formats day anchor with month+day+year", () => {
+    expect(viewRangeLabel("day", ANCHOR)).toBe("Apr 15, 2026");
+  });
+
+  it("formats week anchor as a date range", () => {
+    expect(viewRangeLabel("week", ANCHOR)).toBe("Apr 13 – 19");
+  });
+
+  it("formats month anchor as 'Month YYYY'", () => {
+    expect(viewRangeLabel("month", ANCHOR)).toBe("April 2026");
+  });
+
+  it("formats year anchor as just the year", () => {
+    expect(viewRangeLabel("year", ANCHOR)).toBe("2026");
+  });
+
+  it("week label spans months when range crosses a boundary", () => {
+    // Anchor Apr 29 2026 (Wed) — week is Apr 27 (Mon) through May 3 (Sun)
+    const boundary = new Date(2026, 3, 29, 12, 0, 0);
+    expect(viewRangeLabel("week", boundary)).toBe("Apr 27 – May 3");
+  });
+});
+
+describe("shiftAnchor", () => {
+  it("day shifts by 1 day", () => {
+    expect(shiftAnchor("day", ANCHOR, 1).getDate()).toBe(16);
+    expect(shiftAnchor("day", ANCHOR, -1).getDate()).toBe(14);
+  });
+
+  it("week shifts by 7 days", () => {
+    expect(shiftAnchor("week", ANCHOR, 1).getDate()).toBe(22);
+    expect(shiftAnchor("week", ANCHOR, -1).getDate()).toBe(8);
+  });
+
+  it("month shifts by 1 month", () => {
+    expect(shiftAnchor("month", ANCHOR, 1).getMonth()).toBe(4); // May
+    expect(shiftAnchor("month", ANCHOR, -1).getMonth()).toBe(2); // March
+  });
+
+  it("year shifts by 1 year", () => {
+    expect(shiftAnchor("year", ANCHOR, 1).getFullYear()).toBe(2027);
+    expect(shiftAnchor("year", ANCHOR, -1).getFullYear()).toBe(2025);
+  });
+});
+
+describe("isCurrentPeriod", () => {
+  it("true when anchor is in the same period as now", () => {
+    const sameWeek = new Date(2026, 3, 14, 12, 0, 0); // Tue
+    expect(isCurrentPeriod("week", sameWeek, ANCHOR)).toBe(true);
+  });
+
+  it("false when anchor is in a different week", () => {
+    const prevWeek = new Date(2026, 3, 6, 12, 0, 0);
+    expect(isCurrentPeriod("week", prevWeek, ANCHOR)).toBe(false);
+  });
+
+  it("month comparison only considers calendar month", () => {
+    expect(isCurrentPeriod("month", new Date(2026, 3, 1), ANCHOR)).toBe(true);
+    expect(isCurrentPeriod("month", new Date(2026, 2, 31), ANCHOR)).toBe(false);
+  });
+});
+
+describe("parseAnchorDate / toISODateAnchor", () => {
+  it("parses valid YYYY-MM-DD", () => {
+    const d = parseAnchorDate("2026-04-15");
+    expect(d?.getFullYear()).toBe(2026);
+    expect(d?.getMonth()).toBe(3);
+    expect(d?.getDate()).toBe(15);
+    expect(d?.getHours()).toBe(0);
+  });
+
+  it.each([null, undefined, "", "2026-4-15", "2026/04/15", "garbage", "2026-13-01", "2026-02-30"])(
+    "returns null for %s",
+    (v) => {
+      expect(parseAnchorDate(v as string | null | undefined)).toBeNull();
+    },
+  );
+
+  it("round-trips through toISODateAnchor", () => {
+    const iso = toISODateAnchor(ANCHOR);
+    expect(iso).toBe("2026-04-15");
+    const parsed = parseAnchorDate(iso);
+    expect(parsed?.getFullYear()).toBe(2026);
+    expect(parsed?.getMonth()).toBe(3);
+    expect(parsed?.getDate()).toBe(15);
+  });
+});
+
+describe("filterByBounds", () => {
   const items = [
-    { id: "earlier-today", date: new Date("2026-04-15T08:00:00Z") },
-    { id: "three-days-ago", date: new Date("2026-04-12T10:00:00Z") },
-    { id: "two-weeks-ago", date: new Date("2026-04-01T10:00:00Z") },
-    { id: "two-months-ago", date: new Date("2026-02-10T10:00:00Z") },
-    { id: "two-years-ago", date: new Date("2024-04-15T10:00:00Z") },
+    { id: "apr-13-mon", date: new Date(2026, 3, 13, 8, 0, 0) },
+    { id: "apr-15-wed", date: new Date(2026, 3, 15, 8, 0, 0) },
+    { id: "apr-19-sun", date: new Date(2026, 3, 19, 23, 0, 0) },
+    { id: "apr-20-mon", date: new Date(2026, 3, 20, 0, 0, 0) }, // exclusive end
+    { id: "apr-12-sun", date: new Date(2026, 3, 12, 23, 0, 0) }, // just before window
   ];
 
-  it("day keeps only today", () => {
-    const result = filterByViewRange(items, "day", ANCHOR).map((i) => i.id);
-    expect(result).toEqual(["earlier-today"]);
-  });
-
-  it("week keeps items within 7 days", () => {
-    const result = filterByViewRange(items, "week", ANCHOR).map((i) => i.id);
-    expect(result).toEqual(["earlier-today", "three-days-ago"]);
-  });
-
-  it("month keeps items within 30 days", () => {
-    const result = filterByViewRange(items, "month", ANCHOR).map((i) => i.id);
-    expect(result).toEqual(["earlier-today", "three-days-ago", "two-weeks-ago"]);
-  });
-
-  it("year keeps items within 365 days", () => {
-    const result = filterByViewRange(items, "year", ANCHOR).map((i) => i.id);
-    expect(result).toEqual([
-      "earlier-today",
-      "three-days-ago",
-      "two-weeks-ago",
-      "two-months-ago",
-    ]);
+  it("week bounds include Mon through Sun but exclude next Mon", () => {
+    const bounds = viewRangeBounds("week", ANCHOR);
+    const result = filterByBounds(items, bounds).map((i) => i.id);
+    expect(result).toEqual(["apr-13-mon", "apr-15-wed", "apr-19-sun"]);
   });
 
   it("accepts string dates", () => {
-    const result = filterByViewRange(
-      [{ date: "2026-04-15T08:00:00Z" }, { date: "2020-01-01T00:00:00Z" }],
-      "day",
-      ANCHOR,
+    const result = filterByBounds(
+      [{ date: "2026-04-15T12:00:00Z" }, { date: "2020-01-01T00:00:00Z" }],
+      viewRangeBounds("year", ANCHOR),
     );
     expect(result).toHaveLength(1);
+  });
+});
+
+// --- legacy API coverage (kept until all pages migrate) ---
+
+describe("viewRangeStart (legacy trailing window)", () => {
+  it("day starts at local midnight of now", () => {
+    const start = viewRangeStart("day", ANCHOR);
+    expect(start.getHours()).toBe(0);
+    expect(start.getDate()).toBe(15);
+  });
+
+  it("week starts 6 days before now", () => {
+    const start = viewRangeStart("week", ANCHOR);
+    expect(start.getDate()).toBe(9);
+  });
+});
+
+describe("filterByViewRange (legacy)", () => {
+  const items = [
+    { id: "earlier-today", date: new Date(2026, 3, 15, 8, 0, 0) },
+    { id: "three-days-ago", date: new Date(2026, 3, 12, 10, 0, 0) },
+    { id: "two-weeks-ago", date: new Date(2026, 3, 1, 10, 0, 0) },
+  ];
+
+  it("week keeps items within 7 trailing days", () => {
+    const result = filterByViewRange(items, "week", ANCHOR).map((i) => i.id);
+    expect(result).toEqual(["earlier-today", "three-days-ago"]);
   });
 });
