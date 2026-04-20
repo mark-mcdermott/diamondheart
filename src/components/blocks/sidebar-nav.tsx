@@ -81,6 +81,7 @@ export function SidebarNav({
   const isLoggedIn = !!user;
 
   const allVisibleLinks = links.filter((link) => {
+    if (link.href === "/metrics") return false;
     if (link.requiresAuth && !isLoggedIn) return false;
     if (link.requiresAdmin && !isAdmin) return false;
     if (link.hideWhenAuth && isLoggedIn) return false;
