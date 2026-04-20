@@ -1,20 +1,25 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/db";
-import { foodLog, foodLogItems, favoriteFoods, favoriteMeals, favoriteMealItems } from "@/db/schema";
+import { foodLog, foodLogItems, favoriteFoods, favoriteMeals } from "@/db/schema";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
+import { parseDate, toISODate } from "@/lib/dates";
 import { FoodClient } from "./food-client";
 
-export default async function FoodPage() {
+export default async function FoodPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
 
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const { date: dateParam } = await searchParams;
+  const selectedDate = parseDate(dateParam);
+  const nextDay = new Date(selectedDate);
+  nextDay.setDate(nextDay.getDate() + 1);
 
-  const todayLogs = await db
+  const dayLogs = await db
     .select({
       logId: foodLog.id,
       mealType: foodLog.mealType,
@@ -34,8 +39,8 @@ export default async function FoodPage() {
     .where(
       and(
         eq(foodLog.userId, session.userId),
-        gte(foodLog.date, today),
-        lte(foodLog.date, tomorrow)
+        gte(foodLog.date, selectedDate),
+        lte(foodLog.date, nextDay)
       )
     );
 
@@ -51,7 +56,7 @@ export default async function FoodPage() {
 
   const totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
-  for (const row of todayLogs) {
+  for (const row of dayLogs) {
     if (!row.itemId) continue;
     const item = {
       id: row.itemId,
@@ -102,6 +107,7 @@ export default async function FoodPage() {
         id: m.id,
         name: m.name,
       }))}
+      selectedDate={toISODate(selectedDate)}
     />
   );
 }

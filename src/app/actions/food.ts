@@ -11,20 +11,20 @@ import {
 } from "@/db/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
+import { parseDate } from "@/lib/dates";
 import { revalidatePath } from "next/cache";
 
 type Result = { success: boolean; error?: string };
 
-function todayRange() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return { today, tomorrow };
+function dayRange(date: Date) {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { start, end };
 }
 
-async function findOrCreateLog(userId: string, mealType: string) {
-  const { today, tomorrow } = todayRange();
+async function findOrCreateLog(userId: string, mealType: string, date: Date) {
+  const { start, end } = dayRange(date);
   const [existing] = await db
     .select()
     .from(foodLog)
@@ -32,8 +32,8 @@ async function findOrCreateLog(userId: string, mealType: string) {
       and(
         eq(foodLog.userId, userId),
         eq(foodLog.mealType, mealType),
-        gte(foodLog.date, today),
-        lte(foodLog.date, tomorrow)
+        gte(foodLog.date, start),
+        lte(foodLog.date, end)
       )
     )
     .limit(1);
@@ -41,7 +41,7 @@ async function findOrCreateLog(userId: string, mealType: string) {
   if (existing) return existing.id;
 
   const id = crypto.randomUUID();
-  await db.insert(foodLog).values({ id, userId, date: new Date(), mealType });
+  await db.insert(foodLog).values({ id, userId, date: start, mealType });
   return id;
 }
 
@@ -53,7 +53,8 @@ export async function addFood(formData: FormData): Promise<Result> {
   const name = formData.get("name") as string;
   if (!mealType || !name) return { success: false, error: "Meal type and food name are required" };
 
-  const logId = await findOrCreateLog(session.userId, mealType);
+  const date = parseDate((formData.get("date") as string) || undefined);
+  const logId = await findOrCreateLog(session.userId, mealType, date);
 
   await db.insert(foodLogItems).values({
     id: crypto.randomUUID(),
@@ -166,9 +167,10 @@ export async function saveFavoriteMeal(formData: FormData): Promise<Result> {
   const mealType = formData.get("mealType") as string;
   if (!name || !mealType) return { success: false, error: "Meal name is required" };
 
-  const { today, tomorrow } = todayRange();
+  const date = parseDate((formData.get("date") as string) || undefined);
+  const { start, end } = dayRange(date);
 
-  const todayItems = await db
+  const dayItems = await db
     .select({
       name: foodLogItems.name,
       fdcId: foodLogItems.fdcId,
@@ -186,17 +188,17 @@ export async function saveFavoriteMeal(formData: FormData): Promise<Result> {
       and(
         eq(foodLog.userId, session.userId),
         eq(foodLog.mealType, mealType),
-        gte(foodLog.date, today),
-        lte(foodLog.date, tomorrow)
+        gte(foodLog.date, start),
+        lte(foodLog.date, end)
       )
     );
 
-  if (todayItems.length === 0) return { success: false, error: "No items in this meal" };
+  if (dayItems.length === 0) return { success: false, error: "No items in this meal" };
 
   const mealId = crypto.randomUUID();
   await db.insert(favoriteMeals).values({ id: mealId, userId: session.userId, name });
 
-  for (const item of todayItems) {
+  for (const item of dayItems) {
     await db.insert(favoriteMealItems).values({
       id: crypto.randomUUID(),
       favoriteMealId: mealId,
@@ -238,7 +240,8 @@ export async function logFavoriteMeal(formData: FormData): Promise<Result> {
 
   if (items.length === 0) return { success: false, error: "Favorite meal has no items" };
 
-  const logId = await findOrCreateLog(session.userId, mealType);
+  const date = parseDate((formData.get("date") as string) || undefined);
+  const logId = await findOrCreateLog(session.userId, mealType, date);
 
   for (const item of items) {
     await db.insert(foodLogItems).values({

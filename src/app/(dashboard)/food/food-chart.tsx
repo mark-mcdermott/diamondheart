@@ -113,7 +113,7 @@ export function FoodChart({ totals }: FoodChartProps) {
       <div className="border border-border rounded-lg p-4 bg-card">
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-sm font-semibold" style={{ color: "var(--app-heading-color)" }}>
-            Daily Macros
+            Macro Trends
           </h4>
           <TimeRangePicker value={range} onChange={setRange} />
         </div>
