@@ -93,7 +93,7 @@ const seedMetrics = [
   { name: "Restfulness",              slug: "restfulness",             description: "Sleep restfulness score",                       unit: null,        valueType: "int",    dailyGoal: null, icon: "Sparkles",         categorySlug: "sleep",     sortOrder: "22", hidden: true },
   { name: "Walking Asymmetry",        slug: "walking-asymmetry",       description: "Percentage difference between legs",            unit: "%",         valueType: "number", dailyGoal: null, icon: "GitBranch",        categorySlug: "activity",  sortOrder: "23", hidden: true },
   { name: "Max Heart Rate",           slug: "max-heart-rate",          description: "Maximum heart rate recorded",                   unit: "bpm",       valueType: "int",    dailyGoal: null, icon: "ArrowUpCircle",    categorySlug: "heart",     sortOrder: "24", hidden: true },
-  { name: "water",                    slug: "water",                   description: null,                                            unit: "glasses",   valueType: "int",    dailyGoal: 8,    icon: "Droplets",         categorySlug: "default",   sortOrder: "25", hidden: true, counter: true },
+  { name: "water",                    slug: "water",                   description: null,                                            unit: "glasses",   valueType: "int",    dailyGoal: 8,    icon: "Droplets",         categorySlug: "default",   sortOrder: "25", hidden: false, counter: true },
   { name: "Sleep Timing",             slug: "sleep-timing",            description: "Bedtime consistency score",                     unit: null,        valueType: "int",    dailyGoal: null, icon: "Clock",            categorySlug: "sleep",     sortOrder: "26", hidden: true },
   { name: "Double Support Time",      slug: "double-support-time",     description: "Percentage of time with both feet on ground",   unit: "%",         valueType: "number", dailyGoal: null, icon: "AlignCenter",      categorySlug: "activity",  sortOrder: "27", hidden: true },
   { name: "Sleep Heart Rate",         slug: "sleep-heart-rate",        description: "Average heart rate during sleep",               unit: "bpm",       valueType: "int",    dailyGoal: null, icon: "HeartOff",         categorySlug: "sleep",     sortOrder: "28", hidden: true },
@@ -123,6 +123,10 @@ const seedMetrics = [
   // ON metric at end
   { name: "Sleep Duration",           slug: "sleep-duration",          description: "Total time asleep",                             unit: "hours",     valueType: "number", dailyGoal: null, icon: "Moon",             categorySlug: "sleep",     sortOrder: "51", hidden: false },
   { name: "Awake Time",               slug: "awake-time",              description: "Time spent awake during sleep",                 unit: "min",       valueType: "int",    dailyGoal: null, icon: "Eye",              categorySlug: "sleep",     sortOrder: "52", hidden: true },
+
+  // Additional counters
+  { name: "Journal",                  slug: "journal",                 description: null,                                            unit: "entries",   valueType: "int",    dailyGoal: 1,    icon: "BookOpen",         categorySlug: "default",   sortOrder: "53", hidden: false, counter: true },
+  { name: "Stretching",              slug: "stretching",              description: null,                                            unit: "min",       valueType: "int",    dailyGoal: 1,    icon: "PersonStanding",   categorySlug: "activity",  sortOrder: "54", hidden: false, counter: true },
 ];
 
 // Generate a strong random password: lowercase, uppercase, number, 2+ special chars

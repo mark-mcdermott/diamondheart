@@ -496,12 +496,12 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
 
                   return (
                     <div key={metric.id} className="bg-card rounded-2xl border border-border p-4 card-texture">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <div className="flex items-center gap-2 min-w-0">
                           <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground shrink-0">
                             <MetricIcon className="w-4 h-4" />
                           </div>
-                          <span className="text-sm font-semibold" style={{ color: "var(--app-heading-color)" }}>{titleCase(metric.name)}</span>
+                          <span className="text-sm font-semibold truncate" style={{ color: "var(--app-heading-color)" }}>{titleCase(metric.name)}</span>
                         </div>
                         <button
                           className="w-7 h-7 rounded-lg bg-secondary text-muted-foreground hover:bg-border hover:text-foreground flex items-center justify-center transition-all duration-200 cursor-pointer border-0"
