@@ -577,102 +577,42 @@ async function seedAppointments(db: Db, userId: string) {
   }
 }
 
+async function fetchOmdbPoster(imdbId: string): Promise<string | null> {
+  const apiKey = process.env.OMDB_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const res = await fetch(`https://www.omdbapi.com/?i=${imdbId}&apikey=${apiKey}`);
+    const data = await res.json();
+    return data.Poster && data.Poster !== "N/A" ? data.Poster : null;
+  } catch {
+    return null;
+  }
+}
+
 async function seedEntertainment(db: Db, userId: string) {
-  const items = [
-    {
-      type: "movie",
-      title: "Inception",
-      status: "completed",
-      rating: 5,
-      imdbId: "tt1375666",
-      posterUrl:
-        "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-      releaseDate: "2010-07-16",
-      runtime: 148,
-      genres: "Action, Adventure, Sci-Fi",
-      voteAverage: "8.8",
-    },
-    {
-      type: "movie",
-      title: "The Grand Budapest Hotel",
-      status: "completed",
-      rating: 4,
-      imdbId: "tt2278388",
-      posterUrl:
-        "https://m.media-amazon.com/images/M/MV5BMzM5NjUxOTEyMl5BMl5BanBnXkFtZTgwNjEyMDM0MDE@._V1_SX300.jpg",
-      releaseDate: "2014-03-28",
-      runtime: 99,
-      genres: "Adventure, Comedy, Crime",
-      voteAverage: "8.1",
-    },
-    {
-      type: "movie",
-      title: "Dune: Part Two",
-      status: "queued",
-      rating: null,
-      imdbId: "tt15239678",
-      posterUrl:
-        "https://m.media-amazon.com/images/M/MV5BODI0YjNhNjUtYjM0My00MTUwLWFlYTMtMWI2NGUzYjNkMzFlXkEyXkFqcGdeQXVyMDM2NDM2MQ@@._V1_SX300.jpg",
-      releaseDate: "2024-03-01",
-      runtime: 166,
-      genres: "Action, Adventure, Drama",
-      voteAverage: "8.5",
-    },
-    {
-      type: "show",
-      title: "Breaking Bad",
-      status: "watching",
-      rating: 5,
-      imdbId: "tt0903747",
-      posterUrl:
-        "https://m.media-amazon.com/images/M/MV5BMzU5ZGYzNmQtMTdhYy00OGRiLTg0NmQtYjVjNzliZTg1ZGE4XkEyXkFqcGc@._V1_SX300.jpg",
-      releaseDate: "2008-01-20",
-      genres: "Crime, Drama, Thriller",
-      seasonCount: 5,
-      voteAverage: "9.5",
-    },
-    {
-      type: "show",
-      title: "Severance",
-      status: "watching",
-      rating: 5,
-      imdbId: "tt11280740",
-      posterUrl:
-        "https://m.media-amazon.com/images/M/MV5BMzM5ODMzYWYtZTczMC00NDEyLThjZDctZDBkZWM4MGVjZjk3XkEyXkFqcGc@._V1_SX300.jpg",
-      releaseDate: "2022-02-18",
-      genres: "Drama, Mystery, Sci-Fi",
-      seasonCount: 2,
-      voteAverage: "8.7",
-    },
-    {
-      type: "show",
-      title: "The Bear",
-      status: "completed",
-      rating: 4,
-      imdbId: "tt14452776",
-      posterUrl:
-        "https://m.media-amazon.com/images/M/MV5BNjZkNzJiNDMtN2I4MS00NzQ0LWE2YWUtNzliNDA2ZDMxNTY1XkEyXkFqcGc@._V1_SX300.jpg",
-      releaseDate: "2022-06-23",
-      genres: "Comedy, Drama",
-      seasonCount: 3,
-      voteAverage: "8.6",
-    },
-    {
-      type: "show",
-      title: "The Last of Us",
-      status: "queued",
-      rating: null,
-      imdbId: "tt3581920",
-      posterUrl:
-        "https://m.media-amazon.com/images/M/MV5BZGUzYTI3M2EtZmM0Yy00NGUyLWI4ODEtN2Q3ZGJlYzhhZjU3XkEyXkFqcGc@._V1_SX300.jpg",
-      releaseDate: "2023-01-15",
-      genres: "Action, Adventure, Drama",
-      seasonCount: 2,
-      voteAverage: "8.6",
-    },
+  const items: {
+    type: string;
+    title: string;
+    status: string;
+    rating: number | null;
+    imdbId: string;
+    releaseDate: string;
+    runtime?: number;
+    genres: string;
+    seasonCount?: number;
+    voteAverage: string;
+  }[] = [
+    { type: "movie", title: "Inception", status: "completed", rating: 5, imdbId: "tt1375666", releaseDate: "2010-07-16", runtime: 148, genres: "Action, Adventure, Sci-Fi", voteAverage: "8.8" },
+    { type: "movie", title: "The Grand Budapest Hotel", status: "completed", rating: 4, imdbId: "tt2278388", releaseDate: "2014-03-28", runtime: 99, genres: "Adventure, Comedy, Crime", voteAverage: "8.1" },
+    { type: "movie", title: "Dune: Part Two", status: "queued", rating: null, imdbId: "tt15239678", releaseDate: "2024-03-01", runtime: 166, genres: "Action, Adventure, Drama", voteAverage: "8.5" },
+    { type: "show", title: "Breaking Bad", status: "watching", rating: 5, imdbId: "tt0903747", releaseDate: "2008-01-20", genres: "Crime, Drama, Thriller", seasonCount: 5, voteAverage: "9.5" },
+    { type: "show", title: "Severance", status: "watching", rating: 5, imdbId: "tt11280740", releaseDate: "2022-02-18", genres: "Drama, Mystery, Sci-Fi", seasonCount: 2, voteAverage: "8.7" },
+    { type: "show", title: "The Bear", status: "completed", rating: 4, imdbId: "tt14452776", releaseDate: "2022-06-23", genres: "Comedy, Drama", seasonCount: 3, voteAverage: "8.6" },
+    { type: "show", title: "The Last of Us", status: "queued", rating: null, imdbId: "tt3581920", releaseDate: "2023-01-15", genres: "Action, Adventure, Drama", seasonCount: 2, voteAverage: "8.6" },
   ];
 
   for (const it of items) {
+    const posterUrl = await fetchOmdbPoster(it.imdbId);
     await db.insert(entertainmentItems).values({
       id: randomUUID(),
       userId,
@@ -681,11 +621,11 @@ async function seedEntertainment(db: Db, userId: string) {
       status: it.status,
       rating: it.rating,
       imdbId: it.imdbId,
-      posterUrl: it.posterUrl,
+      posterUrl,
       releaseDate: it.releaseDate,
-      runtime: "runtime" in it ? it.runtime : null,
+      runtime: it.runtime ?? null,
       genres: it.genres,
-      seasonCount: "seasonCount" in it ? it.seasonCount : null,
+      seasonCount: it.seasonCount ?? null,
       voteAverage: it.voteAverage,
     });
   }
