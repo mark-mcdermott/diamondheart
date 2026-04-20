@@ -540,14 +540,14 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
             {/* Macro summary cards */}
             <div className="grid grid-cols-4 gap-3 mb-4">
               {[
-                { label: "Calories", value: foodTotals.calories, unit: "kcal", icon: Flame, color: "#C4653A" },
-                { label: "Protein", value: foodTotals.protein, unit: "g", icon: Beef, color: "#5B8C5A" },
-                { label: "Carbs", value: foodTotals.carbs, unit: "g", icon: Wheat, color: "#D4964A" },
-                { label: "Fat", value: foodTotals.fat, unit: "g", icon: Droplet, color: "#C75B4A" },
+                { label: "Calories", value: foodTotals.calories, unit: "kcal", icon: Flame },
+                { label: "Protein", value: foodTotals.protein, unit: "g", icon: Beef },
+                { label: "Carbs", value: foodTotals.carbs, unit: "g", icon: Wheat },
+                { label: "Fat", value: foodTotals.fat, unit: "g", icon: Droplet },
               ].map((item) => (
                 <div key={item.label} className="bg-card rounded-[28px] border border-border/80 px-4 py-7 text-center card-texture">
-                  <item.icon className="mx-auto mb-5 h-4 w-4" strokeWidth={1.8} style={{ color: item.color }} />
-                  <p className="font-mono text-[2rem] font-semibold leading-none" style={{ color: item.color }}>{item.value}</p>
+                  <item.icon className="mx-auto mb-5 h-4 w-4 text-muted-foreground/80" strokeWidth={1.8} />
+                  <p className="font-mono text-[2rem] font-semibold leading-none" style={{ color: "var(--app-heading-color)" }}>{item.value}</p>
                   <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
                 </div>
               ))}
