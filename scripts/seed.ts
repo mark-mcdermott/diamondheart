@@ -176,7 +176,7 @@ async function seed() {
       passwordHash,
       name: u.name,
       role: u.role,
-      avatarUrl: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(u.name)}&backgroundColor=8b5cf6,6366f1,ec4899&backgroundType=gradientLinear`,
+      avatarUrl: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(u.name)}&backgroundColor=C4653A,D4964A,A0785A&backgroundType=gradientLinear&fontFamily=Georgia&fontSize=40`,
     });
     credentials.push({ email: u.email, password, role: u.role });
     console.log(`  Created ${u.role.padEnd(5)} ${u.email}`);
