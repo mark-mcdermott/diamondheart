@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import type { EntertainmentItem } from "@/db/schema";
 import { Plus, Trash2, Pencil, Tv, Film, BookOpen, Music, Gamepad2, Podcast, Star } from "lucide-react";
 import { useViewRange } from "@/lib/use-view-range";
-import { viewRangeStart, VIEW_RANGES } from "@/lib/view-range";
+import { viewRangeBounds, viewRangeLabel } from "@/lib/view-range";
 
 interface EntertainmentClientProps {
   items: EntertainmentItem[];
@@ -58,12 +58,12 @@ function RatingStars({ rating, onRate }: { rating: number | null; onRate?: (r: n
 const EntertainmentChart = lazy(() => import("./entertainment-chart").then((m) => ({ default: m.EntertainmentChart })));
 
 export function EntertainmentClient({ items }: EntertainmentClientProps) {
-  const { view } = useViewRange("week");
-  const viewLabel = VIEW_RANGES.find((r) => r.value === view)?.label ?? "Week";
-  const cutoff = viewRangeStart(view);
+  const { view, anchor } = useViewRange("week");
+  const bounds = viewRangeBounds(view, anchor ?? new Date());
+  const periodLabel = viewRangeLabel(view, anchor);
   const rangedItems = items.filter((i) => {
     const d = typeof i.updatedAt === "string" ? new Date(i.updatedAt) : i.updatedAt;
-    return d >= cutoff;
+    return d >= bounds.start && d < bounds.end;
   });
 
   const [isPending, startTransition] = useTransition();
@@ -167,7 +167,7 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
 
       {filtered.length === 0 ? (
         <EmptyState
-          title={`No activity in the last ${viewLabel.toLowerCase()}`}
+          title={`No activity in ${periodLabel.toLowerCase()}`}
           description="Switch to a wider range or add something new to your library."
         />
       ) : (

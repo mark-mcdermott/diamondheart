@@ -9,6 +9,7 @@ import { EntertainmentClient } from "./entertainment-client";
 import { NetflixClient } from "./netflix-client";
 import { getUserPreferences } from "@/app/actions/preferences";
 import { PageViewToggle } from "@/components/ui/view-toggle";
+import { DateNavigator } from "@/components/ui/date-navigator";
 
 export default async function EntertainmentPage() {
   const session = await getCurrentUser();
@@ -50,6 +51,7 @@ export default async function EntertainmentPage() {
           <h2>Entertainment</h2>
           <p className="text-muted-foreground mt-1">Track shows, movies, books, and music</p>
         </div>
+        <DateNavigator />
         <PageViewToggle defaultRange="week" available={["week", "month", "year"]} />
       </div>
       <EntertainmentClient items={items} />
