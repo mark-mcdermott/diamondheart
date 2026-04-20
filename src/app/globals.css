@@ -269,7 +269,7 @@
 			font-size: clamp(0.75rem, 1.2vh, 0.95rem);
 		}
 		.hero-image {
-			height: clamp(5rem, 15vh, 12rem) !important;
+			height: clamp(10rem, 15vh, 12rem) !important;
 		}
 	}
 
