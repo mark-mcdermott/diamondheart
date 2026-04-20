@@ -246,7 +246,7 @@
 	}
 
 	.hero-image {
-		height: clamp(6rem, 18vh, 16rem) !important;
+		height: clamp(12rem, 18vh, 16rem) !important;
 	}
 
 	.hero h1 {
