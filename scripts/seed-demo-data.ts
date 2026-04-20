@@ -273,12 +273,14 @@ async function seedFood(db: Db, userId: string) {
     daysAgo: number;
     items: { name: string; calories: number; protein: number; carbs: number; fat: number }[];
   }[] = [
+    // Today
     {
       mealType: "breakfast",
       daysAgo: 0,
       items: [
         { name: "Overnight Oats", calories: 340, protein: 14, carbs: 52, fat: 9 },
         { name: "Greek Yogurt", calories: 100, protein: 17, carbs: 6, fat: 0 },
+        { name: "Banana", calories: 105, protein: 1, carbs: 27, fat: 0 },
       ],
     },
     {
@@ -286,20 +288,50 @@ async function seedFood(db: Db, userId: string) {
       daysAgo: 0,
       items: [
         { name: "Chicken Rice Bowl", calories: 620, protein: 48, carbs: 70, fat: 14 },
+        { name: "Side Salad", calories: 85, protein: 3, carbs: 8, fat: 5 },
       ],
     },
     {
       mealType: "snack",
       daysAgo: 0,
-      items: [{ name: "Almonds", calories: 170, protein: 6, carbs: 6, fat: 15 }],
+      items: [
+        { name: "Almonds", calories: 170, protein: 6, carbs: 6, fat: 15 },
+        { name: "Apple", calories: 95, protein: 0, carbs: 25, fat: 0 },
+      ],
+    },
+    {
+      mealType: "dinner",
+      daysAgo: 0,
+      items: [
+        { name: "Salmon", calories: 380, protein: 40, carbs: 0, fat: 22 },
+        { name: "Brown Rice", calories: 220, protein: 5, carbs: 46, fat: 2 },
+        { name: "Broccoli", calories: 55, protein: 4, carbs: 11, fat: 1 },
+      ],
+    },
+    // Yesterday
+    {
+      mealType: "breakfast",
+      daysAgo: 1,
+      items: [
+        { name: "Eggs (2)", calories: 140, protein: 12, carbs: 1, fat: 10 },
+        { name: "Toast", calories: 130, protein: 4, carbs: 24, fat: 2 },
+        { name: "Orange Juice", calories: 110, protein: 2, carbs: 26, fat: 0 },
+      ],
+    },
+    {
+      mealType: "lunch",
+      daysAgo: 1,
+      items: [
+        { name: "Turkey Sandwich", calories: 420, protein: 28, carbs: 38, fat: 16 },
+        { name: "Chips", calories: 150, protein: 2, carbs: 15, fat: 10 },
+      ],
     },
     {
       mealType: "dinner",
       daysAgo: 1,
       items: [
-        { name: "Salmon", calories: 380, protein: 40, carbs: 0, fat: 22 },
-        { name: "Brown Rice", calories: 220, protein: 5, carbs: 46, fat: 2 },
-        { name: "Broccoli", calories: 55, protein: 4, carbs: 11, fat: 1 },
+        { name: "Pasta with Marinara", calories: 480, protein: 14, carbs: 82, fat: 8 },
+        { name: "Garlic Bread", calories: 200, protein: 4, carbs: 24, fat: 10 },
       ],
     },
   ];
@@ -428,11 +460,29 @@ async function seedWorkouts(
 async function seedTrackingItems(db: Db, userId: string) {
   const items = [
     { name: "Coffee shops visited", category: "Places", count: 23, icon: "coffee" },
+    { name: "Restaurants tried", category: "Places", count: 31, icon: "utensils" },
+    { name: "Parks explored", category: "Places", count: 9, icon: "trees" },
+    { name: "Libraries visited", category: "Places", count: 5, icon: "library" },
     { name: "Books read", category: "Learning", count: 12, icon: "book" },
+    { name: "Online courses", category: "Learning", count: 4, icon: "graduation-cap" },
+    { name: "Podcasts finished", category: "Learning", count: 27, icon: "headphones" },
+    { name: "Languages studied", category: "Learning", count: 2, icon: "languages" },
     { name: "Countries visited", category: "Travel", count: 8, icon: "globe" },
+    { name: "Flights taken", category: "Travel", count: 14, icon: "plane" },
+    { name: "Road trips", category: "Travel", count: 5, icon: "car" },
+    { name: "National parks", category: "Travel", count: 6, icon: "mountain" },
     { name: "Concerts attended", category: "Experiences", count: 5, icon: "music" },
-    { name: "Blood donations", category: "Health", count: 3, icon: "droplet" },
+    { name: "Museums visited", category: "Experiences", count: 11, icon: "landmark" },
+    { name: "Cooking classes", category: "Experiences", count: 3, icon: "chef-hat" },
+    { name: "Escape rooms", category: "Experiences", count: 4, icon: "key" },
     { name: "Hikes completed", category: "Outdoors", count: 14, icon: "mountain" },
+    { name: "Bike rides", category: "Outdoors", count: 22, icon: "bike" },
+    { name: "Camping trips", category: "Outdoors", count: 3, icon: "tent" },
+    { name: "Sunrise watches", category: "Outdoors", count: 7, icon: "sunrise" },
+    { name: "Blood donations", category: "Health", count: 3, icon: "droplet" },
+    { name: "Dental cleanings", category: "Health", count: 4, icon: "sparkles" },
+    { name: "Flu shots", category: "Health", count: 2, icon: "syringe" },
+    { name: "Eye exams", category: "Health", count: 3, icon: "eye" },
   ];
   for (const t of items) {
     await db.insert(trackingItems).values({
