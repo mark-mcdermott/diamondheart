@@ -10,7 +10,7 @@ import {
   Cell,
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart-container";
-import { CHART_PALETTE } from "@/lib/chart-utils";
+import { getCategoryColorMap } from "./tracking-utils";
 
 interface TrackingChartProps {
   items: { name: string; count: number; category: string | null }[];
@@ -19,21 +19,19 @@ interface TrackingChartProps {
 export function TrackingChart({ items }: TrackingChartProps) {
   if (items.length === 0) return null;
 
-  // Group by category
-  const categories = new Map<string, number>();
-  for (const item of items) {
-    const cat = item.category || "Uncategorized";
-    categories.set(cat, (categories.get(cat) || 0) + item.count);
-  }
-
-  const data = Array.from(categories.entries())
-    .map(([category, total]) => ({ category, total }))
-    .sort((a, b) => b.total - a.total);
+  const colorMap = getCategoryColorMap(items);
+  const data = Array.from(colorMap.keys()).map((category) => ({
+    category,
+    total: items.reduce(
+      (sum, i) => sum + ((i.category || "Uncategorized") === category ? i.count : 0),
+      0,
+    ),
+  }));
 
   if (data.length === 0) return null;
 
   return (
-    <div className="border border-border rounded-lg p-4 bg-card mb-8">
+    <div className="border border-border rounded-lg p-4 bg-surface-warm mb-8">
       <h4 className="text-sm font-semibold mb-4" style={{ color: "var(--app-heading-color)" }}>
         Items by Category
       </h4>
@@ -68,8 +66,8 @@ export function TrackingChart({ items }: TrackingChartProps) {
             formatter={(value: number) => [`${value}`, "Total Count"]}
           />
           <Bar dataKey="total" radius={[0, 4, 4, 0]}>
-            {data.map((_, idx) => (
-              <Cell key={idx} fill={CHART_PALETTE[idx % CHART_PALETTE.length]} />
+            {data.map((d) => (
+              <Cell key={d.category} fill={colorMap.get(d.category)} />
             ))}
           </Bar>
         </BarChart>

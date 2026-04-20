@@ -10,6 +10,7 @@ import { addTrackingItem, updateTrackingCount, updateTrackingItem, deleteTrackin
 import type { TrackingItem } from "@/db/schema";
 import { Plus, Minus, Pencil, Trash2, Package } from "lucide-react";
 import { TrackingChart } from "./tracking-chart";
+import { getCategoryColorMap } from "./tracking-utils";
 
 interface TrackingClientProps {
   items: TrackingItem[];
@@ -98,6 +99,8 @@ export function TrackingClient({ items }: TrackingClientProps) {
     categories.get(cat)!.push(item);
   }
 
+  const categoryColors = getCategoryColorMap(items);
+
   return (
     <>
       {/* Chart */}
@@ -117,15 +120,31 @@ export function TrackingClient({ items }: TrackingClientProps) {
         />
       ) : (
         <div className="space-y-8">
-          {Array.from(categories.entries()).map(([cat, catItems]) => (
+          {Array.from(categories.entries()).map(([cat, catItems]) => {
+            const catColor = categoryColors.get(cat) ?? "var(--app-primary)";
+            return (
             <section key={cat}>
-              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">{cat}</h3>
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span
+                  aria-hidden
+                  className="inline-block w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: catColor }}
+                />
+                {cat}
+              </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {catItems.map((item) => (
-                  <div key={item.id} className="bg-card rounded-lg p-4">
+                  <div
+                    key={item.id}
+                    className="rounded-lg p-4 border"
+                    style={{
+                      backgroundColor: `color-mix(in srgb, ${catColor} 7%, var(--app-surface-warm))`,
+                      borderColor: `color-mix(in srgb, ${catColor} 20%, var(--app-border))`,
+                    }}
+                  >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <Package className="w-4 h-4 text-primary" />
+                        <Package className="w-4 h-4" style={{ color: catColor }} />
                         <span className="text-sm font-semibold" style={{ color: "var(--app-heading-color)" }}>{item.name}</span>
                       </div>
                       <div className="flex items-center gap-1">
@@ -164,7 +183,8 @@ export function TrackingClient({ items }: TrackingClientProps) {
                 ))}
               </div>
             </section>
-          ))}
+            );
+          })}
         </div>
       )}
 
