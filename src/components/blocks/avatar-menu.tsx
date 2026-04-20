@@ -61,6 +61,9 @@ export function AvatarMenu({ user, notificationCount = 0 }: AvatarMenuProps) {
         <DropdownMenuItem onClick={() => router.push("/orders")} className="cursor-pointer">
           Orders
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push("/metrics")} className="cursor-pointer">
+          Metrics
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer">
           Settings
         </DropdownMenuItem>
