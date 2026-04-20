@@ -545,10 +545,10 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                 { label: "Carbs", value: foodTotals.carbs, unit: "g", icon: Wheat },
                 { label: "Fat", value: foodTotals.fat, unit: "g", icon: Droplet },
               ].map((item) => (
-                <div key={item.label} className="bg-card rounded-xl border border-border p-3 text-center card-texture">
-                  <item.icon className="w-4 h-4 mx-auto mb-1.5 text-muted-foreground" strokeWidth={1.8} />
-                  <p className="text-lg font-mono font-semibold" style={{ color: "var(--app-heading-color)" }}>{item.value}</p>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{item.label}</p>
+                <div key={item.label} className="bg-card rounded-[28px] border border-border/80 px-4 py-7 text-center card-texture">
+                  <item.icon className="mx-auto mb-5 h-4 w-4 text-muted-foreground/80" strokeWidth={1.8} />
+                  <p className="font-mono text-[2rem] font-semibold leading-none" style={{ color: "var(--app-heading-color)" }}>{item.value}</p>
+                  <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
                 </div>
               ))}
             </div>
