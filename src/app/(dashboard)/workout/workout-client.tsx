@@ -17,6 +17,9 @@ import {
   Clock,
   Calendar,
 } from "lucide-react";
+import { PageViewToggle } from "@/components/ui/view-toggle";
+import { useViewRange } from "@/lib/use-view-range";
+import { filterByViewRange, VIEW_RANGES } from "@/lib/view-range";
 
 interface WorkoutSet {
   id: string;
@@ -59,6 +62,9 @@ export function WorkoutClient({
   activeWorkout,
   activeSets,
 }: WorkoutClientProps) {
+  const { view } = useViewRange("week");
+  const viewLabel = VIEW_RANGES.find((r) => r.value === view)?.label ?? "Week";
+  const rangedWorkouts = filterByViewRange(recentWorkouts, view);
   const [isPending, startTransition] = useTransition();
   const [prAlert, setPrAlert] = useState<string | null>(null);
 
@@ -119,12 +125,15 @@ export function WorkoutClient({
           </p>
         </div>
         {!activeWorkout && (
-          <Button asChild>
-            <Link href="/records">
-              <Trophy className="w-4 h-4 mr-2" />
-              Records
-            </Link>
-          </Button>
+          <>
+            <PageViewToggle defaultRange="week" />
+            <Button asChild>
+              <Link href="/records">
+                <Trophy className="w-4 h-4 mr-2" />
+                Records
+              </Link>
+            </Button>
+          </>
         )}
       </div>
 
@@ -158,14 +167,15 @@ export function WorkoutClient({
             <WorkoutChart />
           </Suspense>
 
-          {/* Recent Workouts */}
-          {recentWorkouts.length > 0 && (
-            <section>
-              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
-                Recent Workouts
-              </h3>
+          <section>
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
+              {viewLabel} &middot; {rangedWorkouts.length} {rangedWorkouts.length === 1 ? "workout" : "workouts"}
+            </h3>
+            {rangedWorkouts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No workouts in this range yet.</p>
+            ) : (
               <div className="space-y-2">
-                {recentWorkouts.map((w) => (
+                {rangedWorkouts.map((w) => (
                   <div
                     key={w.id}
                     className="flex items-center justify-between py-3 px-4 rounded-lg border border-border"
@@ -194,8 +204,8 @@ export function WorkoutClient({
                   </div>
                 ))}
               </div>
-            </section>
-          )}
+            )}
+          </section>
         </>
       ) : (
         <>
