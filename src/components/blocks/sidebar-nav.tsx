@@ -14,6 +14,7 @@ import {
   Tv,
   Compass,
   BarChart3,
+  DollarSign,
   Bell,
   Settings,
   Menu,
@@ -58,6 +59,7 @@ const iconMap: Record<string, LucideIcon> = {
   "/appointments": CalendarCheck,
   "/entertainment": Tv,
   "/workout": Dumbbell,
+  "/finances": DollarSign,
 };
 
 function getNavIcon(href: string): LucideIcon {
