@@ -275,7 +275,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
             <button
               type="button"
               onClick={() => navDate(-1)}
-              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer -translate-y-[3px]"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -286,7 +286,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
               type="button"
               onClick={() => navDate(1)}
               disabled={isFuture || isToday}
-              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default disabled:hover:bg-transparent"
+              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default disabled:hover:bg-transparent -translate-y-[3px]"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
