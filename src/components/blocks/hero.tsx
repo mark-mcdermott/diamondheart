@@ -95,7 +95,7 @@ export function Hero({
               </Button>
             )}
             {secondaryCta && (
-              <Button asChild variant="outline" size="lg" className="bg-transparent transition-all hover:bg-[rgba(154,79,46,0.06)] hover:text-[var(--hero-btn-hover)] hover:border-[var(--hero-btn-hover-border)]" style={{ color: "#9A4F2E", borderColor: "rgba(154, 79, 46, 0.4)", "--hero-btn-hover": "#C15A1E", "--hero-btn-hover-border": "rgba(154, 79, 46, 0.6)" } as React.CSSProperties}>
+              <Button asChild variant="outline" size="lg" className="bg-transparent transition-all hover:bg-[rgba(255,137,0,0.1)] hover:text-[#ff9d2b] hover:border-[#ff8900]" style={{ color: "#9A4F2E", borderColor: "rgba(154, 79, 46, 0.4)" }}>
                 <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
               </Button>
             )}
