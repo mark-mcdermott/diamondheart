@@ -7,6 +7,40 @@ import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { DEFAULT_NAV_ITEMS, buildDefaultNavItems, hasDuplicates, needsMigration, TRACKING_SECTIONS } from "@/lib/nav-utils";
 
+const FEED_HREF = "/feed";
+
+async function ensureCommunityNavItem(
+  userId: string,
+  items: { id: string; href: string; sortOrder: number }[],
+) {
+  if (items.some((i) => i.href === FEED_HREF)) return;
+
+  const dashboard = items.find((i) => i.href === "/dashboard");
+  const metrics = items.find((i) => i.href === "/metrics");
+  const insertAfterSort = Math.max(dashboard?.sortOrder ?? -1, metrics?.sortOrder ?? -1);
+  const insertAt = insertAfterSort + 1;
+
+  for (const item of items) {
+    if (item.sortOrder >= insertAt) {
+      await db
+        .update(userNavItems)
+        .set({ sortOrder: item.sortOrder + 1, updatedAt: new Date() })
+        .where(eq(userNavItems.id, item.id));
+    }
+  }
+
+  await db.insert(userNavItems).values({
+    id: crypto.randomUUID(),
+    userId,
+    label: "Community",
+    href: FEED_HREF,
+    itemType: "builtin",
+    sortOrder: insertAt,
+    visible: true,
+    locked: false,
+  });
+}
+
 export type ActionResult = {
   success: boolean;
   error?: string;
@@ -34,6 +68,16 @@ export async function getNavItems(userId: string) {
   if (hasDuplicates(items)) {
     await db.delete(userNavItems).where(eq(userNavItems.userId, userId));
     return buildDefaultNavItems(userId);
+  }
+
+  // Lazy-migrate in the Community nav item for existing users
+  if (!items.some((i) => i.href === FEED_HREF)) {
+    await ensureCommunityNavItem(userId, items);
+    return db
+      .select()
+      .from(userNavItems)
+      .where(eq(userNavItems.userId, userId))
+      .orderBy(userNavItems.sortOrder);
   }
 
   return items;
@@ -103,7 +147,12 @@ async function ensureNavItemsPersisted(userId: string) {
     }
     return db.select().from(userNavItems).where(eq(userNavItems.userId, userId)).orderBy(userNavItems.sortOrder);
   } else if (items.length > 0) {
-    return items;
+    await ensureCommunityNavItem(userId, items);
+    return db
+      .select()
+      .from(userNavItems)
+      .where(eq(userNavItems.userId, userId))
+      .orderBy(userNavItems.sortOrder);
   }
 
   // Seed defaults

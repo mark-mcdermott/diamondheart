@@ -12,6 +12,7 @@ type Result = { success: boolean; error?: string };
 const DEFAULT_PREFERENCES = {
   useNetflixUI: true,
   showSiteName: true,
+  showMeditationInFeed: true,
 } as const;
 
 export async function getUserPreferences(userId: string) {
@@ -28,6 +29,7 @@ export async function getUserPreferences(userId: string) {
   return {
     useNetflixUI: prefs.useNetflixUI,
     showSiteName: prefs.showSiteName,
+    showMeditationInFeed: prefs.showMeditationInFeed,
     dashboardSections: (prefs.dashboardSections as string[] | null) ?? DEFAULT_DASHBOARD_SECTIONS,
   };
 }
