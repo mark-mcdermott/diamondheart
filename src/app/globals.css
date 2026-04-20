@@ -54,7 +54,7 @@ html {
 	--app-ring: #C4653A;
 
 	/* Semantic colors */
-	--app-success: #7A8B5C;
+	--app-success: #8A9472;
 	--app-success-foreground: #FFFFFF;
 	--app-surface-warm: #F0EBE3;
 
@@ -97,7 +97,7 @@ html {
 	--app-input: #362F28;
 	--app-ring: #D4764A;
 
-	--app-success: #9BA67C;
+	--app-success: #AAB08E;
 	--app-success-foreground: #FFFBF7;
 	--app-surface-warm: #2C2720;
 }
