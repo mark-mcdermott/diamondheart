@@ -2,10 +2,14 @@
 
 import { useState, useTransition, useCallback, useRef, useEffect, lazy, Suspense } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { DatePickerCalendar } from "@/components/ui/date-picker-calendar";
+import { toISODate } from "@/lib/dates";
 import {
   addFood,
   removeFood,
@@ -31,6 +35,9 @@ import {
   BookOpen,
   Save,
   PenLine,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
 } from "lucide-react";
 
 interface StagedFood {
@@ -87,6 +94,7 @@ interface FoodClientProps {
   totals: { calories: number; protein: number; carbs: number; fat: number };
   favoriteFoods: FavFood[];
   favoriteMeals: FavMeal[];
+  selectedDate: string;
 }
 
 const MEAL_TYPES = [
@@ -98,8 +106,18 @@ const MEAL_TYPES = [
 
 const FoodChart = lazy(() => import("./food-chart").then((m) => ({ default: m.FoodChart })));
 
-export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals }: FoodClientProps) {
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, selectedDate }: FoodClientProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [activeMeal, setActiveMeal] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -119,6 +137,29 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals }: Food
   const [customUnit, setCustomUnit] = useState("serving");
   const searchRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const [year, month, day] = selectedDate.split("-").map(Number);
+  const viewDate = new Date(year, month - 1, day);
+  const now = new Date();
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const isToday = viewDate.getTime() === todayMidnight.getTime();
+  const isFuture = viewDate > todayMidnight;
+  const yesterdayMidnight = new Date(todayMidnight);
+  yesterdayMidnight.setDate(yesterdayMidnight.getDate() - 1);
+  const isYesterday = viewDate.getTime() === yesterdayMidnight.getTime();
+  const dateLabel = isToday ? "Today" : isYesterday ? "Yesterday" : formatDate(viewDate).split(",")[0];
+
+  function navDate(offset: number) {
+    const d = new Date(viewDate);
+    d.setDate(d.getDate() + offset);
+    router.push(`/food?date=${toISODate(d)}`);
+  }
+
+  function handleDatePick(dateISO: string) {
+    setCalendarOpen(false);
+    if (dateISO) router.push(`/food?date=${dateISO}`);
+    else router.push("/food");
+  }
 
   // Close search when clicking outside
   useEffect(() => {
@@ -190,6 +231,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals }: Food
     startTransition(async () => {
       const fd = new FormData();
       fd.set("mealType", activeMeal);
+      fd.set("date", selectedDate);
       fd.set("name", stagedFood.name);
       fd.set("fdcId", stagedFood.fdcId || "");
       fd.set("servingSize", String(stagedFood.servingSize));
@@ -221,9 +263,10 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals }: Food
       cfd.set("servingUnit", customUnit || "serving");
       await createCustomFood(cfd);
 
-      // Also add it to today's meal
+      // Also add it to the selected day's meal
       const fd = new FormData();
       fd.set("mealType", activeMeal);
+      fd.set("date", selectedDate);
       fd.set("name", customName);
       fd.set("servingSize", customServing || "1");
       fd.set("servingUnit", customUnit || "serving");
@@ -283,6 +326,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals }: Food
       const fd = new FormData();
       fd.set("mealName", mealName);
       fd.set("mealType", mealType);
+      fd.set("date", selectedDate);
       await saveFavoriteMeal(fd);
       setSavingMeal(null);
       setMealName("");
@@ -294,6 +338,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals }: Food
       const fd = new FormData();
       fd.set("mealId", mealId);
       fd.set("mealType", mealType);
+      fd.set("date", selectedDate);
       await logFavoriteMeal(fd);
     });
   }
@@ -308,13 +353,49 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals }: Food
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="flex items-center gap-4 mb-8">
-        <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
+      <div className="mb-8">
+        <Link href="/dashboard" className="text-muted-foreground hover:text-foreground inline-block mb-4">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div>
-          <h2>Food Tracking</h2>
-          <p className="text-muted-foreground mt-1">Log meals and track your macros</p>
+        <p className="text-sm text-muted-foreground font-medium mb-1 tracking-wide uppercase" style={{ fontSize: "11px", letterSpacing: "0.08em" }}>
+          {dateLabel}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navDate(-1)}
+            className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer -translate-y-[7px]"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <h2 className="text-3xl sm:text-4xl font-display leading-none" style={{ fontWeight: 500 }}>
+            {formatDate(viewDate)}
+          </h2>
+          <button
+            type="button"
+            onClick={() => navDate(1)}
+            disabled={isFuture || isToday}
+            className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default disabled:hover:bg-transparent -translate-y-[7px]"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer ml-1 -translate-y-[7px]"
+              >
+                <Calendar className="w-4 h-4" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" sideOffset={8}>
+              <DatePickerCalendar
+                value={selectedDate}
+                max={toISODate(todayMidnight)}
+                onChange={handleDatePick}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -333,11 +414,6 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals }: Food
           </div>
         ))}
       </div>
-
-      {/* Charts */}
-      <Suspense fallback={<div className="h-64 bg-card border border-border rounded-lg animate-pulse mb-6" />}>
-        <FoodChart totals={totals} />
-      </Suspense>
 
       {/* Saved Meals */}
       {favoriteMeals.length > 0 && (
@@ -576,6 +652,14 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals }: Food
           )}
         </section>
       ))}
+
+      {/* Charts — placed last as trend context */}
+      <Suspense fallback={<div className="h-64 bg-card border border-border rounded-lg animate-pulse mt-8" />}>
+        <div className="mt-8">
+          <FoodChart totals={totals} />
+        </div>
+      </Suspense>
+
       {/* Custom Food Modal */}
       <Dialog open={showCustom} onOpenChange={setShowCustom}>
         <DialogContent>

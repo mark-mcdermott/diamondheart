@@ -10,16 +10,7 @@ import {
 import { eq, and, gte, lt, lte, desc, sql } from "drizzle-orm";
 import { DashboardClient } from "./dashboard-client";
 import { getUserPreferences } from "@/app/actions/preferences";
-
-function parseDate(dateStr: string | undefined): Date {
-  if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    const [y, m, d] = dateStr.split("-").map(Number);
-    const parsed = new Date(y, m - 1, d);
-    if (!isNaN(parsed.getTime())) return parsed;
-  }
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
+import { parseDate, toISODate } from "@/lib/dates";
 
 export default async function DashboardPage({
   searchParams,
@@ -138,7 +129,7 @@ export default async function DashboardPage({
 
   const prefs = await getUserPreferences(session.userId);
 
-  const dateISO = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
+  const dateISO = toISODate(selectedDate);
 
   return (
     <DashboardClient

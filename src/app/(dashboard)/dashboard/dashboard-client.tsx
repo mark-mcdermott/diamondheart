@@ -14,6 +14,7 @@ import { quickLog } from "@/app/actions/tracker";
 import { hapticTap, hapticSuccess } from "@/lib/haptics";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { WeeklyChart } from "./weekly-chart";
+import { toISODate } from "@/lib/dates";
 import type { TrackerMetric } from "@/db/schema";
 import {
   Plus,
@@ -226,8 +227,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
   function navDate(offset: number) {
     const d = new Date(viewDate);
     d.setDate(d.getDate() + offset);
-    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    router.push(`/dashboard?date=${iso}`);
+    router.push(`/dashboard?date=${toISODate(d)}`);
   }
 
   function handleDatePick(dateISO: string) {
@@ -310,7 +310,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
               <PopoverContent align="start" sideOffset={8}>
                 <DatePickerCalendar
                   value={selectedDate}
-                  max={`${todayMidnight.getFullYear()}-${String(todayMidnight.getMonth() + 1).padStart(2, "0")}-${String(todayMidnight.getDate()).padStart(2, "0")}`}
+                  max={toISODate(todayMidnight)}
                   onChange={handleDatePick}
                 />
               </PopoverContent>
