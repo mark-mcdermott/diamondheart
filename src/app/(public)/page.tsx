@@ -2,11 +2,13 @@ import { Hero } from "@/components/blocks/hero";
 import { FeatureCards } from "@/components/blocks/feature-cards";
 import { ImageFeatures } from "@/components/blocks/image-features";
 import { FeatureGrid } from "@/components/blocks/feature-grid";
+import { NativeRedirect } from "@/components/native-redirect";
 import { Activity, Users, GitBranch, Flag, Moon, Shield } from "lucide-react";
 
 export default function HomePage() {
   return (
     <>
+      <NativeRedirect />
       <Hero
         title="Diamondheart"
         image="/illustration.png"
