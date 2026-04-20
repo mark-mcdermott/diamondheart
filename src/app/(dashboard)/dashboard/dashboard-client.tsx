@@ -12,6 +12,7 @@ import { ProgressRing } from "@/components/ui/progress-ring";
 import { EmptyState } from "@/components/ui/empty-state";
 import { quickLog } from "@/app/actions/tracker";
 import { hapticTap, hapticSuccess } from "@/lib/haptics";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { WeeklyChart } from "./weekly-chart";
 import type { TrackerMetric } from "@/db/schema";
 import {
@@ -204,6 +205,7 @@ function InlineSparkline({ data, color, completed }: { data: number[]; color: st
 
 export function DashboardClient({ metrics, todayEntries, recentEntries, foodTotals, mealSummaries, sparklines, dashboardSections, selectedDate }: DashboardClientProps) {
   const router = useRouter();
+  usePullToRefresh();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [entryMetric, setEntryMetric] = useState<TrackerMetric | null>(null);
