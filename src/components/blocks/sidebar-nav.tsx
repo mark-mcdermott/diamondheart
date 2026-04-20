@@ -4,23 +4,23 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  Flower2,
-  UtensilsCrossed,
-  Dumbbell,
-  Activity,
+  SquaresFour,
+  FlowerLotus,
+  ForkKnife,
+  Compass,
   Stethoscope,
   CalendarCheck,
-  Tv,
-  Compass,
-  BarChart3,
-  DollarSign,
+  TelevisionSimple,
+  Barbell,
+  CurrencyDollar,
+  ChartBar,
   Bell,
-  Settings,
-  Menu,
+  GearSix,
+  List,
   X,
-  type LucideIcon,
-} from "lucide-react";
+  Pulse,
+  type Icon as PhosphorIcon,
+} from "@phosphor-icons/react";
 import { Sheet, SheetContent, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -49,21 +49,21 @@ interface SidebarNavProps {
 }
 
 // Map nav hrefs to icons
-const iconMap: Record<string, LucideIcon> = {
-  "/dashboard": LayoutDashboard,
-  "/metrics": BarChart3,
-  "/meditate": Flower2,
-  "/food": UtensilsCrossed,
+const iconMap: Record<string, PhosphorIcon> = {
+  "/dashboard": SquaresFour,
+  "/metrics": ChartBar,
+  "/meditate": FlowerLotus,
+  "/food": ForkKnife,
   "/tracking": Compass,
   "/medical": Stethoscope,
   "/appointments": CalendarCheck,
-  "/entertainment": Tv,
-  "/workout": Dumbbell,
-  "/finances": DollarSign,
+  "/entertainment": TelevisionSimple,
+  "/workout": Barbell,
+  "/finances": CurrencyDollar,
 };
 
-function getNavIcon(href: string): LucideIcon {
-  return iconMap[href] ?? Activity;
+function getNavIcon(href: string): PhosphorIcon {
+  return iconMap[href] ?? Pulse;
 }
 
 export function SidebarNav({
@@ -120,7 +120,7 @@ export function SidebarNav({
                 `}
                 title={link.label}
               >
-                <Icon className="w-5 h-5" strokeWidth={isActive ? 2.2 : 1.8} />
+                <Icon className="w-5 h-5" weight={isActive ? "bold" : "regular"} />
                 {/* Tooltip */}
                 <span className="
                   absolute left-full ml-3 px-2.5 py-1.5 rounded-lg text-xs font-medium
@@ -153,7 +153,7 @@ export function SidebarNav({
               `}
               title="Notifications"
             >
-              <Bell className="w-5 h-5" strokeWidth={1.8} />
+              <Bell className="w-5 h-5" weight="regular" />
               {notificationCount > 0 && (
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500" />
               )}
@@ -195,7 +195,7 @@ export function SidebarNav({
                 href="/notifications"
                 className="relative text-muted-foreground hover:text-foreground p-2 no-underline"
               >
-                <Bell className="h-5 w-5" strokeWidth={1.8} />
+                <Bell className="h-5 w-5" weight="regular" />
                 {notificationCount > 0 && (
                   <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500" />
                 )}
@@ -212,7 +212,7 @@ export function SidebarNav({
               />
             )}
             <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} className="text-foreground">
-              <Menu className="h-5 w-5" strokeWidth={2} />
+              <List className="h-5 w-5" weight="bold" />
             </Button>
           </div>
         </div>
@@ -239,7 +239,7 @@ export function SidebarNav({
                   }
                 `}
               >
-                <Icon className="w-5 h-5" strokeWidth={isActive ? 2.2 : 1.8} />
+                <Icon className="w-5 h-5" weight={isActive ? "bold" : "regular"} />
                 <span className="text-[10px] font-medium leading-none">{link.label}</span>
               </Link>
             );
@@ -252,7 +252,7 @@ export function SidebarNav({
                 transition-all duration-200 min-w-[52px] text-muted-foreground cursor-pointer
               `}
             >
-              <Menu className="w-5 h-5" strokeWidth={1.8} />
+              <List className="w-5 h-5" weight="regular" />
               <span className="text-[10px] font-medium leading-none">More</span>
             </button>
           )}
@@ -265,7 +265,7 @@ export function SidebarNav({
           <div className="flex items-center justify-end h-14 -mr-1">
             <SheetClose asChild>
               <Button variant="ghost" size="icon">
-                <X className="h-5 w-5" strokeWidth={2} />
+                <X className="h-5 w-5" weight="bold" />
               </Button>
             </SheetClose>
           </div>
@@ -290,7 +290,7 @@ export function SidebarNav({
                     }
                   `}
                 >
-                  <Icon className="w-4.5 h-4.5" strokeWidth={isActive ? 2.2 : 1.8} />
+                  <Icon className="w-4.5 h-4.5" weight={isActive ? "bold" : "regular"} />
                   {link.label}
                 </Link>
               );
@@ -303,7 +303,7 @@ export function SidebarNav({
               onClick={() => setMobileOpen(false)}
               className="flex items-center gap-3 text-sm py-2.5 px-3 rounded-xl no-underline text-foreground hover:bg-secondary transition-all duration-200"
             >
-              <Settings className="w-4.5 h-4.5" strokeWidth={1.8} />
+              <GearSix className="w-4.5 h-4.5" weight="regular" />
               Settings
             </Link>
           </nav>
