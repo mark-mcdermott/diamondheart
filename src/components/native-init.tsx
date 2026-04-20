@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
+import { syncDeviceToken } from "@/lib/native-push";
 
 function useThemeObserver(callback: (isDark: boolean) => void) {
   useEffect(() => {
@@ -51,6 +52,8 @@ export function NativeInit() {
           App.minimizeApp();
         }
       });
+
+      syncDeviceToken().catch(() => {});
     })();
   }, []);
 

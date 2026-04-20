@@ -20,7 +20,7 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "cap": "cap",
-    "cap:sync": "cap sync",
+    "cap:sync": "cap sync && tsx scripts/patch-android-splash.ts",
     "cap:ios": "cap open ios",
     "cap:android": "cap open android"
   },

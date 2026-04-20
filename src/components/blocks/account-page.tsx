@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, User, Lock, Mail, Camera } from "lucide-react";
 import { AvatarUpload } from "@/components/blocks/avatar-upload";
+import { BiometricUnlockToggle } from "@/components/biometric-unlock-toggle";
 import { changePassword, removeAvatar, type AccountResult } from "@/app/actions/account";
 import { useUploadThing } from "@/lib/uploadthing-client";
 
@@ -228,6 +229,8 @@ export function AccountPage({
             </CardContent>
           </Card>
         )}
+
+        <BiometricUnlockToggle />
 
         <Card>
           <CardHeader>

@@ -562,6 +562,22 @@ export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 
 
 // ============================================
+// Native Device Tokens (iOS APNs / Android FCM)
+// ============================================
+
+export const deviceTokens = pgTable('device_tokens', {
+	id: text('id').primaryKey(),
+	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	platform: text('platform').notNull(), // 'ios' | 'android'
+	token: text('token').notNull().unique(),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type DeviceToken = typeof deviceTokens.$inferSelect;
+
+
+// ============================================
 // Financial Tracking
 // ============================================
 

@@ -19,3 +19,24 @@ export async function registerNativePush(): Promise<string | null> {
     });
   });
 }
+
+export async function syncDeviceToken(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return false;
+
+  const platform = Capacitor.getPlatform();
+  if (platform !== "ios" && platform !== "android") return false;
+
+  const token = await registerNativePush();
+  if (!token) return false;
+
+  try {
+    const res = await fetch("/api/push/device-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ platform, token }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
