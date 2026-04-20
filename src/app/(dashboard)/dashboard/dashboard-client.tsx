@@ -15,6 +15,7 @@ import { hapticTap, hapticSuccess } from "@/lib/haptics";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { WeeklyChart } from "./weekly-chart";
 import { toISODate } from "@/lib/dates";
+import { buildWeekBars, type WeekBar } from "@/lib/week-bars";
 import type { TrackerMetric } from "@/db/schema";
 import {
   Plus,
@@ -146,60 +147,71 @@ function formatTimeAgo(dateStr: string): string {
   return `${diffDay}d ago`;
 }
 
-// Build 7-day sparkline data for a metric from recent entries
-function buildSparkline(metricId: string, recentEntries: Entry[]): number[] {
-  const days: number[] = [];
-  const now = new Date();
-  for (let i = 6; i >= 0; i--) {
-    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-    const nextDay = new Date(day);
-    nextDay.setDate(nextDay.getDate() + 1);
-    const dayEntries = recentEntries.filter((e) => {
-      const d = new Date(e.date);
-      return e.metricId === metricId && d >= day && d < nextDay;
-    });
-    let sum = 0;
-    for (const entry of dayEntries) {
-      const parsed = parseFloat(entry.value);
-      sum += isNaN(parsed) ? 1 : parsed;
-    }
-    days.push(sum);
-  }
-  return days;
-}
-
-// Mini sparkline SVG
-function InlineSparkline({ data, color, completed }: { data: number[]; color: string; completed: boolean }) {
-  const max = Math.max(...data, 1);
-  const h = 28;
-  const w = 64;
-  const step = w / (data.length - 1);
-  const strokeColor = completed ? "var(--app-success)" : color;
-
-  const points = data.map((v, i) => ({
-    x: i * step,
-    y: h - (v / max) * (h - 4) - 2,
-  }));
-
-  const pathD = points
-    .map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`))
-    .join(" ");
-
-  // Area fill
-  const areaD = `${pathD} L ${w} ${h} L 0 ${h} Z`;
+function WeekBars({ bars, completed }: { bars: WeekBar[]; completed: boolean }) {
+  const width = 54;
+  const height = 28;
+  const barWidth = 4;
+  const gap = 3;
+  const chartHeight = 22;
+  const minPartial = 4;
+  const minEmpty = 2;
+  const groupWidth = bars.length * barWidth + (bars.length - 1) * gap;
+  const offsetX = (width - groupWidth) / 2;
+  const accentColor = completed ? "var(--app-success)" : "var(--app-primary)";
+  const metCount = bars.filter((b) => b.state === "met").length;
 
   return (
-    <svg width={w} height={h} className="shrink-0" viewBox={`0 0 ${w} ${h}`}>
-      <defs>
-        <linearGradient id={`spark-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={strokeColor} stopOpacity="0.2" />
-          <stop offset="100%" stopColor={strokeColor} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={areaD} fill={`url(#spark-${color.replace("#", "")})`} />
-      <path d={pathD} fill="none" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Current day dot */}
-      <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="3" fill={strokeColor} />
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className="shrink-0"
+      role="img"
+      aria-label={`Last 7 days: ${metCount} of 7 goal days met`}
+    >
+      {bars.map((bar, i) => {
+        const x = offsetX + i * (barWidth + gap);
+        let barHeight: number;
+        let fill: string;
+        let opacity = 1;
+
+        if (bar.state === "met") {
+          barHeight = chartHeight;
+          fill = accentColor;
+        } else if (bar.state === "partial") {
+          barHeight = Math.max(minPartial, Math.round(chartHeight * bar.ratio));
+          fill = accentColor;
+          opacity = 0.38;
+        } else {
+          barHeight = minEmpty;
+          fill = "var(--app-border)";
+        }
+
+        const y = height - barHeight;
+        const todayDotY = y - 2.5;
+
+        return (
+          <g key={i}>
+            <rect
+              x={x}
+              y={y}
+              width={barWidth}
+              height={barHeight}
+              rx={1}
+              fill={fill}
+              opacity={opacity}
+            />
+            {bar.isToday && todayDotY >= 0 && (
+              <circle
+                cx={x + barWidth / 2}
+                cy={todayDotY}
+                r={1}
+                fill={accentColor}
+              />
+            )}
+          </g>
+        );
+      })}
     </svg>
   );
 }
@@ -376,7 +388,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                 const currentValue = isCountType ? count : (Number.isInteger(sum) ? sum : sum.toFixed(1));
                 const unit = metric.unit || (isCountType ? "" : "");
                 const progress = getProgress(metric, todayEntries);
-                const sparkData = buildSparkline(metric.id, recentEntries);
+                const weekBars = buildWeekBars(metric.id, goal, recentEntries);
                 const isSettling = settledIds.has(metric.id);
 
                 return (
@@ -415,7 +427,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                           </span>
                         </div>
                       </div>
-                      <InlineSparkline data={sparkData} color="var(--app-primary)" completed={completed} />
+                      <WeekBars bars={weekBars} completed={completed} />
                     </div>
 
                     {/* Progress bar */}
@@ -496,12 +508,12 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
 
                   return (
                     <div key={metric.id} className="bg-card rounded-2xl border border-border p-4 card-texture">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <div className="flex items-center gap-2 min-w-0">
                           <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground shrink-0">
                             <MetricIcon className="w-4 h-4" />
                           </div>
-                          <span className="text-sm font-semibold" style={{ color: "var(--app-heading-color)" }}>{titleCase(metric.name)}</span>
+                          <span className="text-sm font-semibold truncate" style={{ color: "var(--app-heading-color)" }}>{titleCase(metric.name)}</span>
                         </div>
                         <button
                           className="w-7 h-7 rounded-lg bg-secondary text-muted-foreground hover:bg-border hover:text-foreground flex items-center justify-center transition-all duration-200 cursor-pointer border-0"
