@@ -279,7 +279,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h2 className="text-3xl sm:text-4xl font-display" style={{ fontWeight: 500 }}>
+            <h2 className="text-3xl sm:text-4xl font-display leading-none" style={{ fontWeight: 500 }}>
               {formatDate(viewDate)}
             </h2>
             <button
