@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { syncDeviceToken } from "@/lib/native-push";
+import { fetchWidgetSnapshot } from "@/lib/widget-snapshot";
+import { syncStreakToWidgets } from "@/lib/widget-sync";
 
 function useThemeObserver(callback: (isDark: boolean) => void) {
   useEffect(() => {
@@ -54,6 +56,15 @@ export function NativeInit() {
       });
 
       syncDeviceToken().catch(() => {});
+
+      const pushWidgetSnapshot = async () => {
+        const snap = await fetchWidgetSnapshot();
+        if (snap) await syncStreakToWidgets(snap);
+      };
+      pushWidgetSnapshot();
+      App.addListener("appStateChange", ({ isActive }) => {
+        if (isActive) pushWidgetSnapshot();
+      });
     })();
   }, []);
 
