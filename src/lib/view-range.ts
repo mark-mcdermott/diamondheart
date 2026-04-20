@@ -1,7 +1,7 @@
-import { Sun, CalendarRange, CalendarDays, Calendar, type LucideIcon } from "lucide-react";
+import { CalendarClock, CalendarRange, CalendarDays, Calendar, type LucideIcon } from "lucide-react";
 
 export const VIEW_RANGES = [
-  { value: "day", label: "Day", icon: Sun },
+  { value: "day", label: "Day", icon: CalendarClock },
   { value: "week", label: "Week", icon: CalendarRange },
   { value: "month", label: "Month", icon: CalendarDays },
   { value: "year", label: "Year", icon: Calendar },

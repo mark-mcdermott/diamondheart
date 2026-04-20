@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { MedicalClient } from "./medical-client";
 import { PageViewToggle } from "@/components/ui/view-toggle";
+import { DateNavigator } from "@/components/ui/date-navigator";
 
 export default async function MedicalPage() {
   const session = await getCurrentUser();
@@ -17,7 +18,7 @@ export default async function MedicalPage() {
     .from(medicalLogs)
     .where(eq(medicalLogs.userId, session.userId))
     .orderBy(desc(medicalLogs.date))
-    .limit(200);
+    .limit(1000);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -29,6 +30,7 @@ export default async function MedicalPage() {
           <h2>Medical</h2>
           <p className="text-muted-foreground mt-1">Track health, symptoms, and doctor visits</p>
         </div>
+        <DateNavigator />
         <PageViewToggle />
       </div>
       <MedicalClient logs={logs} />
