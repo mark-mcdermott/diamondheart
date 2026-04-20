@@ -5,7 +5,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Brain,
+  Flower2,
   UtensilsCrossed,
   Dumbbell,
   Activity,
@@ -52,7 +52,7 @@ interface SidebarNavProps {
 const iconMap: Record<string, LucideIcon> = {
   "/dashboard": LayoutDashboard,
   "/metrics": BarChart3,
-  "/meditate": Brain,
+  "/meditate": Flower2,
   "/food": UtensilsCrossed,
   "/tracking": Compass,
   "/medical": Stethoscope,
