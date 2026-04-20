@@ -128,63 +128,60 @@ export function NotificationsClient({
           {notifications.map((notification) => (
             <Card
               key={notification.id}
-              className={`flex items-start gap-3 p-4 transition-colors ${
+              className={`flex items-center gap-3 px-4 py-3 transition-colors ${
                 !notification.read
                   ? "border-l-2 border-l-primary"
                   : "opacity-75"
               } ${notification.href ? "cursor-pointer hover:bg-muted/50" : ""}`}
               onClick={() => handleCardClick(notification.href)}
             >
-              {/* Icon */}
-              <div className="mt-0.5">
+              <div className="shrink-0 self-center">
                 <NotificationIcon type={notification.type} />
               </div>
 
-              {/* Content */}
               <div className="flex-1 min-w-0">
                 <p
-                  className={`text-sm ${
+                  className={`text-sm leading-tight ${
                     !notification.read ? "font-semibold" : "font-normal"
                   }`}
                 >
                   {notification.title}
                 </p>
                 {notification.body && (
-                  <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                     {notification.body}
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground mt-1">
-                  {relativeTime(new Date(notification.createdAt))}
-                </p>
               </div>
 
-              {/* Actions */}
               <div
-                className="flex items-center gap-1 shrink-0"
+                className="flex items-center gap-2 shrink-0"
                 onClick={(e) => e.stopPropagation()}
               >
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {relativeTime(new Date(notification.createdAt))}
+                </span>
                 {!notification.read && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 cursor-pointer"
+                    className="h-7 w-7 cursor-pointer"
                     onClick={() => handleMarkAsRead(notification.id)}
                     disabled={isPending}
                     title="Mark as read"
                   >
-                    <Check className="h-4 w-4" />
+                    <Check className="h-3.5 w-3.5" />
                   </Button>
                 )}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive cursor-pointer"
                   onClick={() => handleDelete(notification.id)}
                   disabled={isPending}
                   title="Delete"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </Card>
