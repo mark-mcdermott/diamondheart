@@ -128,7 +128,7 @@ export function NotificationsClient({
           {notifications.map((notification) => (
             <Card
               key={notification.id}
-              className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+              className={`!flex-row items-center !gap-3 px-4 !py-3 transition-colors ${
                 !notification.read
                   ? "border-l-2 border-l-primary"
                   : "opacity-75"
