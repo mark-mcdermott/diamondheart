@@ -42,4 +42,6 @@ playwright-report/
 
 # mobile/desktop builds
 ios/
+android/
+www/
 src-tauri/target/
