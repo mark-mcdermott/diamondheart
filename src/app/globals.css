@@ -534,12 +534,6 @@ html {
 	animation: ripple 0.4s var(--ease-settle);
 }
 
-/* Completed card border glow */
-.goal-completed {
-	border-left: 3px solid var(--app-success);
-	transition: border-color 0.5s var(--ease-settle);
-}
-
 /* Subtle texture for cards */
 .card-texture {
 	position: relative;

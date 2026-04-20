@@ -397,7 +397,6 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                     className={`
                       relative bg-card rounded-2xl border border-border p-4 card-texture
                       transition-all duration-300
-                      ${completed ? "goal-completed" : ""}
                       ${isSettling ? "animate-settle" : ""}
                     `}
                   >
