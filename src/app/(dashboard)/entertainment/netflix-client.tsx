@@ -140,14 +140,14 @@ function PosterCard({
       onClick={onClick}
       className="group relative flex-shrink-0 w-[140px] sm:w-[160px] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
     >
-      <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-muted">
+      <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-muted shadow-sm transition-shadow duration-200 group-hover:shadow-xl">
         {posterUrl ? (
           <Image
             src={posterUrl}
             alt={title}
             fill
             sizes="160px"
-            className="object-cover transition-transform duration-200 group-hover:scale-105"
+            className="object-cover"
             unoptimized
           />
         ) : (
