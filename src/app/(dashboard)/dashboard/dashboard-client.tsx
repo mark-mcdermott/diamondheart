@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { DatePickerCalendar } from "@/components/ui/date-picker-calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -201,7 +203,7 @@ function InlineSparkline({ data, color, completed }: { data: number[]; color: st
 
 export function DashboardClient({ metrics, todayEntries, recentEntries, foodTotals, mealSummaries, sparklines, dashboardSections, selectedDate }: DashboardClientProps) {
   const router = useRouter();
-  const dateInputRef = useRef<HTMLInputElement>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [entryMetric, setEntryMetric] = useState<TrackerMetric | null>(null);
   const [entryValue, setEntryValue] = useState("");
@@ -225,8 +227,10 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
     router.push(`/dashboard?date=${iso}`);
   }
 
-  function handleDatePick(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.value) router.push(`/dashboard?date=${e.target.value}`);
+  function handleDatePick(dateISO: string) {
+    setCalendarOpen(false);
+    if (dateISO) router.push(`/dashboard?date=${dateISO}`);
+    else router.push("/dashboard");
   }
 
   const dateLabel = isToday ? "Today" : isYesterday ? "Yesterday" : formatDate(viewDate).split(",")[0];
@@ -290,25 +294,23 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
             >
               <ChevronRight className="w-5 h-5" />
             </button>
-            <div className="relative ml-1 -translate-y-[7px]">
-              <button
-                type="button"
-                onClick={() => dateInputRef.current?.showPicker()}
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
-              >
-                <Calendar className="w-4 h-4" />
-              </button>
-              <input
-                ref={dateInputRef}
-                type="date"
-                value={selectedDate}
-                max={`${todayMidnight.getFullYear()}-${String(todayMidnight.getMonth() + 1).padStart(2, "0")}-${String(todayMidnight.getDate()).padStart(2, "0")}`}
-                onChange={handleDatePick}
-                className="absolute top-full right-0 opacity-0 w-0 h-0 pointer-events-none"
-                style={{ accentColor: "var(--app-primary, #C4653A)" }}
-                tabIndex={-1}
-              />
-            </div>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer ml-1 -translate-y-[7px]"
+                >
+                  <Calendar className="w-4 h-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" sideOffset={8}>
+                <DatePickerCalendar
+                  value={selectedDate}
+                  max={`${todayMidnight.getFullYear()}-${String(todayMidnight.getMonth() + 1).padStart(2, "0")}-${String(todayMidnight.getDate()).padStart(2, "0")}`}
+                  onChange={handleDatePick}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <p className="text-sm text-muted-foreground">
             {completedCount} of {metrics.length} practices complete
