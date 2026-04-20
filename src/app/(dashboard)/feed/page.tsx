@@ -3,7 +3,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getCommunityFeed } from "@/app/actions/feed";
+import { getMeditatingNow } from "@/app/actions/presence";
 import { FeedList } from "./feed-client";
+import { MeditatingNowRow } from "./meditating-now";
 
 export const metadata = { title: "Community · Diamondheart" };
 
@@ -11,7 +13,10 @@ export default async function FeedPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
 
-  const items = await getCommunityFeed(session.userId);
+  const [items, meditatingNow] = await Promise.all([
+    getCommunityFeed(session.userId),
+    getMeditatingNow(),
+  ]);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -26,6 +31,7 @@ export default async function FeedPage() {
           </p>
         </div>
       </div>
+      <MeditatingNowRow initial={meditatingNow} />
       <FeedList items={items} />
     </div>
   );

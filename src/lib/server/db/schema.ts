@@ -498,6 +498,14 @@ export const meditationReactions = pgTable('meditation_reactions', {
 
 export type MeditationReaction = typeof meditationReactions.$inferSelect;
 
+export const meditationPresence = pgTable('meditation_presence', {
+	userId: text('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+	startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+	lastPingAt: timestamp('last_ping_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+export type MeditationPresence = typeof meditationPresence.$inferSelect;
+
 
 // ============================================
 // User Nav Items (per-user nav customization)
@@ -549,6 +557,7 @@ export const userPreferences = pgTable('user_preferences', {
 	useNetflixUI: boolean('use_netflix_ui').notNull().default(true),
 	showSiteName: boolean('show_site_name').notNull().default(true),
 	showMeditationInFeed: boolean('show_meditation_in_feed').notNull().default(true),
+	showNameWhenMeditating: boolean('show_name_when_meditating').notNull().default(true),
 	dashboardSections: jsonb('dashboard_sections'), // ordered list of visible section keys
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()

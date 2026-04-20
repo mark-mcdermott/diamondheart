@@ -13,6 +13,7 @@ const DEFAULT_PREFERENCES = {
   useNetflixUI: true,
   showSiteName: true,
   showMeditationInFeed: true,
+  showNameWhenMeditating: true,
 } as const;
 
 export async function getUserPreferences(userId: string) {
@@ -30,6 +31,7 @@ export async function getUserPreferences(userId: string) {
     useNetflixUI: prefs.useNetflixUI,
     showSiteName: prefs.showSiteName,
     showMeditationInFeed: prefs.showMeditationInFeed,
+    showNameWhenMeditating: prefs.showNameWhenMeditating,
     dashboardSections: (prefs.dashboardSections as string[] | null) ?? DEFAULT_DASHBOARD_SECTIONS,
   };
 }

@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { logMeditationSession, updateMeditationSession, deleteMeditationSession } from "@/app/actions/meditation";
+import { pingMeditatingNow, stopMeditatingNow } from "@/app/actions/presence";
+import { PRESENCE_HEARTBEAT_MS } from "@/lib/presence";
 import type { MeditationSession, MeditationStyle, MeditationPreset } from "@/db/schema";
 import { Play, Pause, RotateCcw, Trash2, Pencil } from "lucide-react";
 import { hapticHeavy } from "@/lib/haptics";
@@ -126,6 +128,18 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
     }
     return () => clearInterval(intervalRef.current);
   }, [running, targetSeconds]);
+
+  useEffect(() => {
+    if (!running) return;
+    pingMeditatingNow().catch(() => {});
+    const heartbeat = setInterval(() => {
+      pingMeditatingNow().catch(() => {});
+    }, PRESENCE_HEARTBEAT_MS);
+    return () => {
+      clearInterval(heartbeat);
+      stopMeditatingNow().catch(() => {});
+    };
+  }, [running]);
 
   useEffect(() => {
     if (editingTime && timeInputRef.current) {
