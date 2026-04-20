@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { SidebarNav } from "@/components/blocks/sidebar-nav";
+import { BiometricLockGate } from "@/components/biometric-lock-gate";
 import { getNavItems } from "@/app/actions/nav";
 import { getUnreadCount } from "@/app/actions/notifications";
 import { getUserPreferences } from "@/app/actions/preferences";
@@ -41,19 +42,21 @@ export default async function DashboardLayout({
     }));
 
   return (
-    <div className="min-h-screen">
-      <SidebarNav
-        siteName="Diamondheart"
-        logo="/logo.png"
-        links={links}
-        user={{ id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl }}
-        notificationCount={notificationCount}
-        showSiteName={prefs.showSiteName}
-        showThemeToggle
-      />
-      <main className="md:ml-[68px] px-4 py-6 pb-24 md:pb-6 mx-auto w-full max-w-4xl">
-        {children}
-      </main>
-    </div>
+    <BiometricLockGate>
+      <div className="min-h-screen">
+        <SidebarNav
+          siteName="Diamondheart"
+          logo="/logo.png"
+          links={links}
+          user={{ id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl }}
+          notificationCount={notificationCount}
+          showSiteName={prefs.showSiteName}
+          showThemeToggle
+        />
+        <main className="md:ml-[68px] px-4 py-6 pb-24 md:pb-6 mx-auto w-full max-w-4xl">
+          {children}
+        </main>
+      </div>
+    </BiometricLockGate>
   );
 }
