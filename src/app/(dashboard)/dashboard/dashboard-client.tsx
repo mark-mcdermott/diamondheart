@@ -111,9 +111,9 @@ function getProgress(metric: TrackerMetric, todayEntries: Entry[]): number {
   if (goal <= 0) return 100;
 
   if (metric.valueType === "none" || metric.valueType === "bool") {
-    return Math.min(100, (count / goal) * 100);
+    return Math.max(0, Math.min(100, (count / goal) * 100));
   }
-  return Math.min(100, (sum / goal) * 100);
+  return Math.max(0, Math.min(100, (sum / goal) * 100));
 }
 
 function isGoalMet(metric: TrackerMetric, todayEntries: Entry[]): boolean {
