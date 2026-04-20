@@ -156,13 +156,13 @@ export function PropertyClient({ properties }: Props) {
           <Card>
             <CardContent className="pt-4 pb-4">
               <p className="text-xs text-muted-foreground">Total Mortgage Balance</p>
-              <p className="text-lg font-semibold text-red-500">{formatCents(totalMortgage)}</p>
+              <p className="text-lg font-semibold text-[#f8383f]">{formatCents(totalMortgage)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4 pb-4">
               <p className="text-xs text-muted-foreground">Total Equity</p>
-              <p className={`text-lg font-semibold ${totalEquity >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+              <p className={`text-lg font-semibold ${totalEquity >= 0 ? "text-emerald-500" : "text-[#f8383f]"}`}>
                 {formatCents(totalEquity)}
               </p>
             </CardContent>
@@ -199,7 +199,7 @@ export function PropertyClient({ properties }: Props) {
                       size="sm"
                       onClick={() => handleDelete(property.id)}
                       disabled={isPending}
-                      className="text-muted-foreground hover:text-red-500"
+                      className="text-muted-foreground hover:text-[#f8383f]"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -222,7 +222,7 @@ export function PropertyClient({ properties }: Props) {
                     {/* Appreciation */}
                     <div>
                       <p className="text-xs text-muted-foreground">Appreciation</p>
-                      <p className={`text-sm font-medium ${appreciationCents >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                      <p className={`text-sm font-medium ${appreciationCents >= 0 ? "text-emerald-500" : "text-[#f8383f]"}`}>
                         {appreciationCents >= 0 ? "+" : ""}
                         {formatCents(appreciationCents)} ({appreciationCents >= 0 ? "+" : ""}
                         {appreciationPct}%)
@@ -242,7 +242,7 @@ export function PropertyClient({ properties }: Props) {
                     {/* Mortgage Balance */}
                     <div>
                       <p className="text-xs text-muted-foreground">Mortgage Balance</p>
-                      <p className="text-sm font-medium text-red-500">
+                      <p className="text-sm font-medium text-[#f8383f]">
                         {formatCents(property.mortgageBalanceCents)}
                       </p>
                     </div>
@@ -268,7 +268,7 @@ export function PropertyClient({ properties }: Props) {
                     {/* Equity (prominent) */}
                     <div>
                       <p className="text-xs text-muted-foreground">Equity</p>
-                      <p className={`text-sm font-bold ${equity >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                      <p className={`text-sm font-bold ${equity >= 0 ? "text-emerald-500" : "text-[#f8383f]"}`}>
                         {formatCents(equity)}
                       </p>
                     </div>

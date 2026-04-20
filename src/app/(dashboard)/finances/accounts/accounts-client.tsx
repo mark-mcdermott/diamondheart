@@ -181,7 +181,7 @@ export function AccountsClient({ accounts }: Props) {
                   <div className="flex items-center gap-3 shrink-0">
                     <p
                       className={`text-sm font-semibold ${
-                        account.balanceCents >= 0 ? "" : "text-red-500"
+                        account.balanceCents >= 0 ? "" : "text-[#f8383f]"
                       }`}
                     >
                       {formatCents(account.balanceCents)}

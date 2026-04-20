@@ -300,7 +300,7 @@ export function TransactionsClient({ transactions, accounts, categories }: Props
                   <TableCell className="text-muted-foreground">{account?.name ?? "-"}</TableCell>
                   <TableCell
                     className={`text-right font-medium ${
-                      tx.amountCents >= 0 ? "text-emerald-500" : "text-red-500"
+                      tx.amountCents >= 0 ? "text-emerald-500" : "text-[#f8383f]"
                     }`}
                   >
                     {tx.amountCents >= 0 ? "+" : ""}
