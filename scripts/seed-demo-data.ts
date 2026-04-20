@@ -144,6 +144,8 @@ async function seedTrackerEntries(db: Db, userId: string) {
     "sleep-duration": () => 6.5 + Math.random() * 1.8,
     "sleep-balance": () => -10 + Math.floor(Math.random() * 30),
     water: () => 5 + Math.floor(Math.random() * 4),
+    journal: () => Math.random() > 0.3 ? 1 : 0,
+    stretching: () => 5 + Math.floor(Math.random() * 10),
   };
 
   for (const [slug, gen] of Object.entries(daily)) {
