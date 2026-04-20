@@ -90,7 +90,7 @@ export function Nav({
               const isChildActive = link.children.some((child) => pathname === child.href || pathname.startsWith(child.href + "/"));
               return (
                 <DropdownMenu key={link.label || i}>
-                  <DropdownMenuTrigger className={`flex items-center gap-1 text-sm ${isChildActive ? "font-bold" : "font-medium"} text-foreground transition-colors hover:text-black dark:hover:text-white cursor-pointer px-2 py-1.5 -mx-2 rounded-md`}>
+                  <DropdownMenuTrigger className={`flex items-center gap-1 text-sm ${isChildActive ? "font-bold" : "font-medium"} text-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer px-2 py-1.5 -mx-2 rounded-md`}>
                     {link.label}
                     <ChevronDown className="h-3 w-3" />
                   </DropdownMenuTrigger>
@@ -109,7 +109,7 @@ export function Nav({
 
             if (link.icon === "github" && link.href) {
               return (
-                <a key="github" href={link.href} target="_blank" rel="noopener noreferrer" className="text-foreground hover:text-black dark:hover:text-white px-2 py-1.5 -mx-2 rounded-md">
+                <a key="github" href={link.href} target="_blank" rel="noopener noreferrer" className="text-foreground hover:bg-muted hover:text-foreground px-2 py-1.5 -mx-2 rounded-md">
                   <Github className="h-5 w-5" />
                 </a>
               );
@@ -121,7 +121,7 @@ export function Nav({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`text-sm ${isActive ? "font-bold" : "font-medium"} text-foreground transition-colors hover:text-black dark:hover:text-white no-underline px-2 py-1.5 -mx-2 rounded-md`}
+                  className={`text-sm ${isActive ? "font-bold" : "font-medium"} text-foreground transition-colors hover:bg-muted hover:text-foreground no-underline px-2 py-1.5 -mx-2 rounded-md`}
                 >
                   {link.label}
                 </Link>
@@ -131,7 +131,7 @@ export function Nav({
             return null;
           })}
           {!isLoggedIn && (
-            <Link href="/login" className="text-sm font-medium text-foreground transition-colors hover:text-black dark:hover:text-white no-underline px-2 py-1.5 -mx-2 rounded-md">
+            <Link href="/login" className="text-sm font-medium text-foreground transition-colors hover:bg-muted hover:text-foreground no-underline px-2 py-1.5 -mx-2 rounded-md">
               Log In
             </Link>
           )}
@@ -152,7 +152,7 @@ export function Nav({
               />
               <Link
                 href="/notifications"
-                className="relative text-foreground transition-colors hover:text-black dark:hover:text-white px-2 py-1.5 -mx-2 rounded-md"
+                className="relative text-foreground transition-colors hover:bg-muted hover:text-foreground px-2 py-1.5 -mx-2 rounded-md"
               >
                 <Bell className="h-5 w-5" />
                 {notificationCount > 0 && (
@@ -179,7 +179,7 @@ export function Nav({
               />
               <Link
                 href="/notifications"
-                className="relative text-foreground transition-colors hover:text-black dark:hover:text-white"
+                className="relative text-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <Bell className="h-5 w-5" />
                 {notificationCount > 0 && (
