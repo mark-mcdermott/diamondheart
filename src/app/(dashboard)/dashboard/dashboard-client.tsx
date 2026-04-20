@@ -290,22 +290,24 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
             >
               <ChevronRight className="w-5 h-5" />
             </button>
-            <button
-              type="button"
-              onClick={() => dateInputRef.current?.showPicker()}
-              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer ml-1"
-            >
-              <Calendar className="w-4 h-4" />
-            </button>
-            <input
-              ref={dateInputRef}
-              type="date"
-              value={selectedDate}
-              max={`${todayMidnight.getFullYear()}-${String(todayMidnight.getMonth() + 1).padStart(2, "0")}-${String(todayMidnight.getDate()).padStart(2, "0")}`}
-              onChange={handleDatePick}
-              className="sr-only"
-              tabIndex={-1}
-            />
+            <div className="relative ml-1 -translate-y-[7px]">
+              <button
+                type="button"
+                onClick={() => dateInputRef.current?.showPicker()}
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+              >
+                <Calendar className="w-4 h-4" />
+              </button>
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={selectedDate}
+                max={`${todayMidnight.getFullYear()}-${String(todayMidnight.getMonth() + 1).padStart(2, "0")}-${String(todayMidnight.getDate()).padStart(2, "0")}`}
+                onChange={handleDatePick}
+                className="absolute top-full right-0 opacity-0 w-0 h-0 pointer-events-none"
+                tabIndex={-1}
+              />
+            </div>
           </div>
           <p className="text-sm text-muted-foreground">
             {completedCount} of {metrics.length} practices complete

@@ -5,6 +5,7 @@
 
 /* CSS Variables */
 :root {
+	accent-color: var(--app-primary, #C4653A);
 	--font-logo: 'Fraunces', 'Georgia', serif;
 
 	/* Border radius */
