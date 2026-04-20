@@ -321,17 +321,15 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals }: Food
       {/* Daily Totals */}
       <div className="grid grid-cols-4 gap-3 mb-8">
         {[
-          { label: "Calories", value: totals.calories, unit: "kcal", icon: Flame },
-          { label: "Protein", value: totals.protein, unit: "g", icon: Beef },
-          { label: "Carbs", value: totals.carbs, unit: "g", icon: Wheat },
-          { label: "Fat", value: totals.fat, unit: "g", icon: Droplet },
+          { label: "Calories", value: totals.calories, unit: "kcal", icon: Flame, color: "#C4653A" },
+          { label: "Protein", value: totals.protein, unit: "g", icon: Beef, color: "#5B8C5A" },
+          { label: "Carbs", value: totals.carbs, unit: "g", icon: Wheat, color: "#D4964A" },
+          { label: "Fat", value: totals.fat, unit: "g", icon: Droplet, color: "#C75B4A" },
         ].map((item) => (
-          <div key={item.label} className="bg-card rounded-lg p-4 text-center">
-            <item.icon className="w-5 h-5 text-primary mx-auto mb-2" />
-            <p className="text-2xl font-semibold">{item.value}</p>
-            <p className="text-xs text-muted-foreground">
-              {item.label} ({item.unit})
-            </p>
+          <div key={item.label} className="bg-card rounded-[28px] border border-border/80 px-4 py-7 text-center card-texture">
+            <item.icon className="mx-auto mb-5 h-4 w-4" strokeWidth={1.8} style={{ color: item.color }} />
+            <p className="font-mono text-[2rem] font-semibold leading-none" style={{ color: item.color }}>{item.value}</p>
+            <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
           </div>
         ))}
       </div>
