@@ -18,8 +18,9 @@ import {
   Calendar,
 } from "lucide-react";
 import { PageViewToggle } from "@/components/ui/view-toggle";
+import { DateNavigator } from "@/components/ui/date-navigator";
 import { useViewRange } from "@/lib/use-view-range";
-import { filterByViewRange, VIEW_RANGES } from "@/lib/view-range";
+import { filterByBounds, viewRangeBounds, viewRangeLabel } from "@/lib/view-range";
 
 interface WorkoutSet {
   id: string;
@@ -62,9 +63,10 @@ export function WorkoutClient({
   activeWorkout,
   activeSets,
 }: WorkoutClientProps) {
-  const { view } = useViewRange("week");
-  const viewLabel = VIEW_RANGES.find((r) => r.value === view)?.label ?? "Week";
-  const rangedWorkouts = filterByViewRange(recentWorkouts, view);
+  const { view, anchor } = useViewRange("week");
+  const bounds = viewRangeBounds(view, anchor ?? new Date());
+  const rangedWorkouts = filterByBounds(recentWorkouts, bounds);
+  const periodLabel = viewRangeLabel(view, anchor);
   const [isPending, startTransition] = useTransition();
   const [prAlert, setPrAlert] = useState<string | null>(null);
 
@@ -126,6 +128,7 @@ export function WorkoutClient({
         </div>
         {!activeWorkout && (
           <>
+            <DateNavigator />
             <PageViewToggle defaultRange="week" />
             <Button asChild>
               <Link href="/records">
@@ -169,10 +172,10 @@ export function WorkoutClient({
 
           <section>
             <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
-              {viewLabel} &middot; {rangedWorkouts.length} {rangedWorkouts.length === 1 ? "workout" : "workouts"}
+              {periodLabel} &middot; {rangedWorkouts.length} {rangedWorkouts.length === 1 ? "workout" : "workouts"}
             </h3>
             {rangedWorkouts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No workouts in this range yet.</p>
+              <p className="text-sm text-muted-foreground">No workouts in this period.</p>
             ) : (
               <div className="space-y-2">
                 {rangedWorkouts.map((w) => (
