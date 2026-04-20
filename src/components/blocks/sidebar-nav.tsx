@@ -26,6 +26,12 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { AvatarMenu } from "@/components/blocks/avatar-menu";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface NavLink {
   label?: string;
@@ -100,40 +106,39 @@ export function SidebarNav({
         <Separator className="w-8 mb-4" />
 
         {/* Nav links */}
-        <nav className="flex flex-1 flex-col items-center gap-1 overflow-y-auto">
-          {allVisibleLinks.map((link) => {
-            if (!link.href) return null;
-            const Icon = getNavIcon(link.href);
-            const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+        <TooltipProvider delayDuration={150}>
+          <nav className="flex flex-1 flex-col items-center gap-1 overflow-y-auto overflow-x-hidden">
+            {allVisibleLinks.map((link) => {
+              if (!link.href) return null;
+              const Icon = getNavIcon(link.href);
+              const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
 
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`
-                  group relative flex items-center justify-center w-11 h-11 rounded-xl
-                  transition-all duration-200 no-underline
-                  ${isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  }
-                `}
-                title={link.label}
-              >
-                <Icon className="w-5 h-5" weight={isActive ? "bold" : "regular"} />
-                {/* Tooltip */}
-                <span className="
-                  absolute left-full ml-3 px-2.5 py-1.5 rounded-lg text-xs font-medium
-                  bg-card text-foreground border border-border shadow-md
-                  opacity-0 pointer-events-none group-hover:opacity-100
-                  transition-opacity duration-150 whitespace-nowrap z-50
-                ">
-                  {link.label}
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
+              return (
+                <Tooltip key={link.href}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={link.href}
+                      className={`
+                        flex items-center justify-center w-11 h-11 rounded-xl
+                        transition-all duration-200 no-underline
+                        ${isActive
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        }
+                      `}
+                      aria-label={link.label}
+                    >
+                      <Icon className="w-5 h-5" weight={isActive ? "bold" : "regular"} />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={8}>
+                    {link.label}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </nav>
+        </TooltipProvider>
 
         {/* Bottom section */}
         <div className="flex flex-col items-center gap-2 mt-auto pt-4">
