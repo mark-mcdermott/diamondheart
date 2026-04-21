@@ -22,7 +22,7 @@ type ChartView = "frequency" | "severity";
 export function MedicalChart() {
   const [range, setRange] = useState<TimeRange>("month");
   const [view, setView] = useState<ChartView>("frequency");
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [data, setData] = useState<{
     byType: { type: string; count: number }[];
     bySeverity: { date: string; avgSeverity: number; count: number }[];
@@ -109,7 +109,7 @@ export function MedicalChart() {
                 borderRadius: 8,
                 fontSize: 12,
               }}
-              formatter={(value: number) => [`${value}`, "Count"]}
+              formatter={(value) => [`${value}`, "Count"]}
             />
             <Bar dataKey="count" radius={[0, 4, 4, 0]}>
               {data.byType.map((_, idx) => (
@@ -142,7 +142,7 @@ export function MedicalChart() {
                 borderRadius: 8,
                 fontSize: 12,
               }}
-              formatter={(value: number) => [`${value}/5`, "Avg Severity"]}
+              formatter={(value) => [`${value}/5`, "Avg Severity"]}
             />
             <Line
               type="monotone"

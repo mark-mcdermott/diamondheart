@@ -87,7 +87,6 @@ export function FoodOverviewClient() {
       );
       setData(rows);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bounds.start.getTime(), bounds.end.getTime()]);
 
   const isYear = view === "year";

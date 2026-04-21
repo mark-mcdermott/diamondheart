@@ -169,9 +169,9 @@ export async function GET(request: Request) {
           date: w.date.toISOString().slice(0, 10),
           workout: w.name ?? "",
           exercise: exerciseMap.get(s.exerciseId) ?? "",
-          set: s.setNumber,
-          reps: s.reps,
-          weight: s.weight,
+          set: String(s.setNumber),
+          reps: String(s.reps),
+          weight: String(s.weight),
           unit: s.unit,
           duration: w.duration ?? "",
         }));

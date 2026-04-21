@@ -4,7 +4,6 @@ import { db } from "@/db";
 import { trackerMetrics, trackerEntries } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { EntriesTable } from "./entries-table";
 import { MetricChart } from "./metric-chart";
 import { ArrowLeft } from "lucide-react";
@@ -32,12 +31,6 @@ export default async function MetricDetailPage({
     .from(trackerEntries)
     .where(eq(trackerEntries.metricId, id))
     .orderBy(desc(trackerEntries.date));
-
-  function formatValue(value: string, valueType: string): string {
-    if (valueType === "none") return "Done";
-    if (valueType === "bool") return value === "true" ? "Yes" : "No";
-    return value;
-  }
 
   return (
     <div className="max-w-4xl mx-auto">

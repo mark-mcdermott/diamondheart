@@ -14,7 +14,7 @@ interface PublicNavProps {
   logoImage?: string;
 }
 
-export function PublicNav({ siteName, logoIcon, logoImage }: PublicNavProps) {
+export function PublicNav({ siteName, logoIcon: _logoIcon, logoImage: _logoImage }: PublicNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 

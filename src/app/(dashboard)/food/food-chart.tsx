@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart-container";
 import { TimeRangePicker } from "@/components/ui/time-range-picker";
-import { type TimeRange, MACRO_COLORS, formatDateLabel, generateDateKeys, toDateKey } from "@/lib/chart-utils";
+import { type TimeRange, MACRO_COLORS, formatDateLabel, generateDateKeys } from "@/lib/chart-utils";
 import { getFoodChartData } from "@/app/actions/chart-data";
 
 interface FoodChartProps {
@@ -24,7 +24,7 @@ interface FoodChartProps {
 
 export function FoodChart({ totals }: FoodChartProps) {
   const [range, setRange] = useState<TimeRange>("week");
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [rawData, setRawData] = useState<{ date: string; calories: number; protein: number; carbs: number; fat: number }[]>([]);
 
   useEffect(() => {
@@ -87,7 +87,7 @@ export function FoodChart({ totals }: FoodChartProps) {
                     borderRadius: 8,
                     fontSize: 12,
                   }}
-                  formatter={(value: number, name: string) => [`${value}g`, name]}
+                  formatter={(value, name) => [`${value}g`, name]}
                 />
               </PieChart>
             </ChartContainer>
@@ -141,7 +141,7 @@ export function FoodChart({ totals }: FoodChartProps) {
                 borderRadius: 8,
                 fontSize: 12,
               }}
-              formatter={(value: number, name: string) => [`${value}g`, name]}
+              formatter={(value, name) => [`${value}g`, name]}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
             <Bar dataKey="protein" stackId="macros" fill={MACRO_COLORS.protein} name="Protein" radius={[0, 0, 0, 0]} />

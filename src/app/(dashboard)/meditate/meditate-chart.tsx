@@ -16,7 +16,7 @@ import { getMeditationChartData } from "@/app/actions/chart-data";
 
 export function MeditateChart() {
   const [range, setRange] = useState<TimeRange>("week");
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [rawData, setRawData] = useState<{ date: string; minutes: number; sessions: number }[]>([]);
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export function MeditateChart() {
               borderRadius: 8,
               fontSize: 12,
             }}
-            formatter={(value: number) => [`${value} min`, "Duration"]}
+            formatter={(value) => [`${value} min`, "Duration"]}
           />
           <Bar dataKey="minutes" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
         </BarChart>

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X, ChevronDown, Github, Bell } from "lucide-react";
@@ -41,8 +40,8 @@ interface NavProps {
 const NAV_CHAR_LIMIT = 55;
 
 export function Nav({
-  siteName,
-  logo,
+  siteName: _siteName,
+  logo: _logo,
   user = null,
   isAdmin = false,
   links = [],
@@ -53,7 +52,6 @@ export function Nav({
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isLoggedIn = !!user;
-  const isLogoImage = logo && (logo.startsWith("/") || logo.startsWith("http") || logo.endsWith(".svg"));
 
   const allVisibleLinks = links.filter((link) => {
     if (link.requiresAuth && !isLoggedIn) return false;

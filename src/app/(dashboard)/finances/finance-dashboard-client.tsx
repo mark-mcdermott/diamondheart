@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ArrowLeft, Wallet, TrendingUp, Home, PiggyBank, ArrowUpDown, Receipt, Target, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { formatCents, formatCentsCompact, accountTypeLabel } from "@/lib/financial-utils";
 import type {
   FinancialAccount,

@@ -9,9 +9,8 @@ import {
   workoutSets,
   medicalLogs,
   entertainmentItems,
-  trackingItems,
 } from "@/db/schema";
-import { eq, and, gte, lte, sql, desc } from "drizzle-orm";
+import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { type TimeRange, getDateRange } from "@/lib/chart-utils";
 

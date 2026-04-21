@@ -36,7 +36,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 export function EntertainmentChart() {
   const [view, setView] = useState<ChartView>("type");
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [data, setData] = useState<{
     byType: { type: string; count: number }[];
     byStatus: { status: string; count: number }[];
@@ -112,7 +112,7 @@ export function EntertainmentChart() {
               borderRadius: 8,
               fontSize: 12,
             }}
-            formatter={(value: number) => [`${value}`, "Count"]}
+            formatter={(value) => [`${value}`, "Count"]}
           />
           <Bar dataKey="count" radius={[0, 4, 4, 0]}>
             {chartData.map((_, idx) => (
