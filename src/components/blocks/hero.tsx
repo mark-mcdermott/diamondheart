@@ -39,12 +39,16 @@ export function Hero({
     >
       <div className="hero-content relative z-10 flex flex-col items-center">
         {image && (
-          <div className="mb-8 flex justify-center" style={{ animation: "mascot-enter 0.8s var(--ease-settle) both", animationDelay: "100ms" }}>
+          <div className="mb-6 flex justify-center" style={{ animation: "mascot-enter 0.8s var(--ease-settle) both", animationDelay: "100ms" }}>
             <img
               src={image}
               alt=""
               className={`hero-image ${imageSizeClass[imageSize]} object-contain`}
-              style={{ animation: "mascot-float 4s ease-in-out 15s infinite" }}
+              style={{
+                animation: "mascot-float 4s ease-in-out 15s infinite",
+                opacity: 0.95,
+                filter: "drop-shadow(0 10px 26px rgba(11, 11, 12, 0.16)) drop-shadow(0 3px 10px rgba(11, 11, 12, 0.08))",
+              }}
             />
           </div>
         )}
@@ -95,7 +99,7 @@ export function Hero({
               </Button>
             )}
             {secondaryCta && (
-              <Button asChild variant="outline" size="lg" className="bg-transparent text-[#9A4F2E] border-[rgba(154,79,46,0.4)] transition-all hover:bg-[rgba(154,79,46,0.06)] hover:text-[#B5622F] hover:border-[rgba(154,79,46,0.6)]">
+              <Button asChild variant="outline" size="lg" className="bg-white/15 backdrop-blur-[3px] text-[#9A4F2E] border-[rgba(154,79,46,0.6)] transition-all hover:bg-[rgba(154,79,46,0.10)] hover:text-[#B5622F] hover:border-[rgba(154,79,46,0.75)]">
                 <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
               </Button>
             )}
