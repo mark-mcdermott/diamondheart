@@ -44,6 +44,37 @@ export async function getFoodChartData(range: TimeRange) {
   }));
 }
 
+export async function getFoodDailyTotals(startISO: string, endISO: string) {
+  const session = await getCurrentUser();
+  if (!session) return [];
+
+  const start = new Date(startISO);
+  const end = new Date(endISO);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return [];
+
+  const rows = await db
+    .select({
+      date: sql<string>`DATE(${foodLog.date})`,
+      calories: sql<number>`COALESCE(SUM(${foodLogItems.calories} * ${foodLogItems.quantity}), 0)`,
+      protein: sql<number>`COALESCE(SUM(${foodLogItems.protein} * ${foodLogItems.quantity}), 0)`,
+      carbs: sql<number>`COALESCE(SUM(${foodLogItems.carbs} * ${foodLogItems.quantity}), 0)`,
+      fat: sql<number>`COALESCE(SUM(${foodLogItems.fat} * ${foodLogItems.quantity}), 0)`,
+    })
+    .from(foodLog)
+    .innerJoin(foodLogItems, eq(foodLogItems.foodLogId, foodLog.id))
+    .where(and(eq(foodLog.userId, session.userId), gte(foodLog.date, start), lte(foodLog.date, end)))
+    .groupBy(sql`DATE(${foodLog.date})`)
+    .orderBy(sql`DATE(${foodLog.date})`);
+
+  return rows.map((r) => ({
+    date: String(r.date),
+    calories: Math.round(Number(r.calories)),
+    protein: Math.round(Number(r.protein)),
+    carbs: Math.round(Number(r.carbs)),
+    fat: Math.round(Number(r.fat)),
+  }));
+}
+
 export async function getMeditationChartData(range: TimeRange) {
   const session = await getCurrentUser();
   if (!session) return [];
