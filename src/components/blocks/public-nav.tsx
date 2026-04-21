@@ -29,7 +29,7 @@ export function PublicNav({ siteName, logoIcon, logoImage }: PublicNavProps) {
   ];
 
   return (
-    <header className="w-full border-b border-border bg-background">
+    <header className="w-full border-b border-border bg-background shadow-[0_4px_14px_-6px_rgba(28,22,18,0.06)]">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
         <Link
           href="/"
