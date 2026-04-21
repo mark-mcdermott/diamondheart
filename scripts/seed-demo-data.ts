@@ -572,7 +572,7 @@ async function seedAppointments(db: Db, userId: string) {
       date: daysAgo(a.daysAgo, 10, 0),
       durationMinutes: a.duration,
       status: a.status,
-      followUp: "followUp" in a ? a.followUp : null,
+      followUp: "followUp" in a ? (a as { followUp: string }).followUp : null,
     });
   }
 }

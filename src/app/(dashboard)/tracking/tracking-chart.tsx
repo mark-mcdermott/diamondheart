@@ -63,7 +63,7 @@ export function TrackingChart({ items }: TrackingChartProps) {
               borderRadius: 8,
               fontSize: 12,
             }}
-            formatter={(value: number) => [`${value}`, "Total Count"]}
+            formatter={(value) => [`${value}`, "Total Count"]}
           />
           <Bar dataKey="total" radius={[0, 4, 4, 0]}>
             {data.map((d) => (

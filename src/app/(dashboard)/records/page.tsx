@@ -4,7 +4,6 @@ import { db } from "@/db";
 import { exercises, personalRecords } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { ArrowLeft, Trophy, Dumbbell } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 

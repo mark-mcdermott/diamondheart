@@ -136,7 +136,7 @@ export function MetricChart({ entries, valueType, unit, dailyGoal }: MetricChart
                 borderRadius: 8,
                 fontSize: 12,
               }}
-              formatter={(value: number) => [`${value}${unitLabel}`, yLabel]}
+              formatter={(value) => [`${value}${unitLabel}`, yLabel]}
             />
             {dailyGoal && (
               <ReferenceLine
@@ -179,7 +179,7 @@ export function MetricChart({ entries, valueType, unit, dailyGoal }: MetricChart
                 borderRadius: 8,
                 fontSize: 12,
               }}
-              formatter={(value: number) => [`${value}${unitLabel}`, yLabel]}
+              formatter={(value) => [`${value}${unitLabel}`, yLabel]}
             />
             {dailyGoal && (
               <ReferenceLine

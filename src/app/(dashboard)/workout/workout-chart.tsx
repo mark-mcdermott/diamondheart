@@ -21,7 +21,7 @@ type ChartView = "volume" | "duration";
 export function WorkoutChart() {
   const [range, setRange] = useState<TimeRange>("month");
   const [view, setView] = useState<ChartView>("volume");
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [rawData, setRawData] = useState<{ date: string; duration: number; volume: number; sessions: number }[]>([]);
 
   useEffect(() => {
@@ -93,7 +93,7 @@ export function WorkoutChart() {
                 borderRadius: 8,
                 fontSize: 12,
               }}
-              formatter={(value: number) => [`${value.toLocaleString()} lbs`, "Volume"]}
+              formatter={(value) => [`${Number(value).toLocaleString()} lbs`, "Volume"]}
             />
             <Bar dataKey="volume" fill={CHART_COLORS.green} radius={[4, 4, 0, 0]} />
           </BarChart>
@@ -121,7 +121,7 @@ export function WorkoutChart() {
                 borderRadius: 8,
                 fontSize: 12,
               }}
-              formatter={(value: number) => [`${value} min`, "Duration"]}
+              formatter={(value) => [`${value} min`, "Duration"]}
             />
             <Line
               type="monotone"

@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { medicalLogs } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 

@@ -9,10 +9,10 @@ export default async function MeditateEditPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
 
-  let [styles, presets, defaultTimerSeconds] = await Promise.all([
+  const defaultTimerSeconds = await getDefaultTimerSeconds(session.userId);
+  let [styles, presets] = await Promise.all([
     getMeditationStyles(session.userId),
     getMeditationPresets(session.userId),
-    getDefaultTimerSeconds(session.userId),
   ]);
 
   if (styles.length === 0 || presets.length === 0) {

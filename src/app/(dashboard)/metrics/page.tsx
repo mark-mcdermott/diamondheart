@@ -38,7 +38,7 @@ export default async function MetricsPage() {
   const [
     categories,
     metrics,
-    categoryNavStatus,
+    _categoryNavStatus,
     sectionStatus,
     foodCalories,
     trackingCount,

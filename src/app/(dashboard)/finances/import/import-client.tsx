@@ -102,7 +102,7 @@ function guessMapping(headers: string[]): ColumnMapping {
   };
 }
 
-export function ImportClient({ accounts, categories }: Props) {
+export function ImportClient({ accounts, categories: _categories }: Props) {
   const [accountId, setAccountId] = useState("");
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
