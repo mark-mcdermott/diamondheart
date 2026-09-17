@@ -17,6 +17,8 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "node --env-file=.env --import tsx scripts/seed.ts",
     "db:seed:feed": "node --env-file=.env --import tsx scripts/seed-community-feed.ts",
+    "db:migrate:tracker-scope": "node --env-file=.env --import tsx scripts/migrate-tracker-user-scope.ts",
+    "db:reseed:tracker": "node --env-file=.env --import tsx scripts/reseed-tracker.ts",
     "db:seed:feed:clean": "node --env-file=.env --import tsx scripts/seed-community-feed.ts clean",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",

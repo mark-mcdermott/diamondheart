@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/db";
 import { trackerMetrics, trackerEntries } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import { EntriesTable } from "./entries-table";
 import { MetricChart } from "./metric-chart";
@@ -21,7 +21,7 @@ export default async function MetricDetailPage({
   const [metric] = await db
     .select()
     .from(trackerMetrics)
-    .where(eq(trackerMetrics.id, id))
+    .where(and(eq(trackerMetrics.id, id), eq(trackerMetrics.userId, session.userId)))
     .limit(1);
 
   if (!metric) notFound();
@@ -29,7 +29,12 @@ export default async function MetricDetailPage({
   const entries = await db
     .select()
     .from(trackerEntries)
-    .where(eq(trackerEntries.metricId, id))
+    .where(
+      and(
+        eq(trackerEntries.metricId, id),
+        eq(trackerEntries.userId, session.userId)
+      )
+    )
     .orderBy(desc(trackerEntries.date));
 
   return (

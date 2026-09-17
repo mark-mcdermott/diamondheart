@@ -31,18 +31,26 @@ export type Session = typeof sessions.$inferSelect;
 // Tracker categories
 export const trackerCategories = pgTable('tracker_categories', {
 	id: text('id').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
 	name: text('name').notNull(),
-	slug: text('slug').notNull().unique(),
+	slug: text('slug').notNull(),
 	description: text('description'),
 	icon: text('icon'),
 	color: text('color'),
 	sortOrder: text('sort_order').notNull().default('0'),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
-});
+}, (t) => [
+	unique('tracker_categories_user_slug_unique').on(t.userId, t.slug)
+]);
 
 // Tracker metrics
 export const trackerMetrics = pgTable('tracker_metrics', {
 	id: text('id').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
 	categoryId: text('category_id')
 		.notNull()
 		.references(() => trackerCategories.id, { onDelete: 'cascade' }),
@@ -66,6 +74,9 @@ export const trackerMetrics = pgTable('tracker_metrics', {
 // Tracker entries
 export const trackerEntries = pgTable('tracker_entries', {
 	id: text('id').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
 	metricId: text('metric_id')
 		.notNull()
 		.references(() => trackerMetrics.id, { onDelete: 'cascade' }),
@@ -79,6 +90,9 @@ export const trackerEntries = pgTable('tracker_entries', {
 // Tracker goals
 export const trackerGoals = pgTable('tracker_goals', {
 	id: text('id').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
 	metricId: text('metric_id')
 		.notNull()
 		.references(() => trackerMetrics.id, { onDelete: 'cascade' }),

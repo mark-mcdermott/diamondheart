@@ -108,10 +108,14 @@ function mapHeartRate(data: Record<string, unknown>[]): OuraDataPoint[] {
 }
 
 export async function syncOuraData(connectionId: string, accessToken: string, dateStr: string): Promise<{ entriesCreated: number }> {
+	const [connection] = await db.select({ userId: integrationConnections.userId }).from(integrationConnections).where(eq(integrationConnections.id, connectionId));
+	if (!connection) throw new Error(`Unknown Oura connection ${connectionId}`);
+	const userId = connection.userId;
+
 	const existingSync = await db.select().from(integrationSyncLog).where(and(eq(integrationSyncLog.connectionId, connectionId), eq(integrationSyncLog.syncDate, dateStr), eq(integrationSyncLog.status, 'success')));
 	if (existingSync.length > 0) return { entriesCreated: 0 };
 
-	await ensureBiometricMetrics();
+	await ensureBiometricMetrics(userId);
 
 	const params = { start_date: dateStr, end_date: dateStr };
 	const [activity, sleep, readiness, spo2, stress, heartRate] = await Promise.all([
@@ -129,7 +133,7 @@ export async function syncOuraData(connectionId: string, accessToken: string, da
 	];
 
 	const slugs = BIOMETRIC_METRICS.map((m) => m.slug);
-	const metrics = await db.select().from(trackerMetrics);
+	const metrics = await db.select().from(trackerMetrics).where(eq(trackerMetrics.userId, userId));
 	const metricBySlug = new Map(metrics.filter((m) => slugs.includes(m.slug)).map((m) => [m.slug, m]));
 
 	const entryDate = new Date(`${dateStr}T12:00:00Z`);
@@ -138,7 +142,7 @@ export async function syncOuraData(connectionId: string, accessToken: string, da
 	for (const point of allPoints) {
 		const metric = metricBySlug.get(point.slug);
 		if (!metric) continue;
-		await db.insert(trackerEntries).values({ id: crypto.randomUUID(), metricId: metric.id, value: String(point.value), notes: 'source:oura', date: entryDate });
+		await db.insert(trackerEntries).values({ id: crypto.randomUUID(), userId, metricId: metric.id, value: String(point.value), notes: 'source:oura', date: entryDate });
 		entriesCreated++;
 	}
 

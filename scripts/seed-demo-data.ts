@@ -131,8 +131,10 @@ async function seedUserPreferences(db: Db, userId: string) {
 }
 
 async function seedTrackerEntries(db: Db, userId: string) {
-  void userId; // trackerEntries are linked via metricId, not userId directly
-  const metrics = await db.select().from(trackerMetrics);
+  const metrics = await db
+    .select()
+    .from(trackerMetrics)
+    .where(eq(trackerMetrics.userId, userId));
   const bySlug = new Map(metrics.map((m) => [m.slug, m]));
 
   // Realistic ranges for 14 days
@@ -158,6 +160,7 @@ async function seedTrackerEntries(db: Db, userId: string) {
         metric.valueType === "number" ? raw.toFixed(1) : String(Math.round(raw));
       await db.insert(trackerEntries).values({
         id: randomUUID(),
+        userId,
         metricId: metric.id,
         value,
         date,
@@ -787,7 +790,10 @@ async function seedNotifications(db: Db, userId: string) {
 }
 
 async function seedReminders(db: Db, userId: string) {
-  const metrics = await db.select().from(trackerMetrics);
+  const metrics = await db
+    .select()
+    .from(trackerMetrics)
+    .where(eq(trackerMetrics.userId, userId));
   const meditationMetric = metrics.find((m) => m.slug === "meditation");
   const waterMetric = metrics.find((m) => m.slug === "water");
 

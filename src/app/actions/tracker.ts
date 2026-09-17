@@ -6,7 +6,7 @@ import {
   trackerMetrics,
   trackerEntries,
 } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -15,6 +15,15 @@ export type ActionResult = {
   success: boolean;
   error?: string;
 };
+
+async function ownsMetric(metricId: string, userId: string): Promise<boolean> {
+  const [metric] = await db
+    .select({ id: trackerMetrics.id })
+    .from(trackerMetrics)
+    .where(and(eq(trackerMetrics.id, metricId), eq(trackerMetrics.userId, userId)))
+    .limit(1);
+  return Boolean(metric);
+}
 
 // Quick log from dashboard — creates an entry with value "done"
 export async function quickLog(formData: FormData): Promise<ActionResult> {
@@ -25,9 +34,13 @@ export async function quickLog(formData: FormData): Promise<ActionResult> {
   const value = (formData.get("value") as string) || "done";
 
   if (!metricId) return { success: false, error: "Metric is required" };
+  if (!(await ownsMetric(metricId, session.userId))) {
+    return { success: false, error: "Metric not found" };
+  }
 
   await db.insert(trackerEntries).values({
     id: crypto.randomUUID(),
+    userId: session.userId,
     metricId,
     value,
     date: new Date(),
@@ -49,6 +62,7 @@ export async function createEntry(formData: FormData): Promise<void> {
   const timeStr = formData.get("time") as string;
 
   if (!metricId) return;
+  if (!(await ownsMetric(metricId, session.userId))) return;
 
   let date: Date;
   if (dateStr && timeStr) {
@@ -61,6 +75,7 @@ export async function createEntry(formData: FormData): Promise<void> {
 
   await db.insert(trackerEntries).values({
     id: crypto.randomUUID(),
+    userId: session.userId,
     metricId,
     value,
     notes: notes || null,
@@ -102,12 +117,29 @@ export async function addMetric(formData: FormData): Promise<ActionResult> {
     }
   }
 
-  // Default category
-  if (!categoryId) {
+  // Category must belong to the user; fall back to their default category
+  if (categoryId) {
+    const [owned] = await db
+      .select({ id: trackerCategories.id })
+      .from(trackerCategories)
+      .where(
+        and(
+          eq(trackerCategories.id, categoryId),
+          eq(trackerCategories.userId, session.userId)
+        )
+      )
+      .limit(1);
+    if (!owned) return { success: false, error: "Category not found" };
+  } else {
     const [defaultCat] = await db
       .select()
       .from(trackerCategories)
-      .where(eq(trackerCategories.slug, "default"))
+      .where(
+        and(
+          eq(trackerCategories.slug, "default"),
+          eq(trackerCategories.userId, session.userId)
+        )
+      )
       .limit(1);
 
     if (defaultCat) {
@@ -116,6 +148,7 @@ export async function addMetric(formData: FormData): Promise<ActionResult> {
       categoryId = crypto.randomUUID();
       await db.insert(trackerCategories).values({
         id: categoryId,
+        userId: session.userId,
         name: "Default",
         slug: "default",
         sortOrder: "0",
@@ -126,7 +159,8 @@ export async function addMetric(formData: FormData): Promise<ActionResult> {
   // Get next sort order
   const [maxSort] = await db
     .select({ max: sql<string>`COALESCE(MAX(${trackerMetrics.sortOrder}), '-1')` })
-    .from(trackerMetrics);
+    .from(trackerMetrics)
+    .where(eq(trackerMetrics.userId, session.userId));
   const nextSort = String(parseInt(maxSort?.max ?? "-1", 10) + 1);
 
   const slug = name
@@ -136,6 +170,7 @@ export async function addMetric(formData: FormData): Promise<ActionResult> {
 
   await db.insert(trackerMetrics).values({
     id: crypto.randomUUID(),
+    userId: session.userId,
     categoryId,
     name,
     slug,
@@ -180,7 +215,7 @@ export async function updateMetric(
     }
   }
 
-  await db
+  const updated = await db
     .update(trackerMetrics)
     .set({
       name,
@@ -191,7 +226,12 @@ export async function updateMetric(
       fields,
       updatedAt: new Date(),
     })
-    .where(eq(trackerMetrics.id, metricId));
+    .where(
+      and(eq(trackerMetrics.id, metricId), eq(trackerMetrics.userId, session.userId))
+    )
+    .returning({ id: trackerMetrics.id });
+
+  if (!updated.length) return { success: false, error: "Metric not found" };
 
   redirect(`/metrics/${metricId}`);
 }
@@ -204,7 +244,14 @@ export async function deleteMetric(formData: FormData): Promise<ActionResult> {
   const metricId = formData.get("metricId") as string;
   if (!metricId) return { success: false, error: "Metric ID is required" };
 
-  await db.delete(trackerMetrics).where(eq(trackerMetrics.id, metricId));
+  const deleted = await db
+    .delete(trackerMetrics)
+    .where(
+      and(eq(trackerMetrics.id, metricId), eq(trackerMetrics.userId, session.userId))
+    )
+    .returning({ id: trackerMetrics.id });
+
+  if (!deleted.length) return { success: false, error: "Metric not found" };
 
   revalidatePath("/metrics");
   return { success: true };
@@ -221,7 +268,9 @@ export async function toggleHidden(formData: FormData): Promise<ActionResult> {
   const [metric] = await db
     .select({ hidden: trackerMetrics.hidden })
     .from(trackerMetrics)
-    .where(eq(trackerMetrics.id, metricId))
+    .where(
+      and(eq(trackerMetrics.id, metricId), eq(trackerMetrics.userId, session.userId))
+    )
     .limit(1);
 
   if (!metric) return { success: false, error: "Metric not found" };
@@ -229,7 +278,9 @@ export async function toggleHidden(formData: FormData): Promise<ActionResult> {
   await db
     .update(trackerMetrics)
     .set({ hidden: !metric.hidden })
-    .where(eq(trackerMetrics.id, metricId));
+    .where(
+      and(eq(trackerMetrics.id, metricId), eq(trackerMetrics.userId, session.userId))
+    );
 
   revalidatePath("/metrics");
   revalidatePath("/dashboard");
@@ -255,7 +306,12 @@ export async function reorderMetrics(formData: FormData): Promise<ActionResult> 
     await db
       .update(trackerMetrics)
       .set({ sortOrder: String(i) })
-      .where(eq(trackerMetrics.id, ids[i]));
+      .where(
+        and(
+          eq(trackerMetrics.id, ids[i]),
+          eq(trackerMetrics.userId, session.userId)
+        )
+      );
   }
 
   revalidatePath("/metrics");
@@ -269,7 +325,14 @@ export async function deleteEntry(formData: FormData): Promise<ActionResult> {
   const entryId = formData.get("entryId") as string;
   if (!entryId) return { success: false, error: "Entry ID is required" };
 
-  await db.delete(trackerEntries).where(eq(trackerEntries.id, entryId));
+  const deleted = await db
+    .delete(trackerEntries)
+    .where(
+      and(eq(trackerEntries.id, entryId), eq(trackerEntries.userId, session.userId))
+    )
+    .returning({ id: trackerEntries.id });
+
+  if (!deleted.length) return { success: false, error: "Entry not found" };
 
   revalidatePath("/metrics");
   return { success: true };
@@ -285,14 +348,19 @@ export async function updateEntry(formData: FormData): Promise<ActionResult> {
 
   if (!entryId) return { success: false, error: "Entry ID is required" };
 
-  await db
+  const updated = await db
     .update(trackerEntries)
     .set({
       value: value || "done",
       notes: notes || null,
       updatedAt: new Date(),
     })
-    .where(eq(trackerEntries.id, entryId));
+    .where(
+      and(eq(trackerEntries.id, entryId), eq(trackerEntries.userId, session.userId))
+    )
+    .returning({ id: trackerEntries.id });
+
+  if (!updated.length) return { success: false, error: "Entry not found" };
 
   revalidatePath("/metrics");
   return { success: true };

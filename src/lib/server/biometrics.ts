@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { trackerCategories, trackerMetrics } from './db/schema';
 import { db } from '@/db';
 
@@ -23,11 +23,16 @@ export const BIOMETRIC_METRICS: BiometricMetricDef[] = [
 	{ slug: 'bio-stress', name: 'Stress Level', unit: '', providers: ['oura'] },
 ];
 
-export async function ensureBiometricMetrics(): Promise<void> {
+export async function ensureBiometricMetrics(userId: string): Promise<void> {
 	const existing = await db
 		.select()
 		.from(trackerCategories)
-		.where(eq(trackerCategories.slug, BIOMETRIC_CATEGORY_SLUG));
+		.where(
+			and(
+				eq(trackerCategories.userId, userId),
+				eq(trackerCategories.slug, BIOMETRIC_CATEGORY_SLUG)
+			)
+		);
 
 	let categoryId: string;
 	if (existing.length > 0) {
@@ -36,6 +41,7 @@ export async function ensureBiometricMetrics(): Promise<void> {
 		categoryId = crypto.randomUUID();
 		await db.insert(trackerCategories).values({
 			id: categoryId,
+			userId,
 			name: 'Biometrics',
 			slug: BIOMETRIC_CATEGORY_SLUG,
 			description: 'Auto-synced health data from connected devices',
@@ -48,7 +54,12 @@ export async function ensureBiometricMetrics(): Promise<void> {
 	const existingMetrics = await db
 		.select({ slug: trackerMetrics.slug })
 		.from(trackerMetrics)
-		.where(eq(trackerMetrics.categoryId, categoryId));
+		.where(
+			and(
+				eq(trackerMetrics.userId, userId),
+				eq(trackerMetrics.categoryId, categoryId)
+			)
+		);
 
 	const existingSlugs = new Set(existingMetrics.map((m) => m.slug));
 
@@ -58,6 +69,7 @@ export async function ensureBiometricMetrics(): Promise<void> {
 
 		await db.insert(trackerMetrics).values({
 			id: crypto.randomUUID(),
+			userId,
 			categoryId,
 			name: def.name,
 			slug: def.slug,

@@ -32,6 +32,7 @@ export default async function DashboardPage({
     .from(trackerMetrics)
     .where(
       and(
+        eq(trackerMetrics.userId, session.userId),
         eq(trackerMetrics.archived, false),
         eq(trackerMetrics.hidden, false)
       )
@@ -48,6 +49,7 @@ export default async function DashboardPage({
     .from(trackerEntries)
     .where(
       and(
+        eq(trackerEntries.userId, session.userId),
         gte(trackerEntries.date, selectedDate),
         lt(trackerEntries.date, nextDay)
       )
@@ -61,7 +63,12 @@ export default async function DashboardPage({
       date: trackerEntries.date,
     })
     .from(trackerEntries)
-    .where(gte(trackerEntries.date, weekAgo))
+    .where(
+      and(
+        eq(trackerEntries.userId, session.userId),
+        gte(trackerEntries.date, weekAgo)
+      )
+    )
     .orderBy(desc(trackerEntries.date))
     .limit(20);
 
@@ -72,7 +79,12 @@ export default async function DashboardPage({
       total: sql<number>`COALESCE(SUM(CASE WHEN ${trackerEntries.value} ~ '^[0-9.]+$' THEN CAST(${trackerEntries.value} AS NUMERIC) ELSE 1 END), 0)`,
     })
     .from(trackerEntries)
-    .where(gte(trackerEntries.date, weekAgo))
+    .where(
+      and(
+        eq(trackerEntries.userId, session.userId),
+        gte(trackerEntries.date, weekAgo)
+      )
+    )
     .groupBy(trackerEntries.metricId, sql`DATE(${trackerEntries.date})`)
     .orderBy(sql`DATE(${trackerEntries.date})`);
 

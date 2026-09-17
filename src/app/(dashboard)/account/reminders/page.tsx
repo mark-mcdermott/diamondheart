@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/db";
 import { reminderSchedules, trackerMetrics } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { RemindersClient } from "./reminders-client";
 
 export default async function RemindersPage() {
@@ -17,7 +17,12 @@ export default async function RemindersPage() {
   const metrics = await db
     .select({ id: trackerMetrics.id, name: trackerMetrics.name })
     .from(trackerMetrics)
-    .where(eq(trackerMetrics.archived, false))
+    .where(
+      and(
+        eq(trackerMetrics.userId, session.userId),
+        eq(trackerMetrics.archived, false)
+      )
+    )
     .orderBy(trackerMetrics.name);
 
   return (
