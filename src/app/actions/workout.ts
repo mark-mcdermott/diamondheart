@@ -6,7 +6,7 @@ import {
   workoutSets,
   personalRecords,
 } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -49,6 +49,14 @@ export async function addSet(formData: FormData): Promise<WorkoutActionResult> {
   if (!workoutId || !exerciseId || isNaN(reps) || isNaN(weight)) {
     return { success: false, error: "Missing required fields" };
   }
+
+  const [workout] = await db
+    .select({ id: workouts.id })
+    .from(workouts)
+    .where(and(eq(workouts.id, workoutId), eq(workouts.userId, session.userId)))
+    .limit(1);
+
+  if (!workout) return { success: false, error: "Workout not found" };
 
   // Get next set number
   const existingSets = await db
@@ -132,7 +140,23 @@ export async function deleteSet(formData: FormData): Promise<WorkoutActionResult
 
   if (!setId) return { success: false, error: "Set ID is required" };
 
-  await db.delete(workoutSets).where(eq(workoutSets.id, setId));
+  const deleted = await db
+    .delete(workoutSets)
+    .where(
+      and(
+        eq(workoutSets.id, setId),
+        inArray(
+          workoutSets.workoutId,
+          db
+            .select({ id: workouts.id })
+            .from(workouts)
+            .where(eq(workouts.userId, session.userId))
+        )
+      )
+    )
+    .returning({ id: workoutSets.id });
+
+  if (deleted.length === 0) return { success: false, error: "Set not found" };
 
   revalidatePath("/workout");
   return { success: true, workoutId };

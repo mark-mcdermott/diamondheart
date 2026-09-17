@@ -156,7 +156,9 @@ export async function GET(request: Request) {
           weight: workoutSets.weight,
           unit: workoutSets.unit,
         })
-        .from(workoutSets);
+        .from(workoutSets)
+        .innerJoin(workouts, eq(workoutSets.workoutId, workouts.id))
+        .where(eq(workouts.userId, session.userId));
 
       const allExercises = await db.select().from(exercises);
       const exerciseMap = new Map(allExercises.map((e) => [e.id, e.name]));
