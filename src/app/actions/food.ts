@@ -233,6 +233,14 @@ export async function logFavoriteMeal(formData: FormData): Promise<Result> {
   const mealType = formData.get("mealType") as string;
   if (!mealId || !mealType) return { success: false, error: "Meal ID and type are required" };
 
+  const [meal] = await db
+    .select({ id: favoriteMeals.id })
+    .from(favoriteMeals)
+    .where(and(eq(favoriteMeals.id, mealId), eq(favoriteMeals.userId, session.userId)))
+    .limit(1);
+
+  if (!meal) return { success: false, error: "Favorite meal not found" };
+
   const items = await db
     .select()
     .from(favoriteMealItems)
