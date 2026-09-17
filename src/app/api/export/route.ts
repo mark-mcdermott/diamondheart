@@ -47,7 +47,7 @@ export async function GET(request: Request) {
 
   switch (type) {
     case "metrics": {
-      const metrics = await db.select().from(trackerMetrics).orderBy(trackerMetrics.sortOrder);
+      const metrics = await db.select().from(trackerMetrics).where(eq(trackerMetrics.userId, session.userId)).orderBy(trackerMetrics.sortOrder);
       const entries = await db
         .select({
           metricId: trackerEntries.metricId,
@@ -56,6 +56,7 @@ export async function GET(request: Request) {
           date: trackerEntries.date,
         })
         .from(trackerEntries)
+        .where(eq(trackerEntries.userId, session.userId))
         .orderBy(desc(trackerEntries.date));
 
       const metricMap = new Map(metrics.map((m) => [m.id, m.name]));

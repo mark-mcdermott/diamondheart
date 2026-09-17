@@ -271,7 +271,12 @@ export async function toggleCategoryInNav(formData: FormData): Promise<ActionRes
     const [category] = await db
       .select()
       .from(trackerCategories)
-      .where(eq(trackerCategories.id, categoryId))
+      .where(
+        and(
+          eq(trackerCategories.id, categoryId),
+          eq(trackerCategories.userId, session.userId)
+        )
+      )
       .limit(1);
 
     if (!category) return { success: false, error: "Category not found" };

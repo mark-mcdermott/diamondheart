@@ -26,18 +26,25 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
   const [existing] = await db
     .select()
     .from(trackerCategories)
-    .where(eq(trackerCategories.slug, slug))
+    .where(
+      and(
+        eq(trackerCategories.slug, slug),
+        eq(trackerCategories.userId, session.userId)
+      )
+    )
     .limit(1);
 
   if (existing) return { success: false, error: "Category already exists" };
 
   const [maxSort] = await db
     .select({ max: sql<string>`COALESCE(MAX(${trackerCategories.sortOrder}), '-1')` })
-    .from(trackerCategories);
+    .from(trackerCategories)
+    .where(eq(trackerCategories.userId, session.userId));
   const nextSort = String(parseInt(maxSort?.max ?? "-1", 10) + 1);
 
   await db.insert(trackerCategories).values({
     id: crypto.randomUUID(),
+    userId: session.userId,
     name: name.trim(),
     slug,
     sortOrder: nextSort,
@@ -60,16 +67,25 @@ export async function renameCategory(formData: FormData): Promise<ActionResult> 
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
-  await db
+  const renamed = await db
     .update(trackerCategories)
     .set({ name: name.trim(), slug: newSlug })
-    .where(eq(trackerCategories.id, categoryId));
+    .where(
+      and(
+        eq(trackerCategories.id, categoryId),
+        eq(trackerCategories.userId, session.userId)
+      )
+    )
+    .returning({ id: trackerCategories.id });
+
+  if (!renamed.length) return { success: false, error: "Category not found" };
 
   // Update label on any nav items referencing this category
   await db
     .update(userNavItems)
     .set({ label: name.trim(), updatedAt: new Date() })
     .where(and(
+      eq(userNavItems.userId, session.userId),
       eq(userNavItems.referenceId, categoryId),
       eq(userNavItems.itemType, "metric_category")
     ));
@@ -86,17 +102,36 @@ export async function deleteCategory(formData: FormData): Promise<ActionResult> 
   const categoryId = formData.get("categoryId") as string;
   if (!categoryId) return { success: false, error: "Category ID is required" };
 
+  const [target] = await db
+    .select({ id: trackerCategories.id })
+    .from(trackerCategories)
+    .where(
+      and(
+        eq(trackerCategories.id, categoryId),
+        eq(trackerCategories.userId, session.userId)
+      )
+    )
+    .limit(1);
+
+  if (!target) return { success: false, error: "Category not found" };
+
   // Get or create default category to reassign metrics
   let [defaultCat] = await db
     .select()
     .from(trackerCategories)
-    .where(eq(trackerCategories.slug, "default"))
+    .where(
+      and(
+        eq(trackerCategories.slug, "default"),
+        eq(trackerCategories.userId, session.userId)
+      )
+    )
     .limit(1);
 
   if (!defaultCat) {
     const id = crypto.randomUUID();
     [defaultCat] = await db.insert(trackerCategories).values({
       id,
+      userId: session.userId,
       name: "General",
       slug: "default",
       sortOrder: "0",
@@ -112,18 +147,31 @@ export async function deleteCategory(formData: FormData): Promise<ActionResult> 
   await db
     .update(trackerMetrics)
     .set({ categoryId: defaultCat.id })
-    .where(eq(trackerMetrics.categoryId, categoryId));
+    .where(
+      and(
+        eq(trackerMetrics.categoryId, categoryId),
+        eq(trackerMetrics.userId, session.userId)
+      )
+    );
 
   // Remove nav items referencing this category
   await db
     .delete(userNavItems)
     .where(and(
+      eq(userNavItems.userId, session.userId),
       eq(userNavItems.referenceId, categoryId),
       eq(userNavItems.itemType, "metric_category")
     ));
 
   // Delete the category
-  await db.delete(trackerCategories).where(eq(trackerCategories.id, categoryId));
+  await db
+    .delete(trackerCategories)
+    .where(
+      and(
+        eq(trackerCategories.id, categoryId),
+        eq(trackerCategories.userId, session.userId)
+      )
+    );
 
   revalidatePath("/metrics");
   revalidatePath("/settings");

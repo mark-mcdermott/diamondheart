@@ -38,10 +38,10 @@ export async function POST(request: Request) {
   const existingSync = await db.select().from(integrationSyncLog).where(and(eq(integrationSyncLog.connectionId, conn.id), eq(integrationSyncLog.syncDate, payload.date), eq(integrationSyncLog.status, "success")));
   if (existingSync.length > 0) return NextResponse.json({ ok: true, entriesCreated: 0, skipped: true });
 
-  await ensureBiometricMetrics();
+  await ensureBiometricMetrics(session.userId);
 
   const slugs = BIOMETRIC_METRICS.map((m) => m.slug);
-  const metrics = await db.select().from(trackerMetrics);
+  const metrics = await db.select().from(trackerMetrics).where(eq(trackerMetrics.userId, session.userId));
   const metricBySlug = new Map(metrics.filter((m) => slugs.includes(m.slug)).map((m) => [m.slug, m]));
 
   const entryDate = new Date(`${payload.date}T12:00:00Z`);
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     if (value == null || typeof value !== "number") continue;
     const metric = metricBySlug.get(slug);
     if (!metric) continue;
-    await db.insert(trackerEntries).values({ id: crypto.randomUUID(), metricId: metric.id, value: String(value), notes: "source:healthkit", date: entryDate });
+    await db.insert(trackerEntries).values({ id: crypto.randomUUID(), userId: session.userId, metricId: metric.id, value: String(value), notes: "source:healthkit", date: entryDate });
     entriesCreated++;
   }
 

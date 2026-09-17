@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/db";
 import { trackerMetrics } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { MetricEditClient } from "./edit-client";
 
 export default async function MetricEditPage({
@@ -18,7 +18,7 @@ export default async function MetricEditPage({
   const [metric] = await db
     .select()
     .from(trackerMetrics)
-    .where(eq(trackerMetrics.id, id))
+    .where(and(eq(trackerMetrics.id, id), eq(trackerMetrics.userId, session.userId)))
     .limit(1);
 
   if (!metric) notFound();

@@ -49,8 +49,8 @@ export default async function MetricsPage() {
     meditationStats,
     financeAccountCount,
   ] = await Promise.all([
-    db.select().from(trackerCategories).orderBy(trackerCategories.sortOrder),
-    db.select().from(trackerMetrics).where(eq(trackerMetrics.archived, false)).orderBy(trackerMetrics.sortOrder),
+    db.select().from(trackerCategories).where(eq(trackerCategories.userId, session.userId)).orderBy(trackerCategories.sortOrder),
+    db.select().from(trackerMetrics).where(and(eq(trackerMetrics.userId, session.userId), eq(trackerMetrics.archived, false))).orderBy(trackerMetrics.sortOrder),
     getCategoryNavStatus(session.userId, []).then(() => null), // placeholder, resolved below
     getTrackingSectionStatus(session.userId),
 
