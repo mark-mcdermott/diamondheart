@@ -22,10 +22,12 @@ Personal health and life tracking app. Web + iOS/Android (Capacitor) + desktop (
 | `pnpm db:push` | Push schema changes to Neon |
 | `pnpm db:studio` | Drizzle Studio |
 | `pnpm db:seed` | **Full reset** — see warning below |
-| `pnpm db:reseed:tracker` | Rebuild tracker tables per user only |
+| `pnpm db:reseed:tracker` | Rebuild tracker tables per user only — refuses if dependent rows exist, see below |
 | `pnpm db:migrate:tracker-scope` | One-off tracker ownership migration (already applied) |
 
 > ⚠️ **`db:seed` deletes every user**, which cascades through food, workouts, meditation, finances and everything else, then rotates all passwords into `.secrets`. It is a full database reset, not a top-up. For tracker-only work use `db:reseed:tracker`.
+
+> ⚠️ **`db:reseed:tracker` wipes `tracker_metrics`**, which cascades into `tracker_entries`, `tracker_goals` and `reminder_schedules`. It counts those three first and refuses — naming what it would delete — unless you pass `--force`. On any database with real tracking data it *will* refuse, and that is the intended behaviour: think before forcing.
 
 > ⚠️ **`scripts/seed.ts` calls `seed()` at module scope.** Importing it for its data triggers that reset. Import `scripts/tracker-seed-data.ts` instead.
 
@@ -68,7 +70,6 @@ Other conventions:
 - **No test coverage for user scoping.** There is no DB test harness, so the rule above is enforced by review only. A two-user Playwright test is the honest fix.
 - **Lint is not applying Next's rules** — `next lint` warns the plugin is not detected. `next lint` is also deprecated and removed in Next 16.
 - **Not deployed.** There is no Vercel project for this repo and `diamondheart.app` does not resolve.
-- 10 stale merged branches on the remote.
 
 ## Scope
 
