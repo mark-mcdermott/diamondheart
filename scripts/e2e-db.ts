@@ -47,7 +47,20 @@ async function resolveProjectId(): Promise<string> {
   const explicit = env("NEON_PROJECT_ID");
   if (explicit) return explicit;
 
-  const { projects } = await neon<{ projects: { id: string; name: string }[] }>("/projects");
+  // A project-scoped key may not be allowed to list projects at all.
+  let projects: { id: string; name: string }[];
+  try {
+    ({ projects } = await neon<{ projects: { id: string; name: string }[] }>("/projects"));
+  } catch (err) {
+    throw new Error(
+      "Could not list Neon projects to discover the project id. If you are using a " +
+        "project-scoped API key, set NEON_PROJECT_ID explicitly — it is on the project's " +
+        `Settings page in the Neon console.\n\nUnderlying error: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+    );
+  }
+
   if (projects.length === 1) return projects[0].id;
 
   throw new Error(
