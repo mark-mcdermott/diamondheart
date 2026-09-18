@@ -32,3 +32,47 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           AUTH_SECRET: ci-test-secret
+
+  # Isolation tests need a disposable Neon branch. Skipped without the secret
+  # rather than silently passing, so a missing key is visible in the run.
+  e2e:
+    runs-on: ubuntu-latest
+    needs: verify
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Check for Neon credentials
+        id: creds
+        run: echo "present=${{ secrets.NEON_API_KEY != '' }}" >> "$GITHUB_OUTPUT"
+
+      - if: steps.creds.outputs.present != 'true'
+        run: |
+          echo "::warning::NEON_API_KEY is not set — skipping isolation tests."
+          echo "Add NEON_API_KEY (and NEON_PROJECT_ID if the key sees several projects)."
+
+      - if: steps.creds.outputs.present == 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - if: steps.creds.outputs.present == 'true'
+        run: pnpm test:e2e
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          AUTH_SECRET: ci-test-secret
+
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
