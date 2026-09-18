@@ -31,7 +31,7 @@ Not features. The things that made April's work hard to build on.
 | Fix stale chart colour assertion | ✅ #190 |
 | Run typecheck, lint and tests in CI | ✅ #191 |
 | Write `CLAUDE.md` + this roadmap | ✅ #192 |
-| Playwright harness + first two-user isolation test | ✅ |
+| Playwright harness + first two-user isolation test | ✅ #195 |
 | Prune stale merged branches | ✅ |
 
 **Acceptance for the Playwright task:** two accounts, each with their own metric; account A cannot see, edit or delete account B's metric via the UI or by visiting `/metrics/<B's id>` directly. Runs in CI.
