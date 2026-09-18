@@ -11,7 +11,7 @@ Personal health and life tracking app. Web + iOS/Android (Capacitor) + desktop (
 | `pnpm typecheck` | `tsc --noEmit` |
 | `pnpm lint` | ESLint |
 | `pnpm test:unit` | Vitest |
-| `pnpm test:e2e` | Playwright (no tests written yet) |
+| `pnpm test:e2e` | Playwright — provisions a disposable Neon branch, see below |
 
 **The verify loop is `typecheck` → `lint` → `test:unit` → `build`.** CI runs exactly these. Run them before opening a PR.
 
@@ -30,6 +30,16 @@ Personal health and life tracking app. Web + iOS/Android (Capacitor) + desktop (
 > ⚠️ **`db:reseed:tracker` wipes `tracker_metrics`**, which cascades into `tracker_entries`, `tracker_goals` and `reminder_schedules`. It counts those three first and refuses — naming what it would delete — unless you pass `--force`. On any database with real tracking data it *will* refuse, and that is the intended behaviour: think before forcing.
 
 > ⚠️ **`scripts/seed.ts` calls `seed()` at module scope.** Importing it for its data triggers that reset. Import `scripts/tracker-seed-data.ts` instead.
+
+### End-to-end tests
+
+`pnpm test:e2e` runs `scripts/e2e-db.ts`, which creates a throwaway Neon branch, points `DATABASE_URL` at it for the run, and deletes it afterwards — including on Ctrl-C. A Neon branch is a copy-on-write clone, so it arrives with the schema already in place.
+
+Needs `NEON_API_KEY` (and `NEON_PROJECT_ID` if that key can see several projects). Set `TEST_DATABASE_URL` to point at a specific database and skip Neon entirely.
+
+Running `playwright test` directly is refused on purpose: without the wrapper it would inherit `DATABASE_URL` from `.env` and create accounts in a real database.
+
+`e2e/isolation.spec.ts` is the regression test for the user-scoping rule above — two accounts, and the second must not see or be able to open the first's metric. It has been verified to fail when that scoping is removed.
 
 ## Stack
 
@@ -67,7 +77,6 @@ Other conventions:
 
 ## Known gaps
 
-- **No test coverage for user scoping.** There is no DB test harness, so the rule above is enforced by review only. A two-user Playwright test is the honest fix.
 - **Lint is not applying Next's rules** — `next lint` warns the plugin is not detected. `next lint` is also deprecated and removed in Next 16.
 - **Not deployed.** There is no Vercel project for this repo and `diamondheart.app` does not resolve.
 
