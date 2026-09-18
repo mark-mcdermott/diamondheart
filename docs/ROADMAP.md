@@ -10,10 +10,10 @@ The correction is to go the other way: **a small number of features, each genuin
 
 ## Strategy
 
-Three features, in this order, each finished before the next starts:
+Each finished before the next starts:
 
-1. **Coffee** — the smallest possible end-to-end feature.
-2. **Weight** — daily single-value tracking with history.
+1. **Coffee** — ✅ settled as a counter metric rather than a section. See below.
+2. **Weight** — daily single-value tracking with history. The first real take-it-to-done feature.
 3. **Food** — the largest, and the one with the most existing code to salvage.
 
 "Finished" means: logs, displays, edits, deletes; empty, loading and error states; works on mobile; survives a fresh account with no data; covered by a test that would catch a regression.
@@ -28,9 +28,9 @@ Not features. The things that made April's work hard to build on.
 |---|---|
 | Scope tracker tables to their owner | ✅ #188 |
 | Scope workout/food child-table queries | ✅ #189 |
-| Fix stale chart colour assertion | 🔄 #190 |
-| Run typecheck, lint and tests in CI | 🔄 #191 |
-| Write `CLAUDE.md` + this roadmap | 🔄 this PR |
+| Fix stale chart colour assertion | ✅ #190 |
+| Run typecheck, lint and tests in CI | ✅ #191 |
+| Write `CLAUDE.md` + this roadmap | ✅ #192 |
 | Playwright harness + first two-user isolation test | ⬜ |
 | Prune 10 stale merged branches | ⬜ |
 
@@ -38,62 +38,67 @@ Not features. The things that made April's work hard to build on.
 
 ---
 
-## Phase 1 — Coffee
+## Coffee — done
 
-**Open question that must be answered before this starts.** The generic tracker already supports counter metrics, so "coffee tracking" is one seeded row away from existing. Two readings:
+Settled: coffee is a **counter metric**, not a section (#193). The generic tracker already gives tap-to-increment tiles, dated entries, history and sparklines; a dedicated section would have been a third counting system in an app that already has two.
 
-- **(a) A seeded counter metric.** Nearly free. But then coffee is not a feature, it is a row, and the "tiny fully-functional feature" exercise proves nothing.
-- **(b) A dedicated section** — drink type, size, caffeine estimate, time of day, a "last cup was N hours ago" view. Real work, real product, and a genuine test of whether one feature can be taken to done.
-
-The spirit of the plan points at **(b)**; (a) is the cheap answer. This needs a decision, not a default.
-
-Tasks below assume (b).
-
-| # | Task | Acceptance |
-|---|---|---|
-| 1.1 | `coffee_logs` table — user-scoped, drink type, size, caffeine mg, logged-at | Migration applied; `user_id` NOT NULL with cascading FK; scoping rule in `CLAUDE.md` followed |
-| 1.2 | Log a cup | One tap logs a default cup; a second path sets type/size/time. Optimistic UI, rolls back on error |
-| 1.3 | Today view | Cups today, caffeine total, time since last cup. Correct on a brand-new account with zero rows |
-| 1.4 | History + edit/delete | Week/month view; edit and delete an entry; a non-owner gets "not found" |
-| 1.5 | Tests | Unit tests for caffeine totals and time-since; Playwright: log → appears → edit → delete |
+Caffeine math — mg per drink type, half-life decay, "last cup was 3h ago", "this one is still in you at bedtime" — is deliberately **not** built. It is the genuinely interesting idea here, and it is a real feature deserving a real spec, not a warm-up. Parked below.
 
 ---
 
-## Phase 2 — Weight
+## Phase 1 — Weight
 
-A `weight` metric already exists in the seed data (`kg`, Body category), so this is partly a matter of taking the generic metric UI and making one metric excellent.
+The first take-it-to-done feature. The `weight` metric already exists (kg, Body category), so this is about making **one metric excellent** — and because it is the generic metric UI being improved, every other metric benefits, coffee included.
 
 | # | Task | Acceptance |
 |---|---|---|
-| 2.1 | Daily entry | One value per day; logging twice updates rather than duplicating |
-| 2.2 | Trend view | Line chart with a moving average; readable at 7/30/365 days; sensible with 1 data point |
-| 2.3 | Unit preference | kg/lb per user, stored once, applied everywhere including history |
-| 2.4 | Tests | Unit tests for moving average and unit conversion; Playwright: log → chart updates |
+| 1.1 | Daily entry | One value per day; logging twice updates rather than duplicating |
+| 1.2 | Trend view | Line chart with a moving average; readable at 7/30/365 days; sensible with 1 data point |
+| 1.3 | Unit preference | kg/lb per user, stored once, applied everywhere including history |
+| 1.4 | Tests | Unit tests for moving average and unit conversion; Playwright: log → chart updates |
 
 ---
 
-## Phase 3 — Food
+## Phase 2 — Food
 
 The biggest of the three and the one with the most to salvage — 1,272 lines already exist, plus `food_log`, `food_log_items`, `custom_foods`, `favorite_foods`, `favorite_meals`, and a search API.
 
-Scope to be written once Phases 1 and 2 have landed and the pattern for "done" is established. Do not start it early.
+Scope to be written once Phase 1 has landed and the pattern for "done" is established. Do not start it early.
 
 ---
 
+## Parked for v2
+
+Not deleted, not scheduled. Ideas worth keeping that do not belong in a "finish three features" pass:
+
+| Idea | Where it lives now | Why parked |
+|---|---|---|
+| **Social** — community feed, live meditation presence, session reactions | `feed` (257 lines), `meditation_presence`, `meditation_reactions` | This is a different product hiding inside the tracker: other people's activity, not your own. It needs its own thinking about who the audience is before it gets more code |
+| **Caffeine intelligence** — mg by drink type, half-life decay, time-since-last-cup, sleep-impact warning | nothing yet; coffee is a plain counter | The best product idea on this list. Wants a real spec and a real data model, which is exactly why it is not the warm-up feature |
+
 ## Deleting the rest
 
-**Proposed, not approved.** Thirteen sections are not in the plan above:
+**Still a product decision, still not made.** Twelve sections sit outside the plan above:
 
-| Section | Lines | | Section | Lines |
-|---|---|---|---|---|
-| finances | 3,176 | | appointments | 410 |
-| entertainment | 1,620 | | tracking | 409 |
-| meditate | 1,181 | | medical | 391 |
-| settings | 632 | | feed | 257 |
-| workout | 627 | | notifications | 206 |
-| account | 433 | | records | 117 |
-| metrics | 1,560 | | | |
+| Section | Lines | What it is |
+|---|---|---|
+| finances | 3,176 | 8 pages: accounts, budgets, transactions, investments, properties, retirement, CSV import |
+| entertainment | 1,620 | Movie/TV tracking via OMDb, per-episode watch state |
+| meditate | 1,181 | Timer, styles, presets, session history |
+| settings | 632 | Nav customisation, dashboard preferences |
+| workout | 627 | Workouts, sets, exercises |
+| account | 433 | Profile, password, avatar, HealthKit/Oura, reminders |
+| appointments | 410 | Upcoming and past appointments |
+| tracking | 409 | Lifetime tallies — see below |
+| medical | 391 | Medical log entries |
+| feed | 257 | Community feed — **parked for v2**, not a deletion candidate |
+| notifications | 206 | In-app notifications |
+| records | 117 | Read-only view of personal records; a satellite of workout |
 
-`metrics` is listed but is the generic tracker the other features are built on — it almost certainly stays in some form.
+Roughly 9,400 lines. Reversible — it is all in git history.
 
-Roughly 11k lines. Deleting them is what buys the focus this roadmap depends on, and it is reversible — it is all in git history. But it is a product decision, not a technical one, and it has not been made. Nothing gets deleted until it is.
+**`metrics` is not on this list.** An earlier draft included it at 1,560 lines. That was wrong: `metrics` *is* the generic tracker, and Phases 1 and 2 are work on it. It stays.
+
+**`tracking` is less redundant than first claimed.** It was described as duplicating counter metrics. It does not: `tracking_items` holds a single lifetime `count` incremented in place with no history, where counter metrics write dated entries. The seeded data shows the real intent — "Restaurants tried", "Books read", "Flights taken" — life tallies, not daily habits.
+
+It *is* replaceable, but by a plain dated metric rather than a counter, which would trade the increment-button feel for real history. That is a judgement call about what the feature is for, not a straightforward duplication, so it is listed here with everything else rather than deleted on its own.
