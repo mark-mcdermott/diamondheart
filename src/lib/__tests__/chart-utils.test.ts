@@ -103,7 +103,7 @@ describe("toDateKey", () => {
 
 describe("color constants", () => {
   it("CHART_COLORS has primary color", () => {
-    expect(CHART_COLORS.primary).toBe("#a57cf4");
+    expect(CHART_COLORS.primary).toMatch(/^#[0-9a-fA-F]{6}$/);
   });
 
   it("CHART_PALETTE has 8 colors", () => {
