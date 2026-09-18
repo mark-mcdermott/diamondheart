@@ -63,6 +63,12 @@ jobs:
       - if: steps.creds.outputs.present == 'true'
         run: pnpm exec playwright install --with-deps chromium
 
+      # next start needs a build; dev-mode compile-on-demand times out here.
+      - if: steps.creds.outputs.present == 'true'
+        run: pnpm build
+        env:
+          AUTH_SECRET: ci-test-secret
+
       - if: steps.creds.outputs.present == 'true'
         run: pnpm test:e2e
         env:

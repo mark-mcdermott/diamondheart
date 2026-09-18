@@ -15,6 +15,7 @@ if (process.env.E2E_DB_READY !== "1") {
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = `http://127.0.0.1:${PORT}`;
+const isCI = !!process.env.CI;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -23,13 +24,18 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
+  timeout: isCI ? 60_000 : 30_000,
   use: {
     baseURL,
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // dev compiles routes on demand, which is fine locally but times out on a cold
+  // CI runner. CI builds first (see the e2e job) and serves the production output.
   webServer: {
-    command: `pnpm exec next dev --port ${PORT}`,
+    command: isCI
+      ? `pnpm exec next start --port ${PORT}`
+      : `pnpm exec next dev --port ${PORT}`,
     url: baseURL,
     reuseExistingServer: false,
     timeout: 180_000,
