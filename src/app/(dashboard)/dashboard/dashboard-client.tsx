@@ -75,6 +75,7 @@ interface DashboardClientProps {
 // Icon mapping
 const iconMap: Record<string, LucideIcon> = {
   meditation: Brain,
+  coffee: Coffee,
   water: Droplets,
   exercise: Dumbbell,
   sleep: Moon,
