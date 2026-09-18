@@ -38,9 +38,32 @@ async function neon<T>(path: string, init: RequestInit = {}): Promise<T> {
   });
 
   if (!res.ok) {
-    throw new Error(`Neon ${init.method ?? "GET"} ${path} failed: ${res.status} ${await res.text()}`);
+    const body = await res.text();
+    const err = new Error(`Neon ${init.method ?? "GET"} ${path} failed: ${res.status} ${body}`);
+    (err as Error & { body?: string }).body = body;
+    throw err;
   }
   return (await res.json()) as T;
+}
+
+/**
+ * A project-scoped key cannot list projects, but Neon's refusal names the
+ * project the key is bound to — which is exactly the id we need.
+ */
+function projectIdFromScopeError(err: unknown): string | undefined {
+  const body = (err as Error & { body?: string })?.body;
+  if (!body) return undefined;
+
+  // The quotes are JSON-escaped in the raw body, so read the decoded message.
+  let message = body;
+  try {
+    const parsed = JSON.parse(body) as { message?: string };
+    if (parsed.message) message = parsed.message;
+  } catch {
+    // not JSON — fall through and match the raw text
+  }
+
+  return message.match(/subject_project_id:\s*\\?"([^"\\]+)/)?.[1];
 }
 
 async function resolveProjectId(): Promise<string> {
@@ -52,6 +75,9 @@ async function resolveProjectId(): Promise<string> {
   try {
     ({ projects } = await neon<{ projects: { id: string; name: string }[] }>("/projects"));
   } catch (err) {
+    const scoped = projectIdFromScopeError(err);
+    if (scoped) return scoped;
+
     throw new Error(
       "Could not list Neon projects to discover the project id. If you are using a " +
         "project-scoped API key, set NEON_PROJECT_ID explicitly — it is on the project's " +
@@ -117,6 +143,14 @@ async function main() {
   if (override) {
     console.log("Using TEST_DATABASE_URL; not creating a Neon branch.");
     process.exit(await runCommand(argv, override));
+  }
+
+  if (!env("NEON_API_KEY")) {
+    throw new Error(
+      "NEON_API_KEY is not set.\n" +
+        "Add it to .env (it is gitignored) or export it, or set TEST_DATABASE_URL to " +
+        "run against an existing database instead."
+    );
   }
 
   const projectId = await resolveProjectId();
