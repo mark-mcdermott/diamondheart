@@ -5,17 +5,23 @@
  * user their own copy of the standard category + metric set. Run this after
  * migrate-tracker-user-scope.ts. Unlike db:seed, it touches nothing else —
  * users, food, workouts, meditation and finances are left alone.
+ *
+ * Wiping metrics cascades to tracker_entries, tracker_goals and
+ * reminder_schedules, so this refuses to run when any of them hold rows.
+ * Pass --force to wipe them anyway.
  */
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import type { InferInsertModel } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { sql } from "drizzle-orm";
 import {
   users,
   trackerCategories,
   trackerMetrics,
   trackerEntries,
   trackerGoals,
+  reminderSchedules,
 } from "../src/lib/server/db/schema";
 import { seedCategories, seedMetrics } from "./tracker-seed-data";
 
@@ -24,6 +30,29 @@ const db = drizzle(neon(process.env.DATABASE_URL!));
 const CHUNK = 100;
 
 async function main() {
+  const force = process.argv.includes("--force");
+
+  // Wiping metrics cascades into these. Refuse rather than silently destroy them.
+  const dependents = [
+    ["tracker_entries", trackerEntries],
+    ["tracker_goals", trackerGoals],
+    ["reminder_schedules", reminderSchedules],
+  ] as const;
+
+  const occupied: string[] = [];
+  for (const [name, table] of dependents) {
+    const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(table);
+    if ((row?.n ?? 0) > 0) occupied.push(`${name} (${row.n})`);
+  }
+
+  if (occupied.length && !force) {
+    console.error(
+      `Refusing to run: wiping tracker metrics would cascade-delete ${occupied.join(", ")}.\n` +
+        `Re-run with --force if that is what you want.`
+    );
+    process.exit(1);
+  }
+
   await db.delete(trackerGoals);
   await db.delete(trackerEntries);
   await db.delete(trackerMetrics);
