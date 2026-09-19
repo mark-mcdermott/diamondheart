@@ -1,5 +1,5 @@
 # secrets
-.secrets
+.secrets*
 
 # dependencies
 node_modules/
@@ -45,3 +45,4 @@ ios/
 android/
 www/
 src-tauri/target/
+.env*

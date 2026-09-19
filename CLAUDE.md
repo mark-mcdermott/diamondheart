@@ -29,6 +29,19 @@ Personal health and life tracking app. Web + iOS/Android (Capacitor) + desktop (
 
 > ⚠️ **`db:reseed:tracker` wipes `tracker_metrics`**, which cascades into `tracker_entries`, `tracker_goals` and `reminder_schedules`. It counts those three first and refuses — naming what it would delete — unless you pass `--force`. On any database with real tracking data it *will* refuse, and that is the intended behaviour: think before forcing.
 
+### Neon branches
+
+The project has two branches. **`production` is the Neon default**, which is why `.env` pointed at it for months without anyone noticing — every local command ran against production.
+
+| Branch | Used by | Contains |
+|---|---|---|
+| `production` | the Vercel deployment | the real account only |
+| `development` | local `.env` | seeded demo data — safe to wipe |
+
+`.env` must point at **`development`**. Check with the host: `ep-still-sky-*` is development, `ep-patient-fire-*` is production.
+
+> ⚠️ **`.secrets` is your production password.** `db:seed` regenerates it, so seeding development overwrites the credentials for the production account. The production copy is kept at `.secrets.production` (gitignored). Restore from there if you lose it.
+
 > ⚠️ **`scripts/seed.ts` calls `seed()` at module scope.** Importing it for its data triggers that reset. Import `scripts/tracker-seed-data.ts` instead.
 
 ### End-to-end tests
@@ -78,7 +91,7 @@ Other conventions:
 ## Known gaps
 
 - **Lint is not applying Next's rules** — `next lint` warns the plugin is not detected. `next lint` is also deprecated and removed in Next 16.
-- **Not deployed.** There is no Vercel project for this repo and `diamondheart.app` does not resolve.
+- **`diamondheart.app` is not owned.** The deployment lives on a `vercel.app` URL; the Capacitor shells still point `server.url` at a domain that does not resolve, so the native builds open to nothing.
 
 ## Scope
 
