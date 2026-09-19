@@ -24,6 +24,7 @@ Personal health and life tracking app. Web + iOS/Android (Capacitor) + desktop (
 | `pnpm db:seed` | **Full reset** — see warning below |
 | `pnpm db:reseed:tracker` | Rebuild tracker tables per user only — refuses if dependent rows exist, see below |
 | `pnpm db:migrate:tracker-scope` | One-off tracker ownership migration (already applied) |
+| `pnpm db:nav-defaults --email <addr>` | Apply `DEFAULT_NAV_ITEMS` to an existing account (`--all`, `--dry-run`) |
 
 > ⚠️ **Never run `db:push` against production.** Asked to add one column, it proposed adding `tracker_categories_user_slug_unique` — a constraint that already existed, verified identical on both branches — and offered to **truncate `tracker_categories`** to do it. Its diff is not trustworthy here, and it only failed safe because a non-TTY shell could not answer the prompt. Apply production schema changes as explicit SQL:
 >
@@ -49,6 +50,8 @@ The project has two branches. **`production` is the Neon default**, which is why
 > ⚠️ **`.secrets` is your production password.** `db:seed` regenerates it, so seeding development overwrites the credentials for the production account. The production copy is kept at `.secrets.production` (gitignored). Restore from there if you lose it.
 
 > ⚠️ **`scripts/seed.ts` calls `seed()` at module scope.** Importing it for its data triggers that reset. Import `scripts/tracker-seed-data.ts` instead.
+
+> **Changing `DEFAULT_NAV_ITEMS` only affects new accounts.** Nav rows are created per user at signup, so existing accounts keep whatever they were given. Use `db:nav-defaults` to bring one in line. It adds missing entries, never deletes, and leaves custom metric-category entries alone.
 
 ### End-to-end tests
 
