@@ -684,19 +684,19 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
             <div className="grid grid-cols-4 gap-3">
               <div>
                 <Label htmlFor="custom-cal">Calories</Label>
-                <Input id="custom-cal" type="number" value={customCal} onChange={(e) => setCustomCal(e.target.value)} placeholder="0" className="mt-1" />
+                <Input id="custom-cal" type="number" step="0.1" value={customCal} onChange={(e) => setCustomCal(e.target.value)} placeholder="0" className="mt-1" />
               </div>
               <div>
                 <Label htmlFor="custom-protein">Protein</Label>
-                <Input id="custom-protein" type="number" value={customProtein} onChange={(e) => setCustomProtein(e.target.value)} placeholder="0" className="mt-1" />
+                <Input id="custom-protein" type="number" step="0.1" value={customProtein} onChange={(e) => setCustomProtein(e.target.value)} placeholder="0" className="mt-1" />
               </div>
               <div>
                 <Label htmlFor="custom-carbs">Carbs</Label>
-                <Input id="custom-carbs" type="number" value={customCarbs} onChange={(e) => setCustomCarbs(e.target.value)} placeholder="0" className="mt-1" />
+                <Input id="custom-carbs" type="number" step="0.1" value={customCarbs} onChange={(e) => setCustomCarbs(e.target.value)} placeholder="0" className="mt-1" />
               </div>
               <div>
                 <Label htmlFor="custom-fat">Fat</Label>
-                <Input id="custom-fat" type="number" value={customFat} onChange={(e) => setCustomFat(e.target.value)} placeholder="0" className="mt-1" />
+                <Input id="custom-fat" type="number" step="0.1" value={customFat} onChange={(e) => setCustomFat(e.target.value)} placeholder="0" className="mt-1" />
               </div>
             </div>
             <div className="flex gap-3 pt-2 justify-end">

@@ -13,6 +13,7 @@ import { eq, and, gte, lte } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { parseDate } from "@/lib/dates";
 import { revalidatePath } from "next/cache";
+import { parseNumberField, parsePositiveNumberField } from "@/lib/numbers";
 
 type Result = { success: boolean; error?: string };
 
@@ -61,13 +62,13 @@ export async function addFood(formData: FormData): Promise<Result> {
     foodLogId: logId,
     name,
     fdcId: (formData.get("fdcId") as string) || null,
-    servingSize: parseInt(formData.get("servingSize") as string) || 100,
+    servingSize: parsePositiveNumberField(formData.get("servingSize"), 100),
     servingUnit: (formData.get("servingUnit") as string) || "g",
-    calories: parseInt(formData.get("calories") as string) || 0,
-    protein: parseInt(formData.get("protein") as string) || 0,
-    carbs: parseInt(formData.get("carbs") as string) || 0,
-    fat: parseInt(formData.get("fat") as string) || 0,
-    quantity: parseInt(formData.get("quantity") as string) || 1,
+    calories: parseNumberField(formData.get("calories"), 0),
+    protein: parseNumberField(formData.get("protein"), 0),
+    carbs: parseNumberField(formData.get("carbs"), 0),
+    fat: parseNumberField(formData.get("fat"), 0),
+    quantity: parsePositiveNumberField(formData.get("quantity"), 1),
   });
 
   revalidatePath("/food");
@@ -108,11 +109,11 @@ export async function createCustomFood(formData: FormData): Promise<Result> {
     id: crypto.randomUUID(),
     userId: session.userId,
     name,
-    calories: parseInt(formData.get("calories") as string) || 0,
-    protein: parseInt(formData.get("protein") as string) || 0,
-    carbs: parseInt(formData.get("carbs") as string) || 0,
-    fat: parseInt(formData.get("fat") as string) || 0,
-    servingSize: parseInt(formData.get("servingSize") as string) || 100,
+    calories: parseNumberField(formData.get("calories"), 0),
+    protein: parseNumberField(formData.get("protein"), 0),
+    carbs: parseNumberField(formData.get("carbs"), 0),
+    fat: parseNumberField(formData.get("fat"), 0),
+    servingSize: parsePositiveNumberField(formData.get("servingSize"), 100),
     servingUnit: (formData.get("servingUnit") as string) || "g",
   });
 
@@ -132,12 +133,12 @@ export async function favoriteFood(formData: FormData): Promise<Result> {
     userId: session.userId,
     name,
     fdcId: (formData.get("fdcId") as string) || null,
-    servingSize: parseInt(formData.get("servingSize") as string) || 100,
+    servingSize: parsePositiveNumberField(formData.get("servingSize"), 100),
     servingUnit: (formData.get("servingUnit") as string) || "g",
-    calories: parseInt(formData.get("calories") as string) || 0,
-    protein: parseInt(formData.get("protein") as string) || 0,
-    carbs: parseInt(formData.get("carbs") as string) || 0,
-    fat: parseInt(formData.get("fat") as string) || 0,
+    calories: parseNumberField(formData.get("calories"), 0),
+    protein: parseNumberField(formData.get("protein"), 0),
+    carbs: parseNumberField(formData.get("carbs"), 0),
+    fat: parseNumberField(formData.get("fat"), 0),
   });
 
   revalidatePath("/food");

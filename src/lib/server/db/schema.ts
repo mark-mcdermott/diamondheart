@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, jsonb, integer, unique } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, jsonb, integer, doublePrecision, unique } from 'drizzle-orm/pg-core';
 
 // Users table for authentication
 export const users = pgTable('users', {
@@ -229,13 +229,13 @@ export const foodLogItems = pgTable('food_log_items', {
 	foodLogId: text('food_log_id').notNull().references(() => foodLog.id, { onDelete: 'cascade' }),
 	name: text('name').notNull(),
 	fdcId: text('fdc_id'),
-	servingSize: integer('serving_size').notNull().default(100),
+	servingSize: doublePrecision('serving_size').notNull().default(100),
 	servingUnit: text('serving_unit').notNull().default('g'),
-	calories: integer('calories').notNull().default(0),
-	protein: integer('protein').notNull().default(0),
-	carbs: integer('carbs').notNull().default(0),
-	fat: integer('fat').notNull().default(0),
-	quantity: integer('quantity').notNull().default(1),
+	calories: doublePrecision('calories').notNull().default(0),
+	protein: doublePrecision('protein').notNull().default(0),
+	carbs: doublePrecision('carbs').notNull().default(0),
+	fat: doublePrecision('fat').notNull().default(0),
+	quantity: doublePrecision('quantity').notNull().default(1),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
@@ -244,11 +244,11 @@ export const customFoods = pgTable('custom_foods', {
 	id: text('id').primaryKey(),
 	userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
 	name: text('name').notNull(),
-	calories: integer('calories').notNull().default(0),
-	protein: integer('protein').notNull().default(0),
-	carbs: integer('carbs').notNull().default(0),
-	fat: integer('fat').notNull().default(0),
-	servingSize: integer('serving_size').notNull().default(100),
+	calories: doublePrecision('calories').notNull().default(0),
+	protein: doublePrecision('protein').notNull().default(0),
+	carbs: doublePrecision('carbs').notNull().default(0),
+	fat: doublePrecision('fat').notNull().default(0),
+	servingSize: doublePrecision('serving_size').notNull().default(100),
 	servingUnit: text('serving_unit').notNull().default('g'),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
@@ -260,12 +260,12 @@ export const favoriteFoods = pgTable('favorite_foods', {
 	name: text('name').notNull(),
 	fdcId: text('fdc_id'),
 	customFoodId: text('custom_food_id').references(() => customFoods.id, { onDelete: 'cascade' }),
-	servingSize: integer('serving_size').notNull().default(100),
+	servingSize: doublePrecision('serving_size').notNull().default(100),
 	servingUnit: text('serving_unit').notNull().default('g'),
-	calories: integer('calories').notNull().default(0),
-	protein: integer('protein').notNull().default(0),
-	carbs: integer('carbs').notNull().default(0),
-	fat: integer('fat').notNull().default(0),
+	calories: doublePrecision('calories').notNull().default(0),
+	protein: doublePrecision('protein').notNull().default(0),
+	carbs: doublePrecision('carbs').notNull().default(0),
+	fat: doublePrecision('fat').notNull().default(0),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
@@ -283,13 +283,13 @@ export const favoriteMealItems = pgTable('favorite_meal_items', {
 	favoriteMealId: text('favorite_meal_id').notNull().references(() => favoriteMeals.id, { onDelete: 'cascade' }),
 	name: text('name').notNull(),
 	fdcId: text('fdc_id'),
-	servingSize: integer('serving_size').notNull().default(100),
+	servingSize: doublePrecision('serving_size').notNull().default(100),
 	servingUnit: text('serving_unit').notNull().default('g'),
-	calories: integer('calories').notNull().default(0),
-	protein: integer('protein').notNull().default(0),
-	carbs: integer('carbs').notNull().default(0),
-	fat: integer('fat').notNull().default(0),
-	quantity: integer('quantity').notNull().default(1)
+	calories: doublePrecision('calories').notNull().default(0),
+	protein: doublePrecision('protein').notNull().default(0),
+	carbs: doublePrecision('carbs').notNull().default(0),
+	fat: doublePrecision('fat').notNull().default(0),
+	quantity: doublePrecision('quantity').notNull().default(1)
 });
 
 export type FoodLog = typeof foodLog.$inferSelect;
