@@ -33,6 +33,7 @@ Not features. The things that made April's work hard to build on.
 | Write `CLAUDE.md` + this roadmap | ✅ #192 |
 | Playwright harness + first two-user isolation test | ✅ #195 |
 | Prune stale merged branches | ✅ |
+| Deploy to Vercel | ✅ |
 
 **Acceptance for the Playwright task:** two accounts, each with their own metric; account A cannot see, edit or delete account B's metric via the UI or by visiting `/metrics/<B's id>` directly. Runs in CI.
 
@@ -43,6 +44,35 @@ Not features. The things that made April's work hard to build on.
 Settled: coffee is a **counter metric**, not a section (#193). The generic tracker already gives tap-to-increment tiles, dated entries, history and sparklines; a dedicated section would have been a third counting system in an app that already has two.
 
 Caffeine math — mg per drink type, half-life decay, "last cup was 3h ago", "this one is still in you at bedtime" — is deliberately **not** built. It is the genuinely interesting idea here, and it is a real feature deserving a real spec, not a warm-up. Parked below.
+
+---
+
+## Deployed
+
+Live at **https://diamondheart-zeta.vercel.app** — the bare `diamondheart.vercel.app` belongs to someone else.
+
+Behind **Vercel Authentication**, so only the account owner can open it. Signup is open and this is personal health data, so it stays locked until there is a reason not to.
+
+`diamondheart.app` is **not owned**. The Capacitor shells still point `server.url` at it, so the native builds open to nothing until the domain is bought or the shells are repointed.
+
+Production runs on the Neon `production` branch, which holds one real account — the 27 seeded demo users were deleted on deployment day. Local development runs on `development`. See `CLAUDE.md`.
+
+---
+
+## The Astro port
+
+**Decided: diamondheart moves to Astro + React islands — but not yet.**
+
+The trigger was committing to real bundled App Store apps. Capacitor bundles a static build into the webview, and Next cannot produce one here: `output: 'export'` disables server actions (20 files, ~3,900 lines), `middleware.ts`, cookie sessions, and dynamic routes like `/metrics/[id]`. Diamondheart is built on all four.
+
+So the data-layer rewrite — server actions to API routes, cookie session to a bearer token at the API boundary — is **mandatory for bundled native under either framework**. Astro is the option that leaves the project converged with pupluv and fullstackwolfpack rather than on a bespoke Next static-export setup.
+
+What is *not* a reason to port:
+
+- **Speed.** Diamondheart is already fully SSR — every route renders on the server. There is no rendering gain on the web, and the reference pattern would make the dashboard client-rendered.
+- **Svelte.** It was SvelteKit as Ortholinear and moved to Next in April 2026. No Svelte remains; the Svelte projects are `themeforseen.com` and `sidvid`.
+
+**Sequence: deploy (done) → finish weight → then port as its own project.** It is a rewrite, not a tidy-up, and should not be folded into feature work.
 
 ---
 
