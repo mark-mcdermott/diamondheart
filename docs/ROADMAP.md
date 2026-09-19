@@ -80,12 +80,18 @@ What is *not* a reason to port:
 
 The first take-it-to-done feature. The `weight` metric already exists (kg, Body category), so this is about making **one metric excellent** — and because it is the generic metric UI being improved, every other metric benefits, coffee included.
 
-| # | Task | Acceptance |
-|---|---|---|
-| 1.1 | Daily entry | One value per day; logging twice updates rather than duplicating |
-| 1.2 | Trend view | Line chart with a moving average; readable at 7/30/365 days; sensible with 1 data point |
-| 1.3 | Unit preference | kg/lb per user, stored once, applied everywhere including history |
-| 1.4 | Tests | Unit tests for moving average and unit conversion; Playwright: log → chart updates |
+**Done.**
+
+| # | Task | Acceptance | |
+|---|---|---|---|
+| 1.1 | Daily entry | One value per day; logging twice updates rather than duplicating | ✅ #200 |
+| 1.2 | Trend view | Line chart with a moving average; readable at 7/30/365 days; sensible with 1 data point | ✅ #201 |
+| 1.3 | Unit preference | kg/lb per user, stored once, applied everywhere including history | ✅ #203 |
+| 1.4 | Tests | Unit tests for moving average and unit conversion; Playwright | ✅ throughout |
+
+Weight is stored in the unit its metric declares and converted only for display, so switching preference converts history rather than rewriting it. **Pounds is the default**, in the schema rather than only the UI, so a new account never sees kilograms first.
+
+What "done" turned out to mean, for Phase 2 to copy: a canonical storage decision made once, conversion at the write boundary rather than in the client, a test seen to fail for the right reason, and looking at the result in a browser. Three of the bugs found in this phase — the zero-anchored Y axis, the invented "Daily goal: 1 kg", and the type picker that could not represent `number` — were invisible in the code and obvious on screen.
 
 ---
 

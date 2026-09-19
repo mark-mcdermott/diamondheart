@@ -19,11 +19,17 @@ Personal health and life tracking app. Web + iOS/Android (Capacitor) + desktop (
 
 | | |
 |---|---|
-| `pnpm db:push` | Push schema changes to Neon |
+| `pnpm db:push` | Push schema changes to Neon — **development only**, see below |
 | `pnpm db:studio` | Drizzle Studio |
 | `pnpm db:seed` | **Full reset** — see warning below |
 | `pnpm db:reseed:tracker` | Rebuild tracker tables per user only — refuses if dependent rows exist, see below |
 | `pnpm db:migrate:tracker-scope` | One-off tracker ownership migration (already applied) |
+
+> ⚠️ **Never run `db:push` against production.** Asked to add one column, it proposed adding `tracker_categories_user_slug_unique` — a constraint that already existed, verified identical on both branches — and offered to **truncate `tracker_categories`** to do it. Its diff is not trustworthy here, and it only failed safe because a non-TTY shell could not answer the prompt. Apply production schema changes as explicit SQL:
+>
+> ```sql
+> alter table <table> add column if not exists <col> <type> not null default <value>;
+> ```
 
 > ⚠️ **`db:seed` deletes every user**, which cascades through food, workouts, meditation, finances and everything else, then rotates all passwords into `.secrets`. It is a full database reset, not a top-up. For tracker-only work use `db:reseed:tracker`.
 
@@ -47,6 +53,8 @@ The project has two branches. **`production` is the Neon default**, which is why
 ### End-to-end tests
 
 `pnpm test:e2e` runs `scripts/e2e-db.ts`, which creates a throwaway Neon branch, points `DATABASE_URL` at it for the run, and deletes it afterwards — including on Ctrl-C. A Neon branch is a copy-on-write clone, so it arrives with the schema already in place.
+
+> ⚠️ **It clones the *default* branch, which is `production`.** So a schema change must reach production before e2e can pass anywhere — including on a PR that has not merged. Expect a new column to fail CI until you apply it to production, and note that re-running the job *does* help in that case: the fix is in the database, not in the commit GitHub replays.
 
 Needs `NEON_API_KEY` (and `NEON_PROJECT_ID` if that key can see several projects). Set `TEST_DATABASE_URL` to point at a specific database and skip Neon entirely.
 
