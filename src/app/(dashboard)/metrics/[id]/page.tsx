@@ -46,7 +46,9 @@ export default async function MetricDetailPage({
         <div className="flex-1">
           <h2>{metric.name}</h2>
           <p className="text-muted-foreground mt-1">
-            Daily goal: {metric.dailyGoal ?? 1}{metric.unit ? ` ${metric.unit}` : ""}
+            {metric.dailyGoal
+              ? `Daily goal: ${metric.dailyGoal}${metric.unit ? ` ${metric.unit}` : ""}`
+              : metric.unit ?? "No daily goal"}
           </p>
         </div>
       </div>
