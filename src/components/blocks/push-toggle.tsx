@@ -8,8 +8,13 @@ export function PushToggle() {
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Reading `window` in the render body throws during SSR, which Next logs as a
+  // ReferenceError on every settings render before falling back to the client.
+  // The page worked; the noise did not, and it masks real errors.
+  const [supported, setSupported] = useState(false);
 
   useEffect(() => {
+    setSupported("Notification" in window && "PushManager" in window);
     if (!("Notification" in window)) return;
     setPermission(Notification.permission);
 
@@ -70,7 +75,7 @@ export function PushToggle() {
     }
   }
 
-  if (!("Notification" in window) || !("PushManager" in window)) {
+  if (!supported) {
     return null;
   }
 
