@@ -576,6 +576,8 @@ export const userPreferences = pgTable('user_preferences', {
 	showMeditationInFeed: boolean('show_meditation_in_feed').notNull().default(true),
 	showNameWhenMeditating: boolean('show_name_when_meditating').notNull().default(true),
 	dashboardSections: jsonb('dashboard_sections'), // ordered list of visible section keys
+	// Display preference only — readings stay in the unit their metric declares.
+	weightUnit: text('weight_unit').notNull().default('lb'),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });

@@ -7,7 +7,8 @@ import {
   toggleNavItemVisibility,
   reorderNavItems,
 } from "@/app/actions/nav";
-import { toggleNetflixUI, toggleSiteName } from "@/app/actions/preferences";
+import { toggleNetflixUI, toggleSiteName, setWeightUnit } from "@/app/actions/preferences";
+import { MASS_UNITS, type MassUnit } from "@/lib/units";
 import { toggleMeditationFeedVisibility } from "@/app/actions/feed";
 import { toggleShowNameWhenMeditating } from "@/app/actions/presence";
 import type { UserNavItem } from "@/db/schema";
@@ -37,6 +38,7 @@ interface SettingsClientProps {
   useNetflixUI: boolean;
   showSiteName: boolean;
   showMeditationInFeed: boolean;
+  weightUnit: MassUnit;
   showNameWhenMeditating: boolean;
   dashboardSections: string[];
 }
@@ -115,8 +117,9 @@ function SortableNavItem({
   );
 }
 
-export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSiteName: initialShowSiteName, showMeditationInFeed: initialShowInFeed, showNameWhenMeditating: initialShowName, dashboardSections }: SettingsClientProps) {
+export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSiteName: initialShowSiteName, showMeditationInFeed: initialShowInFeed, showNameWhenMeditating: initialShowName, weightUnit: initialWeightUnit, dashboardSections }: SettingsClientProps) {
   const [netflixUI, setNetflixUI] = useState(useNetflixUI);
+  const [massUnit, setMassUnit] = useState<MassUnit>(initialWeightUnit);
   const [siteName, setSiteName] = useState(initialShowSiteName);
   const [showInFeed, setShowInFeed] = useState(initialShowInFeed);
   const [showName, setShowName] = useState(initialShowName);
@@ -345,6 +348,57 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
               </p>
             </div>
           </label>
+        </div>
+      </section>
+
+      <section className="mb-8">
+        <h3
+          className="text-lg font-semibold mb-4"
+          style={{ color: "var(--app-heading-color)" }}
+        >
+          Units
+        </h3>
+        <div className="bg-card border border-border rounded-lg px-4 py-3">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <span
+                className="text-sm font-medium"
+                style={{ color: "var(--app-heading-color)" }}
+              >
+                Weight
+              </span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Changes how weights are shown and entered. Existing readings are
+                converted, not rewritten.
+              </p>
+            </div>
+            <div className="flex gap-1 bg-muted rounded-lg p-1 shrink-0">
+              {MASS_UNITS.map((unit) => (
+                <button
+                  key={unit}
+                  type="button"
+                  aria-pressed={massUnit === unit}
+                  disabled={isPending}
+                  onClick={() => {
+                    if (massUnit === unit) return;
+                    setMassUnit(unit);
+                    startTransition(async () => {
+                      const fd = new FormData();
+                      fd.set("weightUnit", unit);
+                      await setWeightUnit(fd);
+                    });
+                  }}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                    massUnit === unit
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {unit}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
