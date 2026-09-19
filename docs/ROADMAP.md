@@ -53,7 +53,7 @@ Live at **https://diamondheart-zeta.vercel.app** — the bare `diamondheart.verc
 
 Behind **Vercel Authentication**, so only the account owner can open it. Signup is open and this is personal health data, so it stays locked until there is a reason not to.
 
-`diamondheart.app` is **not owned**. The Capacitor shells still point `server.url` at it, so the native builds open to nothing until the domain is bought or the shells are repointed.
+Also reachable at **https://www.diamondheart.app** (canonical) and `diamondheart.app`, both behind the same protection. The Capacitor and Tauri shells now point at the canonical host rather than a domain that used to not resolve.
 
 Production runs on the Neon `production` branch, which holds one real account — the 27 seeded demo users were deleted on deployment day. Local development runs on `development`. See `CLAUDE.md`.
 

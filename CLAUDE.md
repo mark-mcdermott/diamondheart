@@ -91,7 +91,7 @@ Other conventions:
 ## Known gaps
 
 - **Lint is not applying Next's rules** — `next lint` warns the plugin is not detected. `next lint` is also deprecated and removed in Next 16.
-- **`diamondheart.app` is not owned.** The deployment lives on a `vercel.app` URL; the Capacitor shells still point `server.url` at a domain that does not resolve, so the native builds open to nothing.
+- **Deployment protection hides the apex redirect.** Both `diamondheart.app` and `www.diamondheart.app` serve the app, with www canonical. While Vercel Authentication is on, the edge answers with an SSO redirect before the apex-to-www hop, so that redirect cannot be observed from outside.
 
 ## Scope
 

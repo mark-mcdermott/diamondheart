@@ -4,7 +4,7 @@
 
 ### iOS (Universal Links)
 1. Replace `TEAM_ID` in `public/.well-known/apple-app-site-association` with your Apple Team ID
-2. In Xcode: Signing & Capabilities → Add "Associated Domains" → add `applinks:diamondheart.app`
+2. In Xcode: Signing & Capabilities → Add "Associated Domains" → add both `applinks:www.diamondheart.app` and `applinks:diamondheart.app` — www is canonical, but the apex resolves too and is what people type
 
 ### Android (App Links)
 1. Replace `REPLACE_WITH_YOUR_SHA256_FINGERPRINT` in `public/.well-known/assetlinks.json`

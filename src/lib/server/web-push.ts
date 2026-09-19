@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://diamondheart.app";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.diamondheart.app";
 
 if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   webPush.setVapidDetails(APP_URL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);

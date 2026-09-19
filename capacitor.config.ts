@@ -4,7 +4,7 @@ const config: CapacitorConfig = {
   appId: "app.diamondheart.mobile",
   appName: "Diamondheart",
   server: {
-    url: "https://diamondheart.app",
+    url: "https://www.diamondheart.app",
     cleartext: false,
   },
   ios: {
