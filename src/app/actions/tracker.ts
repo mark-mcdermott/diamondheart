@@ -6,23 +6,77 @@ import {
   trackerMetrics,
   trackerEntries,
 } from "@/db/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, gte, lt, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { dayBounds } from "@/lib/dates";
 
 export type ActionResult = {
   success: boolean;
   error?: string;
 };
 
-async function ownsMetric(metricId: string, userId: string): Promise<boolean> {
+type OwnedMetric = { id: string; singleValuePerDay: boolean };
+
+async function ownedMetric(
+  metricId: string,
+  userId: string
+): Promise<OwnedMetric | null> {
   const [metric] = await db
-    .select({ id: trackerMetrics.id })
+    .select({
+      id: trackerMetrics.id,
+      singleValuePerDay: trackerMetrics.singleValuePerDay,
+    })
     .from(trackerMetrics)
     .where(and(eq(trackerMetrics.id, metricId), eq(trackerMetrics.userId, userId)))
     .limit(1);
-  return Boolean(metric);
+  return metric ?? null;
+}
+
+/**
+ * Writes an entry. Metrics that hold one reading per day (weight) replace that
+ * day's entry; metrics that accumulate (coffee) add another.
+ */
+async function recordEntry(
+  metric: OwnedMetric,
+  userId: string,
+  value: string,
+  date: Date,
+  notes: string | null = null
+): Promise<void> {
+  if (metric.singleValuePerDay) {
+    const { start, end } = dayBounds(date);
+    const [existing] = await db
+      .select({ id: trackerEntries.id })
+      .from(trackerEntries)
+      .where(
+        and(
+          eq(trackerEntries.metricId, metric.id),
+          eq(trackerEntries.userId, userId),
+          gte(trackerEntries.date, start),
+          lt(trackerEntries.date, end)
+        )
+      )
+      .limit(1);
+
+    if (existing) {
+      await db
+        .update(trackerEntries)
+        .set({ value, notes, date, updatedAt: new Date() })
+        .where(eq(trackerEntries.id, existing.id));
+      return;
+    }
+  }
+
+  await db.insert(trackerEntries).values({
+    id: crypto.randomUUID(),
+    userId,
+    metricId: metric.id,
+    value,
+    notes,
+    date,
+  });
 }
 
 // Quick log from dashboard — creates an entry with value "done"
@@ -34,17 +88,10 @@ export async function quickLog(formData: FormData): Promise<ActionResult> {
   const value = (formData.get("value") as string) || "done";
 
   if (!metricId) return { success: false, error: "Metric is required" };
-  if (!(await ownsMetric(metricId, session.userId))) {
-    return { success: false, error: "Metric not found" };
-  }
+  const metric = await ownedMetric(metricId, session.userId);
+  if (!metric) return { success: false, error: "Metric not found" };
 
-  await db.insert(trackerEntries).values({
-    id: crypto.randomUUID(),
-    userId: session.userId,
-    metricId,
-    value,
-    date: new Date(),
-  });
+  await recordEntry(metric, session.userId, value, new Date());
 
   revalidatePath("/dashboard");
   return { success: true };
@@ -62,7 +109,8 @@ export async function createEntry(formData: FormData): Promise<void> {
   const timeStr = formData.get("time") as string;
 
   if (!metricId) return;
-  if (!(await ownsMetric(metricId, session.userId))) return;
+  const metric = await ownedMetric(metricId, session.userId);
+  if (!metric) return;
 
   let date: Date;
   if (dateStr && timeStr) {
@@ -73,14 +121,7 @@ export async function createEntry(formData: FormData): Promise<void> {
     date = new Date();
   }
 
-  await db.insert(trackerEntries).values({
-    id: crypto.randomUUID(),
-    userId: session.userId,
-    metricId,
-    value,
-    notes: notes || null,
-    date,
-  });
+  await recordEntry(metric, session.userId, value, date, notes || null);
 
   revalidatePath("/dashboard");
   revalidatePath("/metrics");
@@ -198,6 +239,7 @@ export async function updateMetric(
   const unit = formData.get("unit") as string;
   const dailyGoalStr = formData.get("dailyGoal") as string;
   const counterStr = formData.get("counter") as string;
+  const singleValueStr = formData.get("singleValuePerDay") as string;
   const fieldsJson = formData.get("fields") as string;
 
   if (!name || !valueType) {
@@ -222,7 +264,9 @@ export async function updateMetric(
       valueType,
       unit: unit || null,
       dailyGoal,
-      counter: counterStr === "true",
+      // A metric cannot both accumulate and hold a single daily reading.
+      counter: counterStr === "true" && singleValueStr !== "true",
+      singleValuePerDay: singleValueStr === "true",
       fields,
       updatedAt: new Date(),
     })

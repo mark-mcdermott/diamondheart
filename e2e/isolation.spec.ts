@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import { signUp, createMetric, unique } from "./helpers";
 
 /**
  * The scoping rule in CLAUDE.md, enforced rather than merely written down.
@@ -7,39 +8,6 @@ import { test, expect, type Page } from "@playwright/test";
  * users' metrics and any account could open /metrics/<someone else's id>.
  * Nothing in the unit suite could catch that — these are the assertions that can.
  */
-
-const PASSWORD = "correct-horse-battery-staple";
-
-function unique(): string {
-  return Math.random().toString(36).slice(2, 10);
-}
-
-async function signUp(page: Page): Promise<string> {
-  const email = `e2e-${unique()}@example.test`;
-  await page.goto("/signup");
-  await page.fill('input[name="email"]', email);
-  await page.fill('input[name="name"]', "E2E User");
-  await page.fill('input[name="password"]', PASSWORD);
-  await page.fill('input[name="confirmPassword"]', PASSWORD);
-  await page.click('button[type="submit"]');
-  await page.waitForURL("**/dashboard", { timeout: 30_000 });
-  return email;
-}
-
-async function createMetric(page: Page, name: string): Promise<string> {
-  await page.goto("/metrics");
-  await page.getByRole("button", { name: "Add Metric" }).click();
-  await page.getByPlaceholder("e.g. Water intake").fill(name);
-  await page.getByRole("button", { name: "Save Metric" }).click();
-
-  const link = page.locator('a[href^="/metrics/"]').filter({ hasText: new RegExp(name, "i") }).first();
-  await expect(link).toBeVisible({ timeout: 15_000 });
-
-  const href = await link.getAttribute("href");
-  const id = href?.split("/").pop();
-  expect(id, "created metric should have an id").toBeTruthy();
-  return id as string;
-}
 
 test("one user cannot see or open another user's metric", async ({ browser }) => {
   // Separate contexts rather than sign-out/sign-in: independent cookie jars.

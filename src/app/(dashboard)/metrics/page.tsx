@@ -17,19 +17,7 @@ import {
 import { eq, and, gte, sql } from "drizzle-orm";
 import { MetricsClient } from "./metrics-client";
 import { getCategoryNavStatus, getTrackingSectionStatus } from "@/app/actions/nav";
-
-function todayStart() {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function daysAgo(n: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+import { todayStart, daysAgo } from "@/lib/dates";
 
 export default async function MetricsPage() {
   const session = await getCurrentUser();
