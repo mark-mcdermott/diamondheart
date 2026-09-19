@@ -6,7 +6,11 @@
 
 The correction is to go the other way: **a small number of features, each genuinely complete**, before anything new is added.
 
-> **This is the open question on the project.** The alternative on the table is scrapping this repo for a fresh v2 built the same way from scratch. That was argued down on the grounds that deleting scope costs days where rebuilding costs months, and that the target stack (ZENCATSNBATS) is unproven — 0 projects, to be proven on pupluv first. That reasoning has not been accepted as settled. If v2 wins, this roadmap is void.
+> **Settled: this repo continues. There is no from-scratch v2.**
+>
+> The alternative was scrapping the repo and rebuilding on a fresh stack. What decided it: every one of the sixteen sections is wanted eventually, and a rebuild means rebuilding all of them — finances with its eight tables, entertainment with OMDb and episode tracking, meditation with presence and reactions. A port keeps them and rewrites only how they reach the server.
+>
+> The stack move survives as **a port, scheduled** — see *The Astro port* below. The original v2 target, ZENCATSNBATS, no longer exists; the taxonomy was rebuilt and replaced it with the `DNC-` family.
 
 ## Strategy
 
@@ -112,29 +116,22 @@ Not deleted, not scheduled. Ideas worth keeping that do not belong in a "finish 
 | **Social** — community feed, live meditation presence, session reactions | `feed` (257 lines), `meditation_presence`, `meditation_reactions` | This is a different product hiding inside the tracker: other people's activity, not your own. It needs its own thinking about who the audience is before it gets more code |
 | **Caffeine intelligence** — mg by drink type, half-life decay, time-since-last-cup, sleep-impact warning | nothing yet; coffee is a plain counter | The best product idea on this list. Wants a real spec and a real data model, which is exactly why it is not the warm-up feature |
 
-## Deleting the rest
+## Shelving the rest
 
-**Still a product decision, still not made.** Twelve sections sit outside the plan above:
+**All sixteen sections are kept.** Nothing is deleted. The twelve outside the current plan ship **hidden**, not removed: their code, tables and data stay exactly where they are, and Settings turns any of them back on.
 
-| Section | Lines | What it is |
-|---|---|---|
-| finances | 3,176 | 8 pages: accounts, budgets, transactions, investments, properties, retirement, CSV import |
-| entertainment | 1,620 | Movie/TV tracking via OMDb, per-episode watch state |
-| meditate | 1,181 | Timer, styles, presets, session history |
-| settings | 632 | Nav customisation, dashboard preferences |
-| workout | 627 | Workouts, sets, exercises |
-| account | 433 | Profile, password, avatar, HealthKit/Oura, reminders |
-| appointments | 410 | Upcoming and past appointments |
-| tracking | 409 | Lifetime tallies — see below |
-| medical | 391 | Medical log entries |
-| feed | 257 | Community feed — **parked for v2**, not a deletion candidate |
-| notifications | 206 | In-app notifications |
-| records | 117 | Read-only view of personal records; a satellite of workout |
+That is a default, not a demolition — `DEFAULT_NAV_ITEMS` now ships Dashboard, Metrics and Food visible, everything else off. Metrics stays because it is the tracker engine coffee and weight run on.
 
-Roughly 9,400 lines. Reversible — it is all in git history.
+| Section | Lines | | Section | Lines |
+|---|---|---|---|---|
+| finances | 3,176 | | appointments | 497 |
+| entertainment | 1,754 | | tracking | 496 |
+| meditate | 1,181 | | medical | 434 |
+| workout | 812 | | feed | 422 |
+| settings | 687 | | notifications | 306 |
+| account | 524 | | records | 117 |
 
-**`metrics` is not on this list.** An earlier draft included it at 1,560 lines. That was wrong: `metrics` *is* the generic tracker, and Phases 1 and 2 are work on it. It stays.
+Three of those are not really optional and stay visible in practice regardless: **settings** holds the weight-unit preference, **account** is password and profile, **notifications** is plumbing other features push into.
 
-**`tracking` is less redundant than first claimed.** It was described as duplicating counter metrics. It does not: `tracking_items` holds a single lifetime `count` incremented in place with no history, where counter metrics write dated entries. The seeded data shows the real intent — "Restaurants tried", "Books read", "Flights taken" — life tallies, not daily habits.
+The original plan here was deletion, on the theory that breadth without depth is what stalled this project. The diagnosis was right; the remedy was wrong. Focus comes from what the nav shows, and hiding costs nothing to reverse.
 
-It *is* replaceable, but by a plain dated metric rather than a counter, which would trade the increment-button feel for real history. That is a judgement call about what the feature is for, not a straightforward duplication, so it is listed here with everything else rather than deleted on its own.

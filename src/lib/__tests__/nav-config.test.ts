@@ -40,17 +40,40 @@ describe("nav item defaults", () => {
     expect(sections).toHaveLength(8);
   });
 
-  it("Community is the third builtin, visible and unlocked", () => {
+  it("Community is the third builtin, and unlockable", () => {
     const community = DEFAULT_NAV_ITEMS.find((i) => i.href === "/feed");
     expect(community?.label).toBe("Community");
     expect(community?.itemType).toBe("builtin");
-    expect(community?.visible).toBe(true);
     expect(community?.locked).toBe(false);
   });
 
-  it("Workout starts hidden", () => {
-    const workout = DEFAULT_NAV_ITEMS.find((i) => i.label === "Workout");
-    expect(workout?.visible).toBe(false);
+  it("ships only the in-plan sections visible", () => {
+    // Everything else is shelved, not deleted: hidden here, one toggle away in
+    // Settings. See docs/ROADMAP.md.
+    const visible = DEFAULT_NAV_ITEMS.filter((i) => i.visible).map((i) => i.label);
+    expect(visible).toEqual(["Dashboard", "Metrics", "Food"]);
+  });
+
+  it("keeps every shelved section present rather than removing it", () => {
+    const labels = DEFAULT_NAV_ITEMS.map((i) => i.label);
+    for (const shelved of [
+      "Community",
+      "Meditate",
+      "Tracking",
+      "Medical",
+      "Appointments",
+      "Entertainment",
+      "Workout",
+      "Finances",
+    ]) {
+      expect(labels, `${shelved} should still be listed`).toContain(shelved);
+    }
+  });
+
+  it("leaves every shelved section unlocked so it can be switched back on", () => {
+    for (const item of DEFAULT_NAV_ITEMS.filter((i) => !i.visible)) {
+      expect(item.locked, `${item.label} must not be locked`).toBe(false);
+    }
   });
 
   it("sort orders are sequential starting at 0", () => {
