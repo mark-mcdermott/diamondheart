@@ -77,10 +77,16 @@ test("switching units converts existing readings rather than rewriting them", as
   // Switch the preference; the same reading should now show in kilograms.
   await page.goto("/settings");
   await page.getByRole("button", { name: "kg", exact: true }).click();
-  await expect(page.getByRole("button", { name: "kg", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "true"
-  );
+
+  // aria-pressed flips from optimistic local state, so asserting it proves
+  // nothing about the save. Navigating away on that signal aborts the in-flight
+  // server action. Reload and let the server tell us the preference stuck.
+  await expect(async () => {
+    await page.reload();
+    await expect(
+      page.getByRole("button", { name: "kg", exact: true })
+    ).toHaveAttribute("aria-pressed", "true");
+  }).toPass({ timeout: 20_000 });
 
   await page.goto(`/metrics/${id}`);
   // 180 lb is 81.6 kg. The stored number did not change; its presentation did.
