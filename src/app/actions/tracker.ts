@@ -11,13 +11,15 @@ import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { dayBounds } from "@/lib/dates";
+import { getUserPreferences } from "@/app/actions/preferences";
+import { toStoredValue } from "@/lib/units";
 
 export type ActionResult = {
   success: boolean;
   error?: string;
 };
 
-type OwnedMetric = { id: string; singleValuePerDay: boolean };
+type OwnedMetric = { id: string; singleValuePerDay: boolean; unit: string | null };
 
 async function ownedMetric(
   metricId: string,
@@ -27,11 +29,25 @@ async function ownedMetric(
     .select({
       id: trackerMetrics.id,
       singleValuePerDay: trackerMetrics.singleValuePerDay,
+      unit: trackerMetrics.unit,
     })
     .from(trackerMetrics)
     .where(and(eq(trackerMetrics.id, metricId), eq(trackerMetrics.userId, userId)))
     .limit(1);
   return metric ?? null;
+}
+
+/**
+ * Values arrive in whatever unit the user is viewing. For a mass metric that
+ * may not be the unit the metric stores in, so convert here rather than trust
+ * the client — the form, the dashboard and any future caller all land here.
+ */
+async function toStored(value: string, metric: OwnedMetric, userId: string): Promise<string> {
+  const numeric = parseFloat(value);
+  if (Number.isNaN(numeric)) return value; // "done", "true", free text
+  const { weightUnit } = await getUserPreferences(userId);
+  const stored = toStoredValue(numeric, metric.unit, weightUnit);
+  return stored === numeric ? value : String(stored);
 }
 
 /**
@@ -45,6 +61,8 @@ async function recordEntry(
   date: Date,
   notes: string | null = null
 ): Promise<void> {
+  value = await toStored(value, metric, userId);
+
   if (metric.singleValuePerDay) {
     const { start, end } = dayBounds(date);
     const [existing] = await db
@@ -387,10 +405,26 @@ export async function updateEntry(formData: FormData): Promise<ActionResult> {
   if (!session) return { success: false, error: "Unauthorized" };
 
   const entryId = formData.get("entryId") as string;
-  const value = formData.get("value") as string;
+  const rawValue = formData.get("value") as string;
   const notes = formData.get("notes") as string | null;
 
   if (!entryId) return { success: false, error: "Entry ID is required" };
+
+  // The row being edited was rendered in the viewer's unit; convert it back.
+  const [owning] = await db
+    .select({
+      id: trackerMetrics.id,
+      singleValuePerDay: trackerMetrics.singleValuePerDay,
+      unit: trackerMetrics.unit,
+    })
+    .from(trackerEntries)
+    .innerJoin(trackerMetrics, eq(trackerMetrics.id, trackerEntries.metricId))
+    .where(
+      and(eq(trackerEntries.id, entryId), eq(trackerEntries.userId, session.userId))
+    )
+    .limit(1);
+
+  const value = owning ? await toStored(rawValue, owning, session.userId) : rawValue;
 
   const updated = await db
     .update(trackerEntries)

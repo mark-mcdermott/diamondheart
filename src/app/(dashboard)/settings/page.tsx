@@ -19,6 +19,7 @@ export default async function SettingsPage() {
       useNetflixUI={prefs.useNetflixUI}
       showSiteName={prefs.showSiteName}
       showMeditationInFeed={prefs.showMeditationInFeed}
+      weightUnit={prefs.weightUnit}
       showNameWhenMeditating={prefs.showNameWhenMeditating}
       dashboardSections={prefs.dashboardSections}
     />

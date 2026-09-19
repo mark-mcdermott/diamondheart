@@ -7,6 +7,8 @@ import Link from "next/link";
 import { EntriesTable } from "./entries-table";
 import { MetricChart } from "./metric-chart";
 import { ArrowLeft } from "lucide-react";
+import { getUserPreferences } from "@/app/actions/preferences";
+import { displayUnitFor, toDisplayValue, roundMass } from "@/lib/units";
 
 export default async function MetricDetailPage({
   params,
@@ -25,6 +27,17 @@ export default async function MetricDetailPage({
     .limit(1);
 
   if (!metric) notFound();
+
+  const { weightUnit } = await getUserPreferences(session.userId);
+  const displayUnit = displayUnitFor(metric.unit, weightUnit);
+
+  // Readings are stored in the metric's unit; show them in the viewer's.
+  const forDisplay = (raw: string): string => {
+    const n = parseFloat(raw);
+    if (Number.isNaN(n)) return raw;
+    const shown = toDisplayValue(n, metric.unit, weightUnit);
+    return String(shown === n ? n : roundMass(shown));
+  };
 
   const entries = await db
     .select()
@@ -48,7 +61,7 @@ export default async function MetricDetailPage({
           <p className="text-muted-foreground mt-1">
             {metric.dailyGoal
               ? `Daily goal: ${metric.dailyGoal}${metric.unit ? ` ${metric.unit}` : ""}`
-              : metric.unit ?? "No daily goal"}
+              : displayUnit ?? "No daily goal"}
           </p>
         </div>
       </div>
@@ -56,11 +69,11 @@ export default async function MetricDetailPage({
       {entries.length > 0 && (
         <MetricChart
           entries={entries.map((e) => ({
-            value: e.value,
+            value: forDisplay(e.value),
             date: e.date.toISOString(),
           }))}
           valueType={metric.valueType}
-          unit={metric.unit}
+          unit={displayUnit}
           dailyGoal={metric.dailyGoal}
         />
       )}
@@ -69,12 +82,12 @@ export default async function MetricDetailPage({
         metricId={metric.id}
         entries={entries.map((e) => ({
           id: e.id,
-          value: e.value,
+          value: forDisplay(e.value),
           notes: e.notes,
           date: e.date.toISOString(),
         }))}
         valueType={metric.valueType}
-        unit={metric.unit}
+        unit={displayUnit}
       />
       {entries.length > 0 && (
         <p className="text-sm text-muted-foreground mt-4">

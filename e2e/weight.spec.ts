@@ -12,10 +12,11 @@ import { signUp, createMetric, logEntry } from "./helpers";
 async function configureMetric(
   page: Page,
   metricId: string,
-  opts: { valueType: string; singleValuePerDay: boolean }
+  opts: { valueType: string; singleValuePerDay: boolean; unit?: string }
 ): Promise<void> {
   await page.goto(`/metrics/${metricId}/edit`);
   await page.selectOption("#valueType", opts.valueType);
+  if (opts.unit !== undefined) await page.fill("#unit", opts.unit);
   const toggle = page.locator("#singleValuePerDay");
   if (opts.singleValuePerDay) await toggle.check();
   else await toggle.uncheck();
@@ -52,4 +53,37 @@ test("an ordinary metric still accumulates entries", async ({ page }) => {
   await expect(page.getByText(/^2 entries$/)).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("cell", { name: /^20/ })).toBeVisible();
   await expect(page.getByRole("cell", { name: /^30/ })).toBeVisible();
+});
+
+test("switching units converts existing readings rather than rewriting them", async ({
+  page,
+}) => {
+  await signUp(page);
+  const id = await createMetric(page, "Body Weight");
+  // Stored in kg; pounds is the default display unit.
+  await configureMetric(page, id, {
+    valueType: "number",
+    singleValuePerDay: true,
+    unit: "kg",
+  });
+
+  await logEntry(page, id, "180");
+
+  // Entered as pounds, so it should read back as pounds.
+  await page.goto(`/metrics/${id}`);
+  await expect(page.getByRole("cell", { name: /180/ })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/lb/).first()).toBeVisible();
+
+  // Switch the preference; the same reading should now show in kilograms.
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "kg", exact: true }).click();
+  await expect(page.getByRole("button", { name: "kg", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+
+  await page.goto(`/metrics/${id}`);
+  // 180 lb is 81.6 kg. The stored number did not change; its presentation did.
+  await expect(page.getByRole("cell", { name: /81\.6/ })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("cell", { name: /^180/ })).toHaveCount(0);
 });
