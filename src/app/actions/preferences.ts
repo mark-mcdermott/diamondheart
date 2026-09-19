@@ -162,7 +162,10 @@ export async function setWeightUnit(formData: FormData): Promise<Result> {
     });
   }
 
-  revalidatePath("/");
-  revalidatePath("/metrics");
+  // The weight unit changes how every page renders a reading — the dashboard,
+  // the metrics list, each metric's detail page and the entry form. Listing
+  // paths misses the dynamic ones: revalidatePath("/metrics") does not cover
+  // "/metrics/<id>", which is exactly where the readings are read.
+  revalidatePath("/", "layout");
   return { success: true };
 }
