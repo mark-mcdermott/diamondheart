@@ -101,9 +101,32 @@ What "done" turned out to mean, for Phase 2 to copy: a canonical storage decisio
 
 ## Phase 2 — Food
 
-The biggest of the three and the one with the most to salvage — 1,272 lines already exist, plus `food_log`, `food_log_items`, `custom_foods`, `favorite_foods`, `favorite_meals`, and a search API.
+The biggest of the three and the one with the most to salvage — 1,272 lines, plus `food_log`, `food_log_items`, `custom_foods`, `favorite_foods`, `favorite_meals` and a USDA search API. Logging, favourites, saved meals and a macro overview all exist and work.
 
-Scope to be written once Phase 1 has landed and the pattern for "done" is established. Do not start it early.
+Scope below was written after Phase 1, from an audit of the live code rather than from the feature list. Three things came out of it.
+
+**The numbers cannot represent food.** Every macro column is an `integer`, and every value is read with `parseInt`. The failures are not rounding, they are wrong:
+
+| User enters | Stored | |
+|---|---|---|
+| quantity `0.5` | **1** | `parseInt("0.5")` is 0, and `\|\| 1` turns that into a whole serving |
+| serving size `0.5` | **100** | same path, falling back to the 100 g default — a 200× error |
+| protein `12.5` | `12` | truncated, and it accumulates across a day |
+
+Half a portion logging as a full one is the weight-rounding bug again, louder: the tracker quietly disagrees with what you told it.
+
+**Search is broken in production.** `/api/food/search` needs `USDA_API_KEY`, which is not set on the deployment, so the primary way of adding food returns a 500. Locally it works, which is why this was invisible.
+
+**Nothing to measure against.** There is no calorie or macro target anywhere in the schema or the code. You can log a day perfectly and the app will not tell you whether it was a good one.
+
+| # | Task | Acceptance |
+|---|---|---|
+| 2.1 | Fix the numeric model | Macros and quantities stored as decimals; `0.5` of a serving logs as 0.5; existing integer rows migrate unchanged |
+| 2.2 | Make search work in production | Key configured; when it is absent the UI says so plainly instead of failing with a 500 |
+| 2.3 | Daily targets | Per-user calorie and macro goals; the day reads against them; sensible before any goal is set |
+| 2.4 | Tests | Unit: the quantity and serving-size regressions above. e2e: log a food, see totals change; log half a serving, see half |
+
+Do 2.1 first. Everything else builds on numbers that are currently wrong, and migrating later means migrating data that has already been corrupted.
 
 ---
 
