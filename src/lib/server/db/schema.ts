@@ -65,6 +65,9 @@ export const trackerMetrics = pgTable('tracker_metrics', {
 	color: text('color'),
 	sortOrder: text('sort_order').notNull().default('0'),
 	counter: boolean('counter').notNull().default(false),
+	// Weight-style metrics hold one reading per day: logging again replaces that
+	// day's entry instead of adding a second one.
+	singleValuePerDay: boolean('single_value_per_day').notNull().default(false),
 	hidden: boolean('hidden').notNull().default(false),
 	archived: boolean('archived').notNull().default(false),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

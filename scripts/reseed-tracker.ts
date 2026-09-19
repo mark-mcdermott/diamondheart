@@ -99,6 +99,7 @@ async function main() {
         sortOrder: m.sortOrder,
         hidden: m.hidden,
         counter: m.counter ?? false,
+        singleValuePerDay: m.singleValuePerDay ?? false,
       });
     }
   }

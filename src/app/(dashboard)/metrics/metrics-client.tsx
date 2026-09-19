@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { VALUE_TYPES } from "@/lib/metric-types";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,14 +75,6 @@ interface MetricsClientProps {
   sectionStatus: Record<string, boolean>;
   sectionSummaries: Record<string, string>;
 }
-
-const VALUE_TYPES = [
-  { value: "none", label: "None (just log it)" },
-  { value: "int", label: "Integer" },
-  { value: "float", label: "Decimal" },
-  { value: "text", label: "Text" },
-  { value: "bool", label: "Yes/No" },
-];
 
 function SortableMetricRow({
   metric,

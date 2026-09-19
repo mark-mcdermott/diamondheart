@@ -14,3 +14,27 @@ export function toISODate(date: Date): string {
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
+
+export function startOfDay(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+/** Half-open [start, end) covering the calendar day `date` falls on. */
+export function dayBounds(date: Date): { start: Date; end: Date } {
+  const start = startOfDay(date);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { start, end };
+}
+
+export function todayStart(): Date {
+  return startOfDay(new Date());
+}
+
+export function daysAgo(n: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return startOfDay(d);
+}

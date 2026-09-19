@@ -18,7 +18,7 @@ export const seedMetrics = [
   { name: "meditation",         slug: "meditation",        description: null,                                    unit: "min",       valueType: "int",    dailyGoal: 1,    icon: "Flower2",           categorySlug: "default",   sortOrder: "0",  hidden: false, counter: true },
   { name: "Exercise Minutes",   slug: "exercise-minutes",  description: "Minutes of exercise",                   unit: "min",       valueType: "int",    dailyGoal: null, icon: "Timer",             categorySlug: "activity",  sortOrder: "1",  hidden: false },
   { name: "Steps",              slug: "steps",             description: "Total steps taken",                     unit: "steps",     valueType: "int",    dailyGoal: null, icon: "Footprints",        categorySlug: "activity",  sortOrder: "2",  hidden: false },
-  { name: "Weight",             slug: "weight",            description: "Body weight (manual or smart scale)",   unit: "kg",        valueType: "number", dailyGoal: null, icon: "Scale",             categorySlug: "body",      sortOrder: "3",  hidden: false },
+  { name: "Weight",             slug: "weight",            description: "Body weight (manual or smart scale)",   unit: "kg",        valueType: "number", dailyGoal: null, icon: "Scale",             categorySlug: "body",      sortOrder: "3",  hidden: false, singleValuePerDay: true },
   { name: "Sleep Balance",      slug: "sleep-balance",     description: "Sleep debt indicator",                  unit: null,        valueType: "int",    dailyGoal: null, icon: "Equal",             categorySlug: "readiness", sortOrder: "4",  hidden: false },
 
   // OFF metrics (positions 5-50)

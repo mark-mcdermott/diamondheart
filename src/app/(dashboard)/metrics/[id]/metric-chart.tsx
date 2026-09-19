@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { isNumericValueType } from "@/lib/metric-types";
 import {
   LineChart,
   Line,
@@ -37,7 +38,7 @@ export function MetricChart({ entries, valueType, unit, dailyGoal }: MetricChart
   const [chartType, setChartType] = useState<ChartType>("line");
 
   // Only show charts for numeric metrics
-  const isNumeric = valueType === "int" || valueType === "float" || valueType === "number";
+  const isNumeric = isNumericValueType(valueType);
   const isCounter = valueType === "none";
 
   const data = useMemo(() => {

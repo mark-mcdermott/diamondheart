@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { VALUE_TYPES } from "@/lib/metric-types";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,14 +9,6 @@ import { Label } from "@/components/ui/label";
 import { updateMetric } from "@/app/actions/tracker";
 import type { TrackerMetric } from "@/db/schema";
 import { ArrowLeft, Save } from "lucide-react";
-
-const VALUE_TYPES = [
-  { value: "none", label: "None (just log it)" },
-  { value: "int", label: "Integer" },
-  { value: "float", label: "Decimal" },
-  { value: "text", label: "Text" },
-  { value: "bool", label: "Yes/No" },
-];
 
 interface MetricEditClientProps {
   metric: TrackerMetric;
@@ -27,6 +20,7 @@ export function MetricEditClient({ metric }: MetricEditClientProps) {
   const [unit, setUnit] = useState(metric.unit || "");
   const [dailyGoal, setDailyGoal] = useState(String(metric.dailyGoal ?? 1));
   const [counter, setCounter] = useState(metric.counter);
+  const [singleValuePerDay, setSingleValuePerDay] = useState(metric.singleValuePerDay);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit() {
@@ -37,6 +31,7 @@ export function MetricEditClient({ metric }: MetricEditClientProps) {
       fd.set("unit", unit);
       fd.set("dailyGoal", dailyGoal);
       fd.set("counter", String(counter));
+      fd.set("singleValuePerDay", String(singleValuePerDay));
       await updateMetric(metric.id, fd);
     });
   }
@@ -109,11 +104,30 @@ export function MetricEditClient({ metric }: MetricEditClientProps) {
             type="checkbox"
             id="counter"
             checked={counter}
-            onChange={(e) => setCounter(e.target.checked)}
+            onChange={(e) => {
+              setCounter(e.target.checked);
+              if (e.target.checked) setSingleValuePerDay(false);
+            }}
             className="w-5 h-5 rounded border-border cursor-pointer"
           />
           <Label htmlFor="counter" className="cursor-pointer">
             Counter (tap + to add 1 each time)
+          </Label>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="singleValuePerDay"
+            checked={singleValuePerDay}
+            onChange={(e) => {
+              setSingleValuePerDay(e.target.checked);
+              if (e.target.checked) setCounter(false);
+            }}
+            className="w-5 h-5 rounded border-border cursor-pointer"
+          />
+          <Label htmlFor="singleValuePerDay" className="cursor-pointer">
+            One reading per day (logging again replaces it, like weight)
           </Label>
         </div>
 
