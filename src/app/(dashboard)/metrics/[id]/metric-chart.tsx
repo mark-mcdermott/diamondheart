@@ -22,6 +22,9 @@ import {
   toDateKey,
   formatDateLabel,
   getDateRange,
+  movingAverage,
+  movingAverageWindow,
+  measurementDomain,
 } from "@/lib/chart-utils";
 
 interface MetricChartProps {
@@ -41,7 +44,7 @@ export function MetricChart({ entries, valueType, unit, dailyGoal }: MetricChart
   const isNumeric = isNumericValueType(valueType);
   const isCounter = valueType === "none";
 
-  const data = useMemo(() => {
+  const series = useMemo(() => {
     const { start, end } = getDateRange(range);
     const keys = generateDateKeys(range);
 
@@ -70,7 +73,7 @@ export function MetricChart({ entries, valueType, unit, dailyGoal }: MetricChart
       }
     }
 
-    return keys.map((key) => ({
+    const points = keys.map((key) => ({
       date: key,
       label: formatDateLabel(key, range),
       value: isNumeric
@@ -79,7 +82,31 @@ export function MetricChart({ entries, valueType, unit, dailyGoal }: MetricChart
           : null
         : buckets[key].count,
     }));
+
+    // A trend line only means anything for numeric readings, and only once
+    // there are at least two of them to draw a trend between.
+    const readings = points.filter((p) => p.value !== null).length;
+    if (!isNumeric || readings < 2) {
+      return { points: points.map((p) => ({ ...p, trend: null })), hasTrend: false };
+    }
+
+    const trend = movingAverage(
+      points.map((p) => p.value),
+      movingAverageWindow(range)
+    );
+    return {
+      points: points.map((p, i) => ({ ...p, trend: trend[i] })),
+      hasTrend: true,
+    };
   }, [entries, range, isNumeric]);
+
+  const data = series.points;
+  const showTrend = series.hasTrend && chartType === "line";
+
+  // Counts belong on a 0-based axis; measurements do not.
+  const yDomain = isNumeric
+    ? measurementDomain(data.map((d) => d.value), dailyGoal)
+    : undefined;
 
   if (!isNumeric && !isCounter) return null;
 
@@ -113,6 +140,26 @@ export function MetricChart({ entries, valueType, unit, dailyGoal }: MetricChart
         </div>
         <TimeRangePicker value={range} onChange={setRange} />
       </div>
+      {showTrend && (
+        <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span
+              className="inline-block w-4 h-0.5 rounded"
+              style={{ backgroundColor: CHART_COLORS.primary }}
+            />
+            Reading
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span
+              className="inline-block w-4 h-0.5 rounded"
+              style={{
+                backgroundImage: `repeating-linear-gradient(to right, ${CHART_COLORS.clay} 0 4px, transparent 4px 7px)`,
+              }}
+            />
+            {movingAverageWindow(range)}-point average
+          </span>
+        </div>
+      )}
       <ChartContainer height={250}>
         {chartType === "line" ? (
           <LineChart data={data} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
@@ -129,6 +176,8 @@ export function MetricChart({ entries, valueType, unit, dailyGoal }: MetricChart
               tickLine={false}
               axisLine={false}
               width={40}
+              domain={yDomain ?? [0, "auto"]}
+              allowDecimals
             />
             <Tooltip
               contentStyle={{
@@ -137,7 +186,7 @@ export function MetricChart({ entries, valueType, unit, dailyGoal }: MetricChart
                 borderRadius: 8,
                 fontSize: 12,
               }}
-              formatter={(value) => [`${value}${unitLabel}`, yLabel]}
+              formatter={(value, name) => [`${value}${unitLabel}`, String(name)]}
             />
             {dailyGoal && (
               <ReferenceLine
@@ -150,12 +199,26 @@ export function MetricChart({ entries, valueType, unit, dailyGoal }: MetricChart
             <Line
               type="monotone"
               dataKey="value"
+              name={yLabel}
               stroke={CHART_COLORS.primary}
               strokeWidth={2}
               dot={{ r: range === "week" ? 4 : 0 }}
               activeDot={{ r: 5, fill: CHART_COLORS.primary }}
               connectNulls
             />
+            {showTrend && (
+              <Line
+                type="monotone"
+                dataKey="trend"
+                name={`${movingAverageWindow(range)}-point average`}
+                stroke={CHART_COLORS.clay}
+                strokeWidth={2}
+                strokeDasharray="4 4"
+                dot={false}
+                activeDot={false}
+                connectNulls
+              />
+            )}
           </LineChart>
         ) : (
           <BarChart data={data} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
