@@ -38,7 +38,7 @@ export async function removeAvatar(userId: string): Promise<void> {
 export const password = {
   PATCH: (({ request }) =>
     handler(async () => {
-      const { userId } = await requireSession(request);
+      await requireSession(request);
       const { currentPassword, newPassword } = await readJson(request, changePasswordSchema);
       await changePassword(request.headers, currentPassword, newPassword);
       return noContent();
