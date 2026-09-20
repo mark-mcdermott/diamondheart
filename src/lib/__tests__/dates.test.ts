@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseDate, toISODate } from "@/lib/dates";
+import { localDateTimeToISO, parseDate, toISODate } from "@/lib/dates";
 
 describe("parseDate", () => {
   it("parses a valid ISO date string", () => {
@@ -53,5 +53,25 @@ describe("toISODate", () => {
   it("round-trips through parseDate", () => {
     const original = "2025-12-31";
     expect(toISODate(parseDate(original))).toBe(original);
+  });
+});
+
+describe("localDateTimeToISO", () => {
+  it("reads a date and time in local time", () => {
+    const iso = localDateTimeToISO("2026-09-20", "21:45");
+    expect(iso).not.toBeNull();
+    const d = new Date(iso!);
+    expect([d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes()]).toEqual([2026, 9, 20, 21, 45]);
+  });
+
+  it("uses the start of the local day when there is no time", () => {
+    const d = new Date(localDateTimeToISO("2026-09-20")!);
+    expect([d.getHours(), d.getMinutes()]).toEqual([0, 0]);
+  });
+
+  it("refuses a malformed date or an impossible time", () => {
+    expect(localDateTimeToISO("20-09-2026", "10:00")).toBeNull();
+    expect(localDateTimeToISO("2026-09-20", "25:99")).toBeNull();
+    expect(localDateTimeToISO("", "10:00")).toBeNull();
   });
 });

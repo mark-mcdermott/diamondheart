@@ -313,7 +313,14 @@ server-rendered version never had to.
 replaces the nine queries the page ran, and the client does every edit — add, hide,
 reorder, delete, section create/rename/delete, nav toggles — through the endpoints with
 optimistic cache patches. Seven more server actions and the whole categories action file
-are gone. The metric detail, edit and entry pages are next.
+are gone.
+
+**Landed 2026-09-20 — metric detail, edit and entry** (`feat/applet-metric-pages`): the
+three pages read `GET /api/metrics/:id` and `GET /api/metrics`, and write entries and
+metric edits through the endpoints, passing the viewer's unit so mass readings convert on
+the server as before. A foreign or missing metric renders its own "page not found", which
+is what the isolation spec asserts. Four more actions gone; `quickLog` is the last
+tracker action and moves with the dashboard. Food and the dashboard remain.
 
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the
