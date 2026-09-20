@@ -223,6 +223,38 @@ export const changePasswordSchema = z
 
 export const notificationReadSchema = z.object({ read: z.boolean() }).strict();
 
+const seconds = z.number().int().positive("Duration is required");
+
+export const createMeditationSessionSchema = z
+  .object({
+    /** Seconds. */
+    duration: seconds,
+    type: z.string().trim().min(1).max(64).optional(),
+    notes: optionalText.optional(),
+    date: isoDate.optional(),
+  })
+  .strict();
+
+export const updateMeditationSessionSchema = z
+  .object({ duration: seconds, type: z.string().trim().min(1).max(64), notes: optionalText })
+  .partial()
+  .strict();
+
+export const meditationStyleSchema = z
+  .object({ label: z.string().trim().min(1, "Label is required").max(64), iconName: z.string().trim().min(1).max(64).optional() })
+  .strict();
+
+export const meditationPresetSchema = z
+  .object({ label: z.string().trim().min(1, "Label is required").max(64), seconds })
+  .strict();
+
+export const meditationTimerSchema = z.object({ seconds }).strict();
+
+export type CreateMeditationSession = z.infer<typeof createMeditationSessionSchema>;
+export type UpdateMeditationSession = z.infer<typeof updateMeditationSessionSchema>;
+export type MeditationStyleInput = z.infer<typeof meditationStyleSchema>;
+export type MeditationPresetInput = z.infer<typeof meditationPresetSchema>;
+
 const shortText = (max = 100) => z.string().trim().min(1).max(max);
 const optionalShort = (max = 100) =>
   z
