@@ -24,11 +24,19 @@ export async function createMetric(page: Page, name: string): Promise<string> {
   await page.getByPlaceholder("e.g. Water intake").fill(name);
   await page.getByRole("button", { name: "Save Metric" }).click();
 
+  // The list updates from local state, so its first render says nothing about
+  // whether the insert landed. Under load it can show "No metrics yet" while
+  // the action is still in flight. Reload until the server agrees the metric
+  // exists — the same trap fixed for the settings toggle in #209.
   const link = page
     .locator('a[href^="/metrics/"]')
     .filter({ hasText: new RegExp(name, "i") })
     .first();
-  await expect(link).toBeVisible({ timeout: 15_000 });
+
+  await expect(async () => {
+    await page.goto("/metrics");
+    await expect(link).toBeVisible({ timeout: 5_000 });
+  }).toPass({ timeout: 30_000 });
 
   const href = await link.getAttribute("href");
   const id = href?.split("/").pop();
