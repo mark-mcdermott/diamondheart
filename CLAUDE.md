@@ -57,6 +57,12 @@ The project has two branches. **`production` is the Neon default**, which is why
 
 `pnpm test:e2e` runs `scripts/e2e-db.ts`, which creates a throwaway Neon branch, points `DATABASE_URL` at it for the run, and deletes it afterwards — including on Ctrl-C. A Neon branch is a copy-on-write clone, so it arrives with the schema already in place.
 
+> **Navigate with `gotoReady()`, never bare `page.goto()`.** Server-rendered
+> markup is clickable before React attaches handlers, so Playwright will happily
+> click a button that does nothing — "actionable" by its rules, dead to the app.
+> The gap is invisible locally and wide enough on CI runners to swallow clicks,
+> which made three separate tests flaky before the helper existed.
+
 > ⚠️ **It clones the *default* branch, which is `production`.** So a schema change must reach production before e2e can pass anywhere — including on a PR that has not merged. Expect a new column to fail CI until you apply it to production, and note that re-running the job *does* help in that case: the fix is in the database, not in the commit GitHub replays.
 
 Needs `NEON_API_KEY` (and `NEON_PROJECT_ID` if that key can see several projects). Set `TEST_DATABASE_URL` to point at a specific database and skip Neon entirely.
