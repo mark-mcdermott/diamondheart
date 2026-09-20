@@ -148,6 +148,25 @@ Sign-in and sign-up remain server actions until Phase 2 replaces them with Bette
 
 Notifications are created server-side only. The old action file exported `createNotification`, which made it a callable action for any signed-in client against any user id; it has no callers and now lives in the server module.
 
+### Meditation
+
+The first shelved section with endpoints. Durations are seconds.
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/meditation` | `{ sessions, styles, presets, defaultTimerSeconds }` — the meditate page's read; sessions newest first, at most a thousand. |
+| `POST` | `/api/meditation/defaults` | Seeds the starter styles and presets for whichever list is empty; safe to repeat. Returns both lists. |
+| `GET` / `POST` | `/api/meditation/sessions` | `{ sessions }` / `duration` required, `type` (default `guided`), `notes`, `date` (default now) → 201 `{ session }`. |
+| `PATCH` / `DELETE` | `/api/meditation/sessions/:id` | Partial `duration`, `type`, `notes` → `{ session }` / 204. |
+| `GET` | `/api/meditation/totals?from=&to=` | `{ days: [{ date, minutes, sessions }] }`, inclusive of both days. |
+| `GET` / `POST` | `/api/meditation/styles` | `{ styles }` / `{ label, iconName? }` → 201 `{ style }`. |
+| `PATCH` / `DELETE` | `/api/meditation/styles/:id` | `{ label, iconName? }` → `{ style }` / 204. |
+| `GET` / `POST` | `/api/meditation/presets` | `{ presets }` / `{ label, seconds }` → 201 `{ preset }`. |
+| `PATCH` / `DELETE` | `/api/meditation/presets/:id` | `{ label, seconds }` → `{ preset }` / 204. |
+| `PATCH` | `/api/meditation/timer` | `{ seconds }` → `{ defaultTimerSeconds }`. |
+| `PUT` / `DELETE` | `/api/meditation/presence` | Heartbeat while the timer runs / stop. Both 204. |
+| `GET` | `/api/meditation/presence` | `{ count, meditators }` — everyone else meditating now, names redacted where they chose that. |
+
 ## Verifying against a deploy
 
 ```bash
