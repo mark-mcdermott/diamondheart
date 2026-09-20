@@ -80,6 +80,12 @@ jobs:
           AUTH_SECRET: ci-test-secret
 
       - if: steps.creds.outputs.present == 'true'
+        run: pnpm test:api
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+
+      - if: steps.creds.outputs.present == 'true'
         run: pnpm test:e2e
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}

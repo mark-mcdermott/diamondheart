@@ -4,48 +4,16 @@ import { db } from "@/db";
 import { userPreferences } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
-import { DEFAULT_DASHBOARD_SECTIONS } from "@/lib/config/dashboard-sections";
-import { DEFAULT_MASS_UNIT, isMassUnit, type MassUnit } from "@/lib/units";
-import { MACRO_KEYS, NO_TARGETS, parseTargetField, type FoodTargets, type MacroKey } from "@/lib/targets";
+import { isMassUnit } from "@/lib/units";
+import { MACRO_KEYS, parseTargetField, type FoodTargets, type MacroKey } from "@/lib/targets";
+import { readPreferences } from "@/server/api/preferences";
 import { revalidatePath } from "next/cache";
 
 type Result = { success: boolean; error?: string };
 
-const DEFAULT_PREFERENCES = {
-  useNetflixUI: true,
-  showSiteName: true,
-  showMeditationInFeed: true,
-  showNameWhenMeditating: true,
-  weightUnit: DEFAULT_MASS_UNIT,
-  targets: NO_TARGETS,
-} as const;
-
+/** Reads live in `src/server/api/preferences.ts` now; this stays for the pages that still call it. */
 export async function getUserPreferences(userId: string) {
-  const [prefs] = await db
-    .select()
-    .from(userPreferences)
-    .where(eq(userPreferences.userId, userId))
-    .limit(1);
-
-  if (!prefs) {
-    return { ...DEFAULT_PREFERENCES, dashboardSections: DEFAULT_DASHBOARD_SECTIONS };
-  }
-
-  return {
-    useNetflixUI: prefs.useNetflixUI,
-    showSiteName: prefs.showSiteName,
-    showMeditationInFeed: prefs.showMeditationInFeed,
-    showNameWhenMeditating: prefs.showNameWhenMeditating,
-    // A value written before this column existed, or by hand, must not break display.
-    weightUnit: (isMassUnit(prefs.weightUnit) ? prefs.weightUnit : DEFAULT_MASS_UNIT) as MassUnit,
-    targets: {
-      calories: prefs.calorieTarget ?? null,
-      protein: prefs.proteinTarget ?? null,
-      carbs: prefs.carbsTarget ?? null,
-      fat: prefs.fatTarget ?? null,
-    } satisfies FoodTargets,
-    dashboardSections: (prefs.dashboardSections as string[] | null) ?? DEFAULT_DASHBOARD_SECTIONS,
-  };
+  return readPreferences(userId);
 }
 
 export async function toggleNetflixUI(formData: FormData): Promise<Result> {

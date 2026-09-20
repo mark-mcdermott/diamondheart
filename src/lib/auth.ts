@@ -1,10 +1,11 @@
-import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
-
-const SECRET = new TextEncoder().encode(process.env.AUTH_SECRET);
-const SESSION_COOKIE = "session";
-const SESSION_DURATION = 60 * 60 * 24 * 30; // 30 days
+import {
+  SESSION_COOKIE,
+  SESSION_DURATION_SECONDS as SESSION_DURATION,
+  createSessionToken,
+  verifySessionToken,
+} from "@/lib/session-token";
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -79,24 +80,13 @@ export async function verifyPassword(
 }
 
 export async function createSession(userId: string): Promise<string> {
-  const token = await new SignJWT({ sub: userId })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime(`${SESSION_DURATION}s`)
-    .sign(SECRET);
-  return token;
+  return createSessionToken(userId);
 }
 
 export async function verifySession(
   token: string
 ): Promise<{ userId: string } | null> {
-  try {
-    const { payload } = await jwtVerify(token, SECRET);
-    if (!payload.sub) return null;
-    return { userId: payload.sub };
-  } catch {
-    return null;
-  }
+  return verifySessionToken(token);
 }
 
 export async function setSessionCookie(token: string): Promise<void> {

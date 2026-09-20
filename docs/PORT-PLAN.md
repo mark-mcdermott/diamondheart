@@ -232,6 +232,11 @@ copies it into `process.env` (frunk lost an afternoon to this; `drizzle.config.t
 
 ## Phase 1 — REST endpoints under Next
 
+**Landed 2026-09-20 — the foundation** (`feat/api-foundation`): `_lib`, the session
+resolver off a raw `Request` (cookie or bearer), `GET /api/auth/me`, and preferences as
+one GET plus one partial PATCH that replaces five server actions. `pnpm test:api` and
+`docs/API.md` exist from here on; every resource PR adds to both.
+
 - `src/server/api/_lib/`: `http.ts` (`json`, `fail`, `HttpError`, `handler`, `readJson`),
   `guard.ts` (`requireSession` → `{ userId }`; ownership helpers that put the owner in the
   `WHERE` clause so a foreign row is a 404, never an oracle), `schemas.ts` (Zod shapes;
