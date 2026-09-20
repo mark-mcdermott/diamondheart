@@ -90,7 +90,7 @@ src/lib/server/db/     Drizzle schema (the real one; src/db/schema.ts just re-ex
 scripts/               seeds and migrations
 ```
 
-Pages are server components that query Drizzle directly and hand data to a `*-client.tsx`. Mutations go through server actions, not API routes; API routes are for external callers (integrations, webhooks, the widget).
+Pages are server components that query Drizzle directly and hand data to a `*-client.tsx`, except where Phase 3 of the port has moved a page onto the API: those pages render a client that reads through `src/app/api.ts` with TanStack Query (settings is the first). Mutations for the plan sections go through `/api/*` handlers in `src/server/api/`; the remaining server actions are wrappers over the same functions until their clients move.
 
 ## Conventions
 

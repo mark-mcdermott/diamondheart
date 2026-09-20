@@ -5,6 +5,7 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { SidebarNav } from "@/components/blocks/sidebar-nav";
 import { BiometricLockGate } from "@/components/biometric-lock-gate";
+import { QueryProvider } from "@/app/query-provider";
 import { getNavItems } from "@/app/actions/nav";
 import { getUnreadCount } from "@/app/actions/notifications";
 import { getUserPreferences } from "@/app/actions/preferences";
@@ -54,7 +55,7 @@ export default async function DashboardLayout({
           showThemeToggle
         />
         <main className="md:ml-[68px] px-4 py-6 pb-24 md:pb-6 mx-auto w-full max-w-4xl">
-          {children}
+          <QueryProvider>{children}</QueryProvider>
         </main>
       </div>
     </BiometricLockGate>

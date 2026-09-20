@@ -90,32 +90,3 @@ export async function getMeditatingNow(): Promise<MeditatingNow> {
   return { count: countRow?.count ?? 0, meditators };
 }
 
-export async function toggleShowNameWhenMeditating(formData: FormData): Promise<Result> {
-  void formData;
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const [existing] = await db
-    .select()
-    .from(userPreferences)
-    .where(eq(userPreferences.userId, session.userId))
-    .limit(1);
-
-  if (existing) {
-    await db
-      .update(userPreferences)
-      .set({
-        showNameWhenMeditating: !existing.showNameWhenMeditating,
-        updatedAt: new Date(),
-      })
-      .where(eq(userPreferences.id, existing.id));
-  } else {
-    await db.insert(userPreferences).values({
-      id: crypto.randomUUID(),
-      userId: session.userId,
-      showNameWhenMeditating: false,
-    });
-  }
-
-  return { success: true };
-}
