@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
     ],
   },
   eslint: {
-    dirs: ["src/app", "src/components", "src/db"],
+    dirs: ["src/app", "src/components", "src/db", "src/server", "tests"],
   },
 };
 

@@ -12,6 +12,7 @@ Personal health and life tracking app. Web + iOS/Android (Capacitor) + desktop (
 | `pnpm lint` | ESLint |
 | `pnpm test:unit` | Vitest |
 | `pnpm test:e2e` | Playwright — provisions a disposable Neon branch, see below |
+| `pnpm test:api` | API integration tests (Vitest) — same disposable branch, see `docs/API.md` |
 
 **The verify loop is `typecheck` → `lint` → `test:unit` → `build`.** CI runs exactly these. Run them before opening a PR.
 

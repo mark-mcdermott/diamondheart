@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "test:unit": "vitest run",
+    "test:api": "node --env-file-if-exists=.env --import tsx scripts/e2e-db.ts -- pnpm exec vitest run --config vitest.api.config.ts",
     "test:e2e": "E2E_DB_READY=1 node --env-file-if-exists=.env --import tsx scripts/e2e-db.ts -- pnpm exec playwright test",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
