@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,21 +31,32 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { addInvestment, deleteInvestment } from "@/app/actions/financial";
+import { api, type CreateInvestmentInput, type FinanceAccountView, type InvestmentView } from "@/app/api";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatCents, INVESTMENT_TYPES, investmentTypeLabel } from "@/lib/financial-utils";
-import type { FinancialInvestment, FinancialAccount } from "@/db/schema";
+import { REFETCH_FINANCES, dollarsToCents, optionalCents, optionalIsoDate, optionalText, text } from "../finance-forms";
 
 const EQUITY_TYPES = ["rsu", "iso", "nso"];
 
 type Props = {
-  investments: FinancialInvestment[];
-  accounts: FinancialAccount[];
+  investments: InvestmentView[];
+  accounts: FinanceAccountView[];
 };
 
 export function InvestmentsClient({ investments, accounts }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [investmentType, setInvestmentType] = useState("stock");
-  const [isPending, startTransition] = useTransition();
+
+  const create = useApiMutation({
+    mutationFn: (input: CreateInvestmentInput) => api.finances.investments.create(input),
+    invalidates: REFETCH_FINANCES,
+    onSuccess: () => {
+      setDialogOpen(false);
+      setInvestmentType("stock");
+    },
+  });
+  const remove = useApiMutation({ mutationFn: (id: string) => api.finances.investments.remove(id), invalidates: REFETCH_FINANCES });
+  const isPending = create.isPending || remove.isPending;
 
   // Summary calculations
   const totalMarketValue = investments.reduce((sum, inv) => {
@@ -58,20 +68,27 @@ export function InvestmentsClient({ investments, accounts }: Props) {
   const totalGainLoss = totalMarketValue - totalCostBasis;
   const totalGainLossPercent = totalCostBasis > 0 ? (totalGainLoss / totalCostBasis) * 100 : 0;
 
-  function handleAdd(formData: FormData) {
-    startTransition(async () => {
-      await surfaceErrors(addInvestment(formData));
-      setDialogOpen(false);
-      setInvestmentType("stock");
+  function handleAdd(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const fd = new FormData(event.currentTarget);
+    create.mutate({
+      symbol: text(fd, "symbol"),
+      name: text(fd, "name"),
+      investmentType: text(fd, "investmentType"),
+      accountId: optionalText(fd, "accountId"),
+      shares: text(fd, "shares") || "0",
+      costBasisCents: dollarsToCents(text(fd, "costBasis")),
+      currentPriceCents: dollarsToCents(text(fd, "currentPrice")),
+      vestingDate: optionalIsoDate(fd, "vestingDate"),
+      expirationDate: optionalIsoDate(fd, "expirationDate"),
+      strikePriceCents: optionalCents(fd, "strikePrice"),
+      grantDate: optionalIsoDate(fd, "grantDate"),
+      notes: optionalText(fd, "notes"),
     });
   }
 
   function handleDelete(investmentId: string) {
-    const fd = new FormData();
-    fd.set("investmentId", investmentId);
-    startTransition(async () => {
-      await surfaceErrors(deleteInvestment(fd));
-    });
+    remove.mutate(investmentId);
   }
 
   const showEquityFields = EQUITY_TYPES.includes(investmentType);
@@ -137,7 +154,7 @@ export function InvestmentsClient({ investments, accounts }: Props) {
             <DialogHeader>
               <DialogTitle>Add Investment</DialogTitle>
             </DialogHeader>
-            <form action={handleAdd} className="space-y-4">
+            <form onSubmit={handleAdd} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="symbol">Symbol</Label>
@@ -348,6 +365,7 @@ export function InvestmentsClient({ investments, accounts }: Props) {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      aria-label={`Delete ${inv.symbol}`}
                       disabled={isPending}
                       onClick={() => handleDelete(inv.id)}
                     >

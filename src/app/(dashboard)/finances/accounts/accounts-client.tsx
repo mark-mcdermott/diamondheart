@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, Wallet, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,53 +23,84 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { addAccount, updateAccount, deleteAccount } from "@/app/actions/financial";
+import { api, type CreateFinanceAccount, type FinanceAccountView, type UpdateFinanceAccount } from "@/app/api";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatCents, accountTypeLabel, ACCOUNT_TYPES } from "@/lib/financial-utils";
-import type { FinancialAccount } from "@/db/schema";
+import { REFETCH_FINANCES, dollarsToCents, optionalText, text } from "../finance-forms";
 
 type Props = {
-  accounts: FinancialAccount[];
+  accounts: FinanceAccountView[];
 };
 
 export function AccountsClient({ accounts }: Props) {
-  const [isPending, startTransition] = useTransition();
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [editingAccount, setEditingAccount] = useState<FinancialAccount | null>(null);
+  const [editingAccount, setEditingAccount] = useState<FinanceAccountView | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deletingAccount, setDeletingAccount] = useState<FinancialAccount | null>(null);
+  const [deletingAccount, setDeletingAccount] = useState<FinanceAccountView | null>(null);
 
-  function handleAdd(formData: FormData) {
-    startTransition(async () => {
-      await surfaceErrors(addAccount(formData));
-      setAddOpen(false);
-    });
-  }
-
-  function handleEdit(formData: FormData) {
-    startTransition(async () => {
-      await surfaceErrors(updateAccount(formData));
+  const create = useApiMutation({
+    mutationFn: (input: CreateFinanceAccount) => api.finances.accounts.create(input),
+    invalidates: REFETCH_FINANCES,
+    onSuccess: () => setAddOpen(false),
+  });
+  const update = useApiMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: UpdateFinanceAccount }) => api.finances.accounts.update(id, patch),
+    invalidates: REFETCH_FINANCES,
+    onSuccess: () => {
       setEditOpen(false);
       setEditingAccount(null);
-    });
-  }
-
-  function handleDelete(account: FinancialAccount) {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.append("accountId", account.id);
-      await surfaceErrors(deleteAccount(fd));
+    },
+  });
+  const archive = useApiMutation({
+    mutationFn: (id: string) => api.finances.accounts.archive(id),
+    invalidates: REFETCH_FINANCES,
+    onSuccess: () => {
       setDeleteOpen(false);
       setDeletingAccount(null);
+    },
+  });
+  const isPending = create.isPending || update.isPending || archive.isPending;
+
+  function handleAdd(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const fd = new FormData(event.currentTarget);
+    create.mutate({
+      name: text(fd, "name"),
+      accountType: text(fd, "accountType"),
+      institution: optionalText(fd, "institution"),
+      balanceCents: dollarsToCents(text(fd, "balance")),
+      currency: "USD",
+      notes: optionalText(fd, "notes"),
     });
   }
 
-  function openEdit(account: FinancialAccount) {
+  function handleEdit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingAccount) return;
+    const fd = new FormData(event.currentTarget);
+    update.mutate({
+      id: editingAccount.id,
+      patch: {
+        name: text(fd, "name"),
+        ...(text(fd, "accountType") ? { accountType: text(fd, "accountType") } : {}),
+        institution: optionalText(fd, "institution"),
+        balanceCents: dollarsToCents(text(fd, "balance")),
+        notes: optionalText(fd, "notes"),
+      },
+    });
+  }
+
+  function handleDelete(account: FinanceAccountView) {
+    archive.mutate(account.id);
+  }
+
+  function openEdit(account: FinanceAccountView) {
     setEditingAccount(account);
     setEditOpen(true);
   }
 
-  function openDelete(account: FinancialAccount) {
+  function openDelete(account: FinanceAccountView) {
     setDeletingAccount(account);
     setDeleteOpen(true);
   }
@@ -98,7 +128,7 @@ export function AccountsClient({ accounts }: Props) {
             <DialogHeader>
               <DialogTitle>Add Account</DialogTitle>
             </DialogHeader>
-            <form action={handleAdd} className="space-y-4">
+            <form onSubmit={handleAdd} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="add-name">Name</Label>
                 <Input id="add-name" name="name" placeholder="e.g. Chase Checking" required />
@@ -191,6 +221,7 @@ export function AccountsClient({ accounts }: Props) {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
+                      aria-label={`Edit ${account.name}`}
                       onClick={() => openEdit(account)}
                     >
                       <Pencil className="w-4 h-4" />
@@ -199,6 +230,7 @@ export function AccountsClient({ accounts }: Props) {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-destructive hover:text-destructive"
+                      aria-label={`Delete ${account.name}`}
                       onClick={() => openDelete(account)}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -224,8 +256,7 @@ export function AccountsClient({ accounts }: Props) {
             <DialogTitle>Edit Account</DialogTitle>
           </DialogHeader>
           {editingAccount && (
-            <form action={handleEdit} className="space-y-4">
-              <input type="hidden" name="accountId" value={editingAccount.id} />
+            <form onSubmit={handleEdit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Name</Label>
                 <Input

@@ -386,6 +386,16 @@ toggle. Three more action files gone, and `chart-data.ts` with them: every chart
 section's totals endpoint. What is left of `src/app/actions/` is finances, account, auth, the
 contact form and the three read-only delegates the layout still uses.
 
+**Landed 2026-09-20 — finances** (`feat/applet-finances`): the section's seven pages read
+through the endpoints from #232, the dashboard through its one aggregate, the others through
+the lists and the month summary combined into one gate. `QueryGate` and `combineQueries` are
+the page-level pattern from here on: skeleton, retry card, then the page once every read has
+data. The dollars-to-cents and date conversions the action file did once now happen once on
+the client, in `finance-forms.ts`, and the CSV import posts straight to the import endpoint.
+The 345-line financial action file and the import action are gone. **Every section's client
+reads and writes through the API.** What remains of `src/app/actions/` is account, auth, the
+contact form and the three read-only delegates the dashboard layout uses.
+
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the
   dashboard layout (Decision 5).

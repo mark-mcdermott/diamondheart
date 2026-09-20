@@ -4,6 +4,12 @@ import type {
   CreateAppointment,
   CreateCustomFood,
   CreateEntertainment,
+  CreateFinanceAccount,
+  CreateFinanceCategory,
+  CreateInvestment,
+  CreateProperty,
+  CreateRetirementPlan,
+  CreateTransaction,
   CreateEntry,
   CreateFavoriteFood,
   CreateMedicalLog,
@@ -13,24 +19,44 @@ import type {
   CreateWorkout,
   EpisodeWatched,
   FinishWorkout,
+  ImportTransactions,
   LogFood,
   LogMeal,
   MeditationPresetInput,
   MeditationStyleInput,
   SaveMeal,
+  SetBudget,
   UpdateAppointment,
   UpdateEntertainment,
   UpdateEntry,
+  UpdateFinanceAccount,
+  UpdateInvestment,
   UpdateMeditationSession,
   UpdateMetric,
   UpdatePreferences,
+  UpdateProperty,
+  UpdateRetirementPlan,
   UpdateTrackingItem,
+  UpdateTransaction,
 } from "@/server/api/_lib/schemas";
 import type { Appointment } from "@/server/api/appointments";
 import type { CustomFood, FavoriteFood, FavoriteMeal, FoodDay, FoodLogItem, MacroTotals } from "@/server/api/food";
 import type { Dashboard } from "@/server/api/dashboard";
 import type { EntertainmentItem, EntertainmentTotals, ShowEpisode } from "@/server/api/entertainment";
 import type { FeedItem } from "@/server/api/feed";
+import type {
+  Budget,
+  FinanceAccount,
+  FinanceCategory,
+  FinanceOverview,
+  Investment,
+  MonthSummary,
+  NetWorth,
+  Property,
+  RetirementPlan,
+  Snapshot,
+  Transaction,
+} from "@/server/api/finances";
 import type { MedicalLog, MedicalTotals } from "@/server/api/medical";
 import type { MeditatingNow, MeditationOverview } from "@/server/api/meditation";
 import type { MetricsOverview } from "@/server/api/metrics";
@@ -167,6 +193,37 @@ export type EntertainmentItemView = Serialized<EntertainmentItem>;
 export type ShowEpisodeView = Serialized<ShowEpisode>;
 export type CreateEntertainmentInput = Omit<CreateEntertainment, "startDate" | "endDate"> & { startDate?: string | null; endDate?: string | null };
 export type UpdateEntertainmentInput = Omit<UpdateEntertainment, "startDate" | "endDate"> & { startDate?: string | null; endDate?: string | null };
+export type FinanceAccountView = Serialized<FinanceAccount>;
+export type FinanceCategoryView = Serialized<FinanceCategory>;
+export type TransactionView = Serialized<Transaction>;
+export type BudgetView = Serialized<Budget>;
+export type InvestmentView = Serialized<Investment>;
+export type PropertyView = Serialized<Property>;
+export type RetirementPlanView = Serialized<RetirementPlan>;
+export type SnapshotView = Serialized<Snapshot>;
+export type MonthSummaryView = MonthSummary & { year: number; month: number };
+export type FinanceOverviewView = Omit<FinanceOverview, "accounts" | "investments" | "properties" | "retirementPlans" | "snapshots" | "recentTransactions" | "categories"> & {
+  accounts: FinanceAccountView[];
+  investments: InvestmentView[];
+  properties: PropertyView[];
+  retirementPlans: RetirementPlanView[];
+  snapshots: SnapshotView[];
+  recentTransactions: TransactionView[];
+  categories: FinanceCategoryView[];
+};
+export type CreateTransactionInput = Omit<CreateTransaction, "date"> & { date?: string };
+export type CreateInvestmentInput = Omit<CreateInvestment, "vestingDate" | "expirationDate" | "grantDate"> & {
+  vestingDate?: string | null;
+  expirationDate?: string | null;
+  grantDate?: string | null;
+};
+export type UpdateInvestmentInput = Omit<UpdateInvestment, "vestingDate" | "expirationDate" | "grantDate"> & {
+  vestingDate?: string | null;
+  expirationDate?: string | null;
+  grantDate?: string | null;
+};
+export type CreatePropertyInput = Omit<CreateProperty, "purchaseDate"> & { purchaseDate?: string | null };
+export type UpdatePropertyInput = Omit<UpdateProperty, "purchaseDate"> & { purchaseDate?: string | null };
 
 export const keys = {
   preferences: ["preferences"] as const,
@@ -193,6 +250,15 @@ export const keys = {
   entertainment: ["entertainment", "items"] as const,
   entertainmentTotals: ["entertainment", "totals"] as const,
   watchedEpisodes: (series: string) => ["entertainment", "episodes", series] as const,
+  finances: ["finances", "overview"] as const,
+  financeAccounts: ["finances", "accounts"] as const,
+  financeCategories: ["finances", "categories"] as const,
+  financeTransactions: (limit: number) => ["finances", "transactions", limit] as const,
+  financeMonth: (year: number, month: number) => ["finances", "month", year, month] as const,
+  financeBudgets: ["finances", "budgets"] as const,
+  financeInvestments: ["finances", "investments"] as const,
+  financeProperties: ["finances", "properties"] as const,
+  financeRetirement: ["finances", "retirement"] as const,
 };
 
 export const api = {
@@ -354,6 +420,72 @@ export const api = {
     setEpisodeWatched: (input: EpisodeWatched) =>
       request<{ episode: ShowEpisodeView | null }>("/api/entertainment/episodes", { method: "PUT", ...json(input) }).then((r) => r.episode),
   },
+  /** Every amount is integer cents (docs/API.md, Finances). */
+  finances: {
+    overview: () => request<FinanceOverviewView>("/api/finances"),
+    accounts: {
+      list: () => request<{ accounts: FinanceAccountView[] }>("/api/finances/accounts").then((r) => r.accounts),
+      create: (input: CreateFinanceAccount) =>
+        request<{ account: FinanceAccountView }>("/api/finances/accounts", { method: "POST", ...json(input) }).then((r) => r.account),
+      update: (id: string, patch: UpdateFinanceAccount) =>
+        request<{ account: FinanceAccountView }>(`/api/finances/accounts/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.account),
+      /** Accounts are archived, never deleted. */
+      archive: (id: string) => request<void>(`/api/finances/accounts/${id}`, { method: "DELETE" }),
+    },
+    categories: {
+      list: () => request<{ categories: FinanceCategoryView[] }>("/api/finances/categories").then((r) => r.categories),
+      create: (input: CreateFinanceCategory) =>
+        request<{ category: FinanceCategoryView }>("/api/finances/categories", { method: "POST", ...json(input) }).then((r) => r.category),
+    },
+    transactions: {
+      list: (limit: number) =>
+        request<{ transactions: TransactionView[] }>(`/api/finances/transactions?limit=${limit}`).then((r) => r.transactions),
+      create: (input: CreateTransactionInput) =>
+        request<{ transaction: TransactionView }>("/api/finances/transactions", { method: "POST", ...json(input) }).then((r) => r.transaction),
+      update: (id: string, patch: UpdateTransaction) =>
+        request<{ transaction: TransactionView }>(`/api/finances/transactions/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.transaction),
+      remove: (id: string) => request<void>(`/api/finances/transactions/${id}`, { method: "DELETE" }),
+      /** Dollars in, as the CSV carries them; repeats are skipped by an import key. */
+      import: (input: ImportTransactions) =>
+        request<{ imported: number; skipped: number }>("/api/finances/transactions/import", { method: "POST", ...json(input) }),
+    },
+    month: (year: number, month: number) => request<MonthSummaryView>(`/api/finances/months/${year}/${month}`),
+    budgets: {
+      list: () => request<{ budgets: BudgetView[] }>("/api/finances/budgets").then((r) => r.budgets),
+      /** Sets the one budget a category has. */
+      set: (input: SetBudget) => request<{ budget: BudgetView }>("/api/finances/budgets", { method: "PUT", ...json(input) }).then((r) => r.budget),
+      remove: (id: string) => request<void>(`/api/finances/budgets/${id}`, { method: "DELETE" }),
+    },
+    investments: {
+      list: () => request<{ investments: InvestmentView[] }>("/api/finances/investments").then((r) => r.investments),
+      create: (input: CreateInvestmentInput) =>
+        request<{ investment: InvestmentView }>("/api/finances/investments", { method: "POST", ...json(input) }).then((r) => r.investment),
+      update: (id: string, patch: UpdateInvestmentInput) =>
+        request<{ investment: InvestmentView }>(`/api/finances/investments/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.investment),
+      remove: (id: string) => request<void>(`/api/finances/investments/${id}`, { method: "DELETE" }),
+    },
+    properties: {
+      list: () => request<{ properties: PropertyView[] }>("/api/finances/properties").then((r) => r.properties),
+      create: (input: CreatePropertyInput) =>
+        request<{ property: PropertyView }>("/api/finances/properties", { method: "POST", ...json(input) }).then((r) => r.property),
+      update: (id: string, patch: UpdatePropertyInput) =>
+        request<{ property: PropertyView }>(`/api/finances/properties/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.property),
+      remove: (id: string) => request<void>(`/api/finances/properties/${id}`, { method: "DELETE" }),
+    },
+    retirement: {
+      list: () => request<{ plans: RetirementPlanView[] }>("/api/finances/retirement").then((r) => r.plans),
+      create: (input: CreateRetirementPlan) =>
+        request<{ plan: RetirementPlanView }>("/api/finances/retirement", { method: "POST", ...json(input) }).then((r) => r.plan),
+      update: (id: string, patch: UpdateRetirementPlan) =>
+        request<{ plan: RetirementPlanView }>(`/api/finances/retirement/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.plan),
+      remove: (id: string) => request<void>(`/api/finances/retirement/${id}`, { method: "DELETE" }),
+    },
+    netWorth: () => request<NetWorth>("/api/finances/net-worth"),
+    snapshots: {
+      list: (limit: number) => request<{ snapshots: SnapshotView[] }>(`/api/finances/snapshots?limit=${limit}`).then((r) => r.snapshots),
+      take: () => request<{ snapshot: SnapshotView }>("/api/finances/snapshots", { method: "POST" }).then((r) => r.snapshot),
+    },
+  },
 };
 
 export type {
@@ -375,6 +507,15 @@ export type {
   AddSet,
   EpisodeWatched,
   EntertainmentTotals,
+  CreateFinanceAccount,
+  UpdateFinanceAccount,
+  CreateFinanceCategory,
+  UpdateTransaction,
+  ImportTransactions,
+  SetBudget,
+  CreateRetirementPlan,
+  UpdateRetirementPlan,
+  NetWorth,
 };
 
 /** What to show a person when a call fails: the first field message, else the error, else a generic line. */
