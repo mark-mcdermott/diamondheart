@@ -237,6 +237,12 @@ resolver off a raw `Request` (cookie or bearer), `GET /api/auth/me`, and prefere
 one GET plus one partial PATCH that replaces five server actions. `pnpm test:api` and
 `docs/API.md` exist from here on; every resource PR adds to both.
 
+**Landed 2026-09-20 — nav** (`feat/api-nav`): five endpoints, and the action file is
+now wrappers over the shared functions. Moving the logic surfaced a latent bug: the seed
+minted random ids while the client held the deterministic virtual ones, so a fresh
+account's first reorder or toggle matched nothing and reported success. The seed now
+keeps the virtual ids, and a reorder with an id that is not yours is a 422.
+
 - `src/server/api/_lib/`: `http.ts` (`json`, `fail`, `HttpError`, `handler`, `readJson`),
   `guard.ts` (`requireSession` → `{ userId }`; ownership helpers that put the owner in the
   `WHERE` clause so a foreign row is a 404, never an oracle), `schemas.ts` (Zod shapes;

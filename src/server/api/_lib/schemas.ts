@@ -36,3 +36,15 @@ export const updatePreferencesSchema = z
   .strict();
 
 export type UpdatePreferences = z.infer<typeof updatePreferencesSchema>;
+
+/** A full ordering of the caller's nav: every id once, nothing that is not theirs. */
+export const reorderNavSchema = z
+  .object({
+    ids: z
+      .array(z.string().min(1))
+      .min(1)
+      .refine((ids) => new Set(ids).size === ids.length, "Ids must not repeat"),
+  })
+  .strict();
+
+export const navVisibilitySchema = z.object({ visible: z.boolean() }).strict();
