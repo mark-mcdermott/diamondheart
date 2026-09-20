@@ -249,6 +249,8 @@ take an explicit `unit` for what the value is expressed in, so the conversion de
 the caller's to state rather than the server's to guess from a preference; the wrappers
 pass the viewer's unit to keep today's behaviour. `slugify` moved to `src/lib/slug.ts`
 from two copies. The default category is now consistently named General.
+Reminders came with it: four endpoints replacing route handlers that spread the raw
+request body into the update, which would have let a body rewrite `user_id`.
 
 - `src/server/api/_lib/`: `http.ts` (`json`, `fail`, `HttpError`, `handler`, `readJson`),
   `guard.ts` (`requireSession` → `{ userId }`; ownership helpers that put the owner in the

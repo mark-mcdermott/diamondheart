@@ -92,6 +92,15 @@ time something needs one; it cannot be deleted.
 Values are text in the database (`"done"`, free text, or a number), so they cross the wire
 as strings.
 
+### Reminders
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/reminders` | `{ reminders }`, ordered by time. |
+| `POST` | `/api/reminders` | `label`, `time` (`HH:MM`), `days` (0–6, Sunday first, no repeats) required; `timezone` (default `America/Chicago`), `enabled` (default true), `metricId` (must be the caller's, else 404) optional → 201 `{ reminder }`. |
+| `PATCH` | `/api/reminders/:id` | Any subset of the same fields. Unknown keys are a 422 — the old handler spread the raw body into the update, so a body could have rewritten `user_id`. |
+| `DELETE` | `/api/reminders/:id` | 204. |
+
 ## Verifying against a deploy
 
 ```bash

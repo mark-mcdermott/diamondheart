@@ -123,3 +123,31 @@ export type CreateMetric = z.infer<typeof createMetricSchema>;
 export type UpdateMetric = z.infer<typeof updateMetricSchema>;
 export type CreateEntry = z.infer<typeof createEntrySchema>;
 export type UpdateEntry = z.infer<typeof updateEntrySchema>;
+
+const reminderFields = {
+  label: z.string().trim().min(1, "Label is required").max(100),
+  /** 24-hour wall-clock time, `HH:MM`. */
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be HH:MM"),
+  /** Days of the week, 0 = Sunday. */
+  days: z
+    .array(z.number().int().min(0).max(6))
+    .min(1, "Pick at least one day")
+    .refine((d) => new Set(d).size === d.length, "Days must not repeat"),
+  timezone: z.string().trim().min(1).max(64),
+  enabled: z.boolean(),
+  metricId: z.string().min(1).nullable(),
+};
+
+export const createReminderSchema = z
+  .object({
+    ...reminderFields,
+    timezone: reminderFields.timezone.optional(),
+    enabled: reminderFields.enabled.optional(),
+    metricId: reminderFields.metricId.optional(),
+  })
+  .strict();
+
+export const updateReminderSchema = z.object(reminderFields).partial().strict();
+
+export type CreateReminder = z.infer<typeof createReminderSchema>;
+export type UpdateReminder = z.infer<typeof updateReminderSchema>;
