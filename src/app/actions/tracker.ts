@@ -71,44 +71,6 @@ export async function createEntry(formData: FormData): Promise<void> {
   redirect("/dashboard");
 }
 
-export async function addMetric(formData: FormData): Promise<ActionResult> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const name = text(formData, "name");
-  const valueType = text(formData, "valueType");
-  if (!name || !valueType) return { success: false, error: "Name and type are required" };
-
-  const dailyGoalStr = text(formData, "dailyGoal");
-  const dailyGoal = dailyGoalStr ? parseInt(dailyGoalStr, 10) : 1;
-  if (!Number.isInteger(dailyGoal) || dailyGoal < 1) {
-    return { success: false, error: "Daily goal must be at least 1" };
-  }
-
-  let fields: unknown = null;
-  const fieldsJson = text(formData, "fields");
-  if (fieldsJson) {
-    try {
-      fields = JSON.parse(fieldsJson);
-    } catch {
-      fields = null;
-    }
-  }
-
-  const result = await asResult(() =>
-    metrics.createMetric(session.userId, {
-      name,
-      valueType,
-      unit: text(formData, "unit") || null,
-      dailyGoal,
-      fields,
-      categoryId: text(formData, "categoryId") || null,
-    })
-  );
-  revalidatePath("/metrics");
-  return result;
-}
-
 export async function updateMetric(metricId: string, formData: FormData): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
@@ -144,53 +106,6 @@ export async function updateMetric(metricId: string, formData: FormData): Promis
   if (!result.success) return result;
 
   redirect(`/metrics/${metricId}`);
-}
-
-export async function deleteMetric(formData: FormData): Promise<ActionResult> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const metricId = text(formData, "metricId");
-  if (!metricId) return { success: false, error: "Metric ID is required" };
-
-  const result = await asResult(() => metrics.deleteMetric(session.userId, metricId));
-  revalidatePath("/metrics");
-  return result;
-}
-
-export async function toggleHidden(formData: FormData): Promise<ActionResult> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const metricId = text(formData, "metricId");
-  if (!metricId) return { success: false, error: "Metric ID is required" };
-
-  const result = await asResult(async () => {
-    const { metric } = await metrics.getMetric(session.userId, metricId);
-    await metrics.updateMetric(session.userId, metricId, { hidden: !metric.hidden });
-  });
-  revalidatePath("/metrics");
-  revalidatePath("/dashboard");
-  return result;
-}
-
-export async function reorderMetrics(formData: FormData): Promise<ActionResult> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const idsJson = text(formData, "ids");
-  if (!idsJson) return { success: false, error: "IDs are required" };
-
-  let ids: string[];
-  try {
-    ids = JSON.parse(idsJson);
-  } catch {
-    return { success: false, error: "Invalid IDs" };
-  }
-
-  const result = await asResult(() => metrics.reorderMetrics(session.userId, ids));
-  revalidatePath("/metrics");
-  return result;
 }
 
 export async function deleteEntry(formData: FormData): Promise<ActionResult> {
