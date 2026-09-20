@@ -279,6 +279,12 @@ nineteen endpoints. Reactions became an explicit set instead of a toggle. With t
 `chart-data.ts` is nothing but delegates, and finances is the last section without
 endpoints.
 
+**Landed 2026-09-20 — finances** (`feat/api-finances`): thirty-three endpoints over the
+eight financial tables, amounts in integer cents on the wire. Two ownership holes closed:
+adding a transaction moved any account's balance, and the CSV import wrote into any
+account. **Phase 1 is complete: every section has endpoints.** What remains before
+Phase 4 is Phase 3 for the shelved sections, the account block and the auth forms.
+
 - `src/server/api/_lib/`: `http.ts` (`json`, `fail`, `HttpError`, `handler`, `readJson`),
   `guard.ts` (`requireSession` → `{ userId }`; ownership helpers that put the owner in the
   `WHERE` clause so a foreign row is a 404, never an oracle), `schemas.ts` (Zod shapes;

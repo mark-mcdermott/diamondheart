@@ -209,6 +209,36 @@ The first shelved section with endpoints. Durations are seconds.
 | `GET` | `/api/feed` | `{ items }` — the last thirty meditations by other members who have not opted out, with reaction counts and whether the caller reacted. |
 | `PUT` | `/api/feed/reactions/:sessionId` | `{ reacted }` → `{ reacted, reactionCount }`. Explicit rather than a toggle, so a retry cannot flip it twice. |
 
+### Finances
+
+Every amount is **integer cents**; the form wrappers convert from dollars. Accounts are
+archived, never deleted. Categories are seeded with twenty-four defaults on first read.
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/finances` | The finances page's read: accounts, investments, properties, retirement plans, the last twelve snapshots, the last ten transactions, net worth, this month's spending by category and income, and categories. |
+| `GET` / `POST` | `/api/finances/accounts` | `{ accounts }` (unarchived) / `name`, `accountType` required → 201 `{ account }`. |
+| `PATCH` / `DELETE` | `/api/finances/accounts/:id` | Partial (including `archived`) → `{ account }` / archive, 204. |
+| `GET` / `POST` | `/api/finances/categories` | `{ categories }` / `{ name, type?, icon? }` → 201 `{ category }`. |
+| `GET` | `/api/finances/transactions` | `?accountId&categoryId&type&from&to&limit&offset` → `{ transactions }`, newest first, at most five hundred. |
+| `POST` | `/api/finances/transactions` | `accountId` (must be the caller's), `type`, `amountCents` (the magnitude; signed by type), `description` required; `categoryId`, `merchant`, `date`, `notes`, `isRecurring` → 201 `{ transaction }`. Moves the account balance. |
+| `PATCH` / `DELETE` | `/api/finances/transactions/:id` | `categoryId`, `description`, `merchant`, `notes` → `{ transaction }` / 204, reversing the balance. |
+| `POST` | `/api/finances/transactions/import` | `{ accountId, transactions: [{ date, description, amount (dollars), type, merchant?, categoryId? }] }` → `{ imported, skipped }`. Repeats are skipped by an import key; the balance is recomputed from every transaction on the account. |
+| `GET` | `/api/finances/months/:year/:month` | `{ spending: [{ categoryId, totalCents, count }], incomeCents, year, month }`. |
+| `GET` / `PUT` | `/api/finances/budgets` | `{ budgets }` / `{ categoryId, amountCents, period? }` sets the one budget a category has → `{ budget }`. |
+| `DELETE` | `/api/finances/budgets/:id` | 204. |
+| `GET` / `POST` | `/api/finances/investments` | `{ investments }` / `symbol` (upper-cased), `name`, `investmentType` required → 201 `{ investment }`. |
+| `PATCH` / `DELETE` | `/api/finances/investments/:id` | Partial → `{ investment }` / 204. |
+| `GET` / `POST` | `/api/finances/properties` | `{ properties }` / `name` required → 201 `{ property }`. |
+| `PATCH` / `DELETE` | `/api/finances/properties/:id` | Partial → `{ property }` / 204. |
+| `GET` / `POST` | `/api/finances/retirement` | `{ plans }` / `name`, `planType` required → 201 `{ plan }`. |
+| `PATCH` / `DELETE` | `/api/finances/retirement/:id` | Partial → `{ plan }` / 204. |
+| `GET` | `/api/finances/net-worth` | `{ netWorthCents, totalAssetsCents, totalLiabilitiesCents }`. |
+| `GET` / `POST` | `/api/finances/snapshots?limit=` | `{ snapshots }` / take one now → 201 `{ snapshot }`. |
+
+The old actions moved an account balance without checking the account was the caller's,
+and the CSV import took any account id. Both are 404 now.
+
 ## Verifying against a deploy
 
 ```bash
