@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -14,26 +15,22 @@ import {
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart-container";
 import { TimeRangePicker } from "@/components/ui/time-range-picker";
-import { type TimeRange, CHART_COLORS, CHART_PALETTE, formatDateLabel, generateDateKeys } from "@/lib/chart-utils";
-import { getMedicalChartData } from "@/app/actions/chart-data";
+import { type TimeRange, CHART_COLORS, CHART_PALETTE, formatDateLabel, generateDateKeys, getDateRange } from "@/lib/chart-utils";
+import { toISODate } from "@/lib/dates";
+import { api, keys, type MedicalTotals } from "@/app/api";
 
 type ChartView = "frequency" | "severity";
+
+const EMPTY_TOTALS: MedicalTotals = { byType: [], bySeverity: [] };
 
 export function MedicalChart() {
   const [range, setRange] = useState<TimeRange>("month");
   const [view, setView] = useState<ChartView>("frequency");
-  const [, startTransition] = useTransition();
-  const [data, setData] = useState<{
-    byType: { type: string; count: number }[];
-    bySeverity: { date: string; avgSeverity: number; count: number }[];
-  }>({ byType: [], bySeverity: [] });
-
-  useEffect(() => {
-    startTransition(async () => {
-      const result = await getMedicalChartData(range);
-      setData(result);
-    });
-  }, [range]);
+  const { start, end } = getDateRange(range);
+  const from = toISODate(start);
+  const to = toISODate(end);
+  const totals = useQuery({ queryKey: keys.medicalTotals(from, to), queryFn: () => api.medical.totals(from, to) });
+  const data: MedicalTotals = totals.data ?? EMPTY_TOTALS;
 
   const severityData = generateDateKeys(range).map((key) => {
     const match = data.bySeverity.find((r) => r.date === key);

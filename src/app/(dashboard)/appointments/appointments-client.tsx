@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { api, errorMessage, keys, type AppointmentView, type CreateAppointmentInput } from "@/app/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { addAppointment, updateAppointment, deleteAppointment } from "@/app/actions/appointments";
-import type { Appointment } from "@/db/schema";
 import {
   Plus,
   Pencil,
@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 
 interface AppointmentsClientProps {
-  appointments: Appointment[];
+  appointments: AppointmentView[];
 }
 
 const APPOINTMENT_TYPES = [
@@ -106,10 +106,33 @@ const EMPTY_FORM = {
 };
 
 export function AppointmentsClient({ appointments }: AppointmentsClientProps) {
-  const [isPending, startTransition] = useTransition();
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: keys.appointments });
+  const surface = (error: unknown) => toast.error(errorMessage(error));
+
+  const save = useMutation({
+    mutationFn: ({ id, values }: { id: string | null; values: CreateAppointmentInput }) =>
+      id ? api.appointments.update(id, values) : api.appointments.create(values),
+    onSuccess: () => {
+      setDialogOpen(false);
+      setEditingId(null);
+      setForm(EMPTY_FORM);
+    },
+    onError: surface,
+    onSettled: invalidate,
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => api.appointments.remove(id),
+    onError: surface,
+    onSettled: invalidate,
+  });
+
+  const isPending = save.isPending || remove.isPending;
 
   const now = new Date();
 
@@ -127,7 +150,7 @@ export function AppointmentsClient({ appointments }: AppointmentsClientProps) {
     setDialogOpen(true);
   }
 
-  function openEdit(appt: Appointment) {
+  function openEdit(appt: AppointmentView) {
     setEditingId(appt.id);
     setForm({
       title: appt.title,
@@ -144,39 +167,35 @@ export function AppointmentsClient({ appointments }: AppointmentsClientProps) {
   }
 
   function handleSave() {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("title", form.title);
-      fd.set("appointmentType", form.appointmentType);
-      fd.set("provider", form.provider);
-      fd.set("location", form.location);
-      fd.set("date", form.date);
-      fd.set("durationMinutes", form.durationMinutes);
-      fd.set("status", form.status);
-      fd.set("notes", form.notes);
-      fd.set("followUp", form.followUp);
-
-      if (editingId) {
-        fd.set("appointmentId", editingId);
-        await surfaceErrors(updateAppointment(fd));
-      } else {
-        await surfaceErrors(addAppointment(fd));
-      }
-      setDialogOpen(false);
-      setEditingId(null);
-      setForm(EMPTY_FORM);
+    // The picker's value is local wall-clock time; it becomes an instant here,
+    // in the browser's zone, rather than in whatever zone the server runs in.
+    const when = new Date(form.date);
+    if (Number.isNaN(when.getTime())) {
+      toast.error("Enter a date and time.");
+      return;
+    }
+    const duration = Number.parseInt(form.durationMinutes, 10);
+    save.mutate({
+      id: editingId,
+      values: {
+        title: form.title.trim(),
+        appointmentType: form.appointmentType,
+        provider: form.provider.trim() || null,
+        location: form.location.trim() || null,
+        date: when.toISOString(),
+        durationMinutes: Number.isFinite(duration) ? duration : null,
+        status: form.status,
+        notes: form.notes.trim() || null,
+        followUp: form.followUp.trim() || null,
+      },
     });
   }
 
   function handleDelete(id: string) {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("appointmentId", id);
-      await surfaceErrors(deleteAppointment(fd));
-    });
+    remove.mutate(id);
   }
 
-  function renderCard(appt: Appointment) {
+  function renderCard(appt: AppointmentView) {
     const Icon = TYPE_ICONS[appt.appointmentType] || Calendar;
     const statusStyle = STATUS_STYLES[appt.status] || STATUS_STYLES.upcoming;
 
@@ -215,10 +234,10 @@ export function AppointmentsClient({ appointments }: AppointmentsClientProps) {
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <Button variant="ghost" size="icon-xs" onClick={() => openEdit(appt)} disabled={isPending}>
+          <Button variant="ghost" size="icon-xs" aria-label={`Edit ${appt.title}`} onClick={() => openEdit(appt)} disabled={isPending}>
             <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
           </Button>
-          <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(appt.id)} disabled={isPending}>
+          <Button variant="ghost" size="icon-xs" aria-label={`Delete ${appt.title}`} onClick={() => handleDelete(appt.id)} disabled={isPending}>
             <Trash2 className="w-3.5 h-3.5 text-destructive" />
           </Button>
         </div>
@@ -362,7 +381,7 @@ export function AppointmentsClient({ appointments }: AppointmentsClientProps) {
               />
             </div>
             <div className="flex gap-3 pt-2 justify-end">
-              <Button onClick={handleSave} disabled={isPending || !form.title || !form.date}>
+              <Button onClick={handleSave} disabled={isPending || !form.title.trim() || !form.date}>
                 {editingId ? "Update" : "Save"}
               </Button>
               <Button variant="secondary" onClick={() => setDialogOpen(false)}>

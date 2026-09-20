@@ -1,19 +1,19 @@
 "use client";
 
-import { useState, useTransition, lazy, Suspense } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useState, lazy, Suspense } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { api, errorMessage, type CreateMedicalLogInput, type MedicalLogView } from "@/app/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { addMedicalLog, deleteMedicalLog } from "@/app/actions/medical";
-import type { MedicalLog } from "@/db/schema";
 import { Plus, Trash2, Droplets, ThermometerSun, Pill, Stethoscope, AlertCircle } from "lucide-react";
 import { useViewRange } from "@/lib/use-view-range";
 import { filterByBounds, viewRangeBounds, viewRangeLabel } from "@/lib/view-range";
 
 interface MedicalClientProps {
-  logs: MedicalLog[];
+  logs: MedicalLogView[];
 }
 
 const QUICK_LOGS = [
@@ -39,46 +39,58 @@ export function MedicalClient({ logs }: MedicalClientProps) {
   const bounds = viewRangeBounds(view, anchor ?? new Date());
   const rangedLogs = filterByBounds(logs, bounds);
   const periodLabel = viewRangeLabel(view, anchor);
-  const [isPending, startTransition] = useTransition();
+  const queryClient = useQueryClient();
   const [showCustom, setShowCustom] = useState(false);
   const [customType, setCustomType] = useState("symptom");
   const [customSubtype, setCustomSubtype] = useState("");
   const [customNotes, setCustomNotes] = useState("");
   const [customSeverity, setCustomSeverity] = useState("");
-  const [pendingId, setPendingId] = useState<string | null>(null);
+
+  // The list and the chart's totals both live under "medical", so one invalidation covers them.
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["medical"] });
+  const surface = (error: unknown) => toast.error(errorMessage(error));
+
+  const create = useMutation({
+    mutationFn: (input: CreateMedicalLogInput) => api.medical.create(input),
+    onError: surface,
+    onSettled: invalidate,
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => api.medical.remove(id),
+    onError: surface,
+    onSettled: invalidate,
+  });
+
+  const isPending = create.isPending;
+  const pendingId = remove.isPending ? remove.variables : null;
 
   function handleQuickLog(type: string, subtype: string | null) {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("type", type);
-      if (subtype) fd.set("subtype", subtype);
-      await surfaceErrors(addMedicalLog(fd));
-    });
+    create.mutate({ type, subtype });
   }
 
   function handleCustomLog() {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("type", customType);
-      if (customSubtype) fd.set("subtype", customSubtype);
-      if (customNotes) fd.set("notes", customNotes);
-      if (customSeverity) fd.set("severity", customSeverity);
-      await surfaceErrors(addMedicalLog(fd));
-      setShowCustom(false);
-      setCustomSubtype("");
-      setCustomNotes("");
-      setCustomSeverity("");
-    });
+    const severity = Number.parseInt(customSeverity, 10);
+    create.mutate(
+      {
+        type: customType,
+        subtype: customSubtype.trim() || null,
+        notes: customNotes.trim() || null,
+        severity: Number.isFinite(severity) ? severity : null,
+      },
+      {
+        onSuccess: () => {
+          setShowCustom(false);
+          setCustomSubtype("");
+          setCustomNotes("");
+          setCustomSeverity("");
+        },
+      }
+    );
   }
 
   function handleDelete(logId: string) {
-    setPendingId(logId);
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("logId", logId);
-      await surfaceErrors(deleteMedicalLog(fd));
-      setPendingId(null);
-    });
+    remove.mutate(logId);
   }
 
   return (
@@ -142,7 +154,7 @@ export function MedicalClient({ logs }: MedicalClientProps) {
                       {log.notes && <span className="text-xs text-muted-foreground ml-2">{log.notes}</span>}
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(log.id)} disabled={pendingId === log.id}>
+                  <Button variant="ghost" size="icon-xs" aria-label="Delete entry" onClick={() => handleDelete(log.id)} disabled={pendingId === log.id}>
                     <Trash2 className="w-3.5 h-3.5 text-destructive" />
                   </Button>
                 </div>

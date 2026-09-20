@@ -355,6 +355,14 @@ pull-to-refresh refetches instead of reloading the route. The tracker action fil
 the account block, the login and signup forms (which Better Auth's client will take over),
 and the shelved sections once their endpoints exist.
 
+**Landed 2026-09-20 — tracking, medical and appointments** (`feat/applet-tracking-medical-appointments`):
+the first shelved sections on the API, and the first to share `RetryCard` for the failed
+read. A tracking count tap patches the cached list and only refetches once the last tap in
+a burst has settled, so two quick taps never snap back to one. The medical chart reads
+`GET /api/medical/totals` through Query with the range in its key. An appointment's date
+is now turned into an instant in the browser, in the zone it was typed, where the action
+used to parse it in the server's zone. Three action files gone.
+
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the
   dashboard layout (Decision 5).

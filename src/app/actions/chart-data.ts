@@ -3,7 +3,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import { type TimeRange, getDateRange } from "@/lib/chart-utils";
 import { totals as entertainmentTotals } from "@/server/api/entertainment";
-import { totalsBetween as medicalTotals } from "@/server/api/medical";
 import { dailyTotals as meditationDailyTotals } from "@/server/api/meditation";
 import { dailyTotals as workoutDailyTotals } from "@/server/api/workout";
 
@@ -21,13 +20,6 @@ export async function getWorkoutChartData(range: TimeRange) {
   if (!session) return [];
   const { start, end } = getDateRange(range);
   return workoutDailyTotals(session.userId, start, end);
-}
-
-export async function getMedicalChartData(range: TimeRange) {
-  const session = await getCurrentUser();
-  if (!session) return { byType: [], bySeverity: [] };
-  const { start, end } = getDateRange(range);
-  return medicalTotals(session.userId, start, end);
 }
 
 export async function getEntertainmentChartData() {
