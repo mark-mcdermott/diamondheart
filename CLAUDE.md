@@ -114,3 +114,8 @@ Other conventions:
 ## Scope
 
 The app has 16 dashboard sections, most of them shallow. See `docs/ROADMAP.md` for which are being kept and why.
+
+**The Astro port is in progress** — `docs/PORT-PLAN.md` is the plan and the status. Until
+its Phase 4 lands, this is still a Next app and everything above applies. New server
+code goes in `src/server/api/` as framework-agnostic handlers (plan, Decision 1), not in
+new server actions.
