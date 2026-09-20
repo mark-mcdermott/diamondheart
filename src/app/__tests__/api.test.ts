@@ -69,6 +69,11 @@ describe("the API client", () => {
     expect(budget.amountCents).toBe(5000);
   });
 
+  it("reads signed-out as null rather than an error", async () => {
+    respond(200, { user: null });
+    await expect(api.auth.me()).resolves.toBeNull();
+  });
+
   it("turns an error body into an ApiError with its fields", async () => {
     respond(422, { error: "Validation failed", fields: { weightUnit: ["Invalid"] } });
     const failure = await api.preferences.update({ weightUnit: "kg" }).catch((e: unknown) => e);

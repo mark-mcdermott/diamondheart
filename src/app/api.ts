@@ -40,6 +40,7 @@ import type {
   UpdateTransaction,
 } from "@/server/api/_lib/schemas";
 import type { Appointment } from "@/server/api/appointments";
+import type { SessionUser } from "@/server/api/auth";
 import type { CustomFood, FavoriteFood, FavoriteMeal, FoodDay, FoodLogItem, MacroTotals } from "@/server/api/food";
 import type { Dashboard } from "@/server/api/dashboard";
 import type { EntertainmentItem, EntertainmentTotals, ShowEpisode } from "@/server/api/entertainment";
@@ -226,6 +227,7 @@ export type CreatePropertyInput = Omit<CreateProperty, "purchaseDate"> & { purch
 export type UpdatePropertyInput = Omit<UpdateProperty, "purchaseDate"> & { purchaseDate?: string | null };
 
 export const keys = {
+  me: ["auth", "me"] as const,
   preferences: ["preferences"] as const,
   nav: ["nav"] as const,
   metricsOverview: ["metrics", "overview"] as const,
@@ -262,6 +264,16 @@ export const keys = {
 };
 
 export const api = {
+  auth: {
+    /** Signed-out is `null`, not an error: the endpoint answers 200 either way. */
+    me: () => request<{ user: SessionUser | null }>("/api/auth/me").then((r) => r.user),
+  },
+  account: {
+    /** A wrong current password is a 422 on `currentPassword`, not a 401; the session is fine. */
+    changePassword: (input: { currentPassword: string; newPassword: string }) =>
+      request<void>("/api/account/password", { method: "PATCH", ...json(input) }),
+    removeAvatar: () => request<void>("/api/account/avatar", { method: "DELETE" }),
+  },
   preferences: {
     get: () => request<{ preferences: Preferences }>("/api/preferences").then((r) => r.preferences),
     update: (patch: UpdatePreferences) =>
@@ -516,6 +528,7 @@ export type {
   CreateRetirementPlan,
   UpdateRetirementPlan,
   NetWorth,
+  SessionUser,
 };
 
 /** What to show a person when a call fails: the first field message, else the error, else a generic line. */

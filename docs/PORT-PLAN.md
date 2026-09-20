@@ -396,6 +396,14 @@ The 345-line financial action file and the import action are gone. **Every secti
 reads and writes through the API.** What remains of `src/app/actions/` is account, auth, the
 contact form and the three read-only delegates the dashboard layout uses.
 
+**Landed 2026-09-20 — the account block** (`feat/applet-account`): the account page reads
+`GET /api/auth/me` and changes the password and clears the avatar through the endpoints from
+the account PR, with the form's own checks (length, confirmation) done before the call and the
+server's field errors shown under the field they name. The dashboard layout reads nav and
+preferences from the server modules directly, so the last three delegate action files are
+gone. What remains of `src/app/actions/` is sign-in, sign-up and sign-out, which Better Auth's
+client replaces (#223), and the public contact form, which Phase 4 turns into an Astro page.
+
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the
   dashboard layout (Decision 5).
