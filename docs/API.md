@@ -122,6 +122,32 @@ serving; a logged item also carries `quantity`, and every total multiplies the t
 | `POST` | `/api/food/meals/:id/log` | `{ mealType, date? }` logs every item of the saved meal → 201 `{ items }`. |
 | `GET` | `/api/food/search?q=` | `{ foods }` from USDA FoodData Central. **Signed-in only now** — the deployment's key was reachable by anyone who found the URL. 503 `reason: not_configured` without a key; 502 with `reason` when USDA is unreachable, rejects the key, or errors. |
 
+### Dashboard
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/dashboard?date=` | One read for the dashboard screen: `{ date, metrics, todayEntries, recentEntries, sparklines, food: { totals, meals } }`. Metrics are the visible, non-archived ones; `recentEntries` are the last twenty from the seven days before the date; `sparklines` are per metric, per day totals over those days, non-numeric values counting as 1. Today when `date` is omitted. |
+
+### Account
+
+| Method | Path | Notes |
+|---|---|---|
+| `PATCH` | `/api/account/password` | `{ currentPassword, newPassword }` → 204. A wrong current password is a 422 on `currentPassword`, not a 401 — the session is fine. |
+| `DELETE` | `/api/account/avatar` | 204. Clears the avatar and, best effort, deletes the file. Nothing to clear is still a 204. |
+
+Sign-in and sign-up remain server actions until Phase 2 replaces them with Better Auth.
+
+### Notifications
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/notifications` | `{ notifications, unread }` — the latest fifty, newest first. |
+| `PATCH` | `/api/notifications` | `{ read: true }` marks everything read → `{ unread }`. |
+| `PATCH` | `/api/notifications/:id` | `{ read }` → `{ notification }`. |
+| `DELETE` | `/api/notifications/:id` | 204. |
+
+Notifications are created server-side only. The old action file exported `createNotification`, which made it a callable action for any signed-in client against any user id; it has no callers and now lives in the server module.
+
 ## Verifying against a deploy
 
 ```bash

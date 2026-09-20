@@ -1,100 +1,54 @@
 "use server";
 
-import { db } from "@/db";
-import { notifications } from "@/db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
-import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { sendPushToUser } from "@/lib/server/web-push";
+import { getCurrentUser } from "@/lib/auth";
+import * as notifications from "@/server/api/notifications";
+import { asResult, type ActionResult } from "./api-result";
 
-type Result = { success: boolean; error?: string };
+/** Thin wrappers over `src/server/api/notifications.ts`, kept until Phase 3 moves the clients onto `/api/notifications`. */
 
 export async function getNotifications(userId: string) {
-  return db
-    .select()
-    .from(notifications)
-    .where(eq(notifications.userId, userId))
-    .orderBy(desc(notifications.createdAt))
-    .limit(50);
+  return notifications.listNotifications(userId);
 }
 
 export async function getUnreadCount(userId: string) {
-  const [result] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(notifications)
-    .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
-  return result?.count ?? 0;
+  return notifications.unreadCount(userId);
 }
 
-export async function markAsRead(formData: FormData): Promise<Result> {
+function text(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+export async function markAsRead(formData: FormData): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  const notificationId = formData.get("notificationId") as string;
-  if (!notificationId) return { success: false, error: "Notification ID required" };
+  const id = text(formData, "notificationId");
+  if (!id) return { success: false, error: "Notification ID required" };
 
-  await db
-    .update(notifications)
-    .set({ read: true })
-    .where(and(eq(notifications.id, notificationId), eq(notifications.userId, session.userId)));
-
+  const result = await asResult(() => notifications.setRead(session.userId, id, true));
   revalidatePath("/");
-  return { success: true };
+  return result;
 }
 
-export async function markAllAsRead(): Promise<Result> {
+export async function markAllAsRead(): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  await db
-    .update(notifications)
-    .set({ read: true })
-    .where(and(eq(notifications.userId, session.userId), eq(notifications.read, false)));
-
+  const result = await asResult(() => notifications.markAllRead(session.userId));
   revalidatePath("/");
-  return { success: true };
+  return result;
 }
 
-export async function deleteNotification(formData: FormData): Promise<Result> {
+export async function deleteNotification(formData: FormData): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  const notificationId = formData.get("notificationId") as string;
-  if (!notificationId) return { success: false, error: "Notification ID required" };
+  const id = text(formData, "notificationId");
+  if (!id) return { success: false, error: "Notification ID required" };
 
-  await db
-    .delete(notifications)
-    .where(and(eq(notifications.id, notificationId), eq(notifications.userId, session.userId)));
-
+  const result = await asResult(() => notifications.deleteNotification(session.userId, id));
   revalidatePath("/");
-  return { success: true };
-}
-
-export async function createNotification({
-  userId,
-  type,
-  title,
-  body,
-  href,
-  referenceId,
-}: {
-  userId: string;
-  type: string;
-  title: string;
-  body?: string;
-  href?: string;
-  referenceId?: string;
-}) {
-  await db.insert(notifications).values({
-    id: crypto.randomUUID(),
-    userId,
-    type,
-    title,
-    body: body ?? null,
-    href: href ?? null,
-    referenceId: referenceId ?? null,
-  });
-
-  // Send push notification (non-blocking — don't fail if push fails)
-  sendPushToUser(userId, { title, body, href }).catch(() => {});
+  return result;
 }
