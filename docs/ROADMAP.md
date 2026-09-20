@@ -125,7 +125,7 @@ Half a portion logging as a full one is the weight-rounding bug again, louder: t
 |---|---|---|---|
 | 2.1 | Fix the numeric model | Macros and quantities stored as decimals; `0.5` of a serving logs as 0.5; existing integer rows migrate unchanged | ✅ #208 |
 | 2.2 | Make search work in production | Key configured; when it is absent the UI says so plainly instead of failing with a 500 | ✅ #211 |
-| 2.3 | Daily targets | Per-user calorie and macro goals; the day reads against them; sensible before any goal is set | ✅ |
+| 2.3 | Daily targets | Per-user calorie and macro goals; the day reads against them; sensible before any goal is set | ✅ #214 |
 | 2.4 | Tests | Unit: the quantity and serving-size regressions above. e2e: log a food, see totals change; log half a serving, see half | ✅ #208, #210 |
 
 Do 2.1 first. Everything else builds on numbers that are currently wrong, and migrating later means migrating data that has already been corrupted.
