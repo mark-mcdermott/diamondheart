@@ -140,7 +140,7 @@ serving; a logged item also carries `quantity`, and every total multiplies the t
 
 | Method | Path | Notes |
 |---|---|---|
-| `PATCH` | `/api/account/password` | `{ currentPassword, newPassword }` → 204. A wrong current password is a 422 on `currentPassword`, not a 401 — the session is fine. |
+| `PATCH` | `/api/account/password` | `{ currentPassword, newPassword }` → 204, through Better Auth's own change-password, which verifies against `account.password` and rehashes. A wrong current password is a 422 on `currentPassword`, not a 401 — the session is fine. |
 | `DELETE` | `/api/account/avatar` | 204. Clears the avatar and, best effort, deletes the file. Nothing to clear is still a 204. |
 
 ### Notifications

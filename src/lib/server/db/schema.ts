@@ -4,8 +4,8 @@ import { pgTable, text, timestamp, boolean, jsonb, integer, doublePrecision, uni
 export const users = pgTable('users', {
 	id: text('id').primaryKey(),
 	email: text('email').notNull().unique(),
-	/** Kept for the legacy sign-in path and the account row backfill; Better Auth stores the working hash in `account.password`. */
-	passwordHash: text('password_hash').notNull(),
+	/** Pre-Phase-2 hashes, kept for the account row backfill. Better Auth writes the working hash to `account.password` and never this column, so new accounts leave it null. */
+	passwordHash: text('password_hash'),
 	name: text('name'),
 	/** Better Auth's `image`, mapped in `src/lib/server/auth.ts`. */
 	avatarUrl: text('avatar_url'),

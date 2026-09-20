@@ -28,6 +28,8 @@ async function main() {
   const sql = neon(url);
 
   await sql`alter table users add column if not exists email_verified boolean not null default false`;
+  // Better Auth never writes this column; a NOT NULL here would make every sign-up fail.
+  await sql`alter table users alter column password_hash drop not null`;
 
   await sql`create table if not exists session (
     id text primary key,

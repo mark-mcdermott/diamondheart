@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { headers } from "next/headers";
 import { getCurrentUser } from "@/lib/auth";
 import { HttpError, type ApiError } from "@/server/api/_lib/http";
 import * as account from "@/server/api/account";
@@ -38,7 +39,7 @@ export async function changePassword(_prevState: AccountResult, formData: FormDa
   }
 
   try {
-    await account.changePassword(session.userId, parsed.data.currentPassword, parsed.data.newPassword);
+    await account.changePassword(await headers(), parsed.data.currentPassword, parsed.data.newPassword);
     return { success: true };
   } catch (cause) {
     if (!(cause instanceof HttpError)) throw cause;

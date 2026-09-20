@@ -287,9 +287,11 @@ section has endpoints.** What remains in Phase 1 is the shelved sections.
 
 **Landed 2026-09-20** (`feat/better-auth`). What the docs settled that the plan had guessed:
 
-- `users` maps in by `modelName` with `image → avatarUrl`; one column was needed
-  (`email_verified`), plus Better Auth's own `session`, `account` and `verification`
-  tables. `scripts/migrate-better-auth.ts` applies both as explicit SQL and backfills a
+- `users` maps in by `modelName` with `image → avatarUrl`. Two column changes were needed:
+  `email_verified` added, and `password_hash` made nullable, because Better Auth never
+  writes it and a NOT NULL there fails every sign-up — the adapter refuses to start
+  rather than let that happen. Plus Better Auth's own `session`, `account` and
+  `verification` tables. `scripts/migrate-better-auth.ts` applies both as explicit SQL and backfills a
   credential `account` row per user from `password_hash`, which is where Better Auth reads
   the hash. Development is migrated; production is applied with the same script and
   `--production`.
