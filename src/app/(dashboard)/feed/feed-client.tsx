@@ -1,15 +1,45 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useMemo } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toggleReaction, type FeedItem } from "@/app/actions/feed";
+import { api, errorMessage, keys, type FeedItemView } from "@/app/api";
 import { formatRelativeTime, formatDuration } from "@/lib/feed-format";
 import { cn } from "@/lib/utils";
 
-export function FeedList({ items }: { items: FeedItem[] }) {
+const REACT_KEY = ["feed", "react"] as const;
+
+export function FeedList({ items }: { items: FeedItemView[] }) {
+  const queryClient = useQueryClient();
+
+  /** The heart flips in the cached list at once and is put back if the server disagrees. */
+  const react = useMutation({
+    mutationKey: REACT_KEY,
+    mutationFn: ({ sessionId, reacted }: { sessionId: string; reacted: boolean }) => api.feed.react(sessionId, reacted),
+    onMutate: async ({ sessionId, reacted }) => {
+      await queryClient.cancelQueries({ queryKey: keys.feed });
+      const previous = queryClient.getQueryData<FeedItemView[]>(keys.feed);
+      queryClient.setQueryData<FeedItemView[]>(keys.feed, (current) =>
+        current?.map((item) =>
+          item.sessionId === sessionId
+            ? { ...item, reactedByMe: reacted, reactionCount: item.reactionCount + (reacted ? 1 : -1) }
+            : item
+        )
+      );
+      return { previous };
+    },
+    onError: (error, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(keys.feed, context.previous);
+      toast.error(errorMessage(error));
+    },
+    onSettled: () => {
+      if (queryClient.isMutating({ mutationKey: REACT_KEY }) === 1) void queryClient.invalidateQueries({ queryKey: keys.feed });
+    },
+  });
+
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border p-10 text-center">
@@ -21,39 +51,26 @@ export function FeedList({ items }: { items: FeedItem[] }) {
     );
   }
 
+  const pendingId = react.isPending ? react.variables.sessionId : null;
+
   return (
     <ul className="space-y-3">
       {items.map((item) => (
-        <FeedRow key={item.sessionId} item={item} />
+        <FeedRow
+          key={item.sessionId}
+          item={item}
+          pending={pendingId === item.sessionId}
+          onToggle={() => react.mutate({ sessionId: item.sessionId, reacted: !item.reactedByMe })}
+        />
       ))}
     </ul>
   );
 }
 
-function FeedRow({ item }: { item: FeedItem }) {
-  const [reactedByMe, setReactedByMe] = useState(item.reactedByMe);
-  const [count, setCount] = useState(item.reactionCount);
-  const [isPending, startTransition] = useTransition();
-
+function FeedRow({ item, pending, onToggle }: { item: FeedItemView; pending: boolean; onToggle: () => void }) {
   const initials = useMemo(() => getInitials(item.userName), [item.userName]);
-  const relative = useMemo(() => formatRelativeTime(item.date), [item.date]);
+  const relative = useMemo(() => formatRelativeTime(new Date(item.date)), [item.date]);
   const duration = useMemo(() => formatDuration(item.duration), [item.duration]);
-
-  function onToggle() {
-    const nextReacted = !reactedByMe;
-    setReactedByMe(nextReacted);
-    setCount((c) => c + (nextReacted ? 1 : -1));
-
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("sessionId", item.sessionId);
-      const result = await surfaceErrors(toggleReaction(fd));
-      if (!result.success) {
-        setReactedByMe(!nextReacted);
-        setCount((c) => c + (nextReacted ? -1 : 1));
-      }
-    });
-  }
 
   return (
     <li className="flex items-center gap-4 p-4 bg-card rounded-lg border border-border hover:border-muted-foreground/30 transition-colors">
@@ -77,22 +94,22 @@ function FeedRow({ item }: { item: FeedItem }) {
       <button
         type="button"
         onClick={onToggle}
-        disabled={isPending}
-        aria-pressed={reactedByMe}
-        aria-label={reactedByMe ? "Remove reaction" : "Send a heart"}
+        disabled={pending}
+        aria-pressed={item.reactedByMe}
+        aria-label={item.reactedByMe ? "Remove reaction" : "Send a heart"}
         className={cn(
           "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-colors",
-          reactedByMe
+          item.reactedByMe
             ? "border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300"
             : "border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground/40",
-          isPending && "opacity-70",
+          pending && "opacity-70",
         )}
       >
         <Heart
-          className={cn("w-4 h-4", reactedByMe && "fill-current")}
+          className={cn("w-4 h-4", item.reactedByMe && "fill-current")}
           aria-hidden="true"
         />
-        <span className="tabular-nums">{count}</span>
+        <span className="tabular-nums">{item.reactionCount}</span>
       </button>
     </li>
   );

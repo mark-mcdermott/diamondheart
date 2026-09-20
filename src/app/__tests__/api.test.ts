@@ -41,6 +41,16 @@ describe("the API client", () => {
     expect(item.count).toBe(3);
   });
 
+  it("puts an explicit reaction rather than toggling", async () => {
+    respond(200, { reacted: false, reactionCount: 2 });
+    const result = await api.feed.react("s1", false);
+    const [url, init] = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/feed/reactions/s1");
+    expect(init.method).toBe("PUT");
+    expect(init.body).toBe(JSON.stringify({ reacted: false }));
+    expect(result.reactionCount).toBe(2);
+  });
+
   it("turns an error body into an ApiError with its fields", async () => {
     respond(422, { error: "Validation failed", fields: { weightUnit: ["Invalid"] } });
     const failure = await api.preferences.update({ weightUnit: "kg" }).catch((e: unknown) => e);

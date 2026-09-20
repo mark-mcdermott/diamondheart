@@ -7,7 +7,7 @@ import { SidebarNav } from "@/components/blocks/sidebar-nav";
 import { BiometricLockGate } from "@/components/biometric-lock-gate";
 import { QueryProvider } from "@/app/query-provider";
 import { getNavItems } from "@/app/actions/nav";
-import { getUnreadCount } from "@/app/actions/notifications";
+import { unreadCount } from "@/server/api/notifications";
 import { getUserPreferences } from "@/app/actions/preferences";
 import type { NavLink } from "@/components/blocks/sidebar-nav";
 
@@ -29,7 +29,7 @@ export default async function DashboardLayout({
 
   const [navItems, notificationCount, prefs] = await Promise.all([
     getNavItems(session.userId),
-    getUnreadCount(session.userId),
+    unreadCount(session.userId),
     getUserPreferences(session.userId),
   ]);
 
