@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -46,7 +47,7 @@ function FeedRow({ item }: { item: FeedItem }) {
     startTransition(async () => {
       const fd = new FormData();
       fd.set("sessionId", item.sessionId);
-      const result = await toggleReaction(fd);
+      const result = await surfaceErrors(toggleReaction(fd));
       if (!result.success) {
         setReactedByMe(!nextReacted);
         setCount((c) => c + (nextReacted ? -1 : 1));

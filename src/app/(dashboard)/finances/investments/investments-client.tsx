@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,7 +60,7 @@ export function InvestmentsClient({ investments, accounts }: Props) {
 
   function handleAdd(formData: FormData) {
     startTransition(async () => {
-      await addInvestment(formData);
+      await surfaceErrors(addInvestment(formData));
       setDialogOpen(false);
       setInvestmentType("stock");
     });
@@ -69,7 +70,7 @@ export function InvestmentsClient({ investments, accounts }: Props) {
     const fd = new FormData();
     fd.set("investmentId", investmentId);
     startTransition(async () => {
-      await deleteInvestment(fd);
+      await surfaceErrors(deleteInvestment(fd));
     });
   }
 

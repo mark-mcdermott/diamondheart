@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, lazy, Suspense } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,7 +52,7 @@ export function MedicalClient({ logs }: MedicalClientProps) {
       const fd = new FormData();
       fd.set("type", type);
       if (subtype) fd.set("subtype", subtype);
-      await addMedicalLog(fd);
+      await surfaceErrors(addMedicalLog(fd));
     });
   }
 
@@ -62,7 +63,7 @@ export function MedicalClient({ logs }: MedicalClientProps) {
       if (customSubtype) fd.set("subtype", customSubtype);
       if (customNotes) fd.set("notes", customNotes);
       if (customSeverity) fd.set("severity", customSeverity);
-      await addMedicalLog(fd);
+      await surfaceErrors(addMedicalLog(fd));
       setShowCustom(false);
       setCustomSubtype("");
       setCustomNotes("");
@@ -75,7 +76,7 @@ export function MedicalClient({ logs }: MedicalClientProps) {
     startTransition(async () => {
       const fd = new FormData();
       fd.set("logId", logId);
-      await deleteMedicalLog(fd);
+      await surfaceErrors(deleteMedicalLog(fd));
       setPendingId(null);
     });
   }

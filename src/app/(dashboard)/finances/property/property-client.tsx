@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition, useState } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import Link from "next/link";
 import { ArrowLeft, Home, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -45,7 +46,7 @@ export function PropertyClient({ properties }: Props) {
 
   function handleAdd(formData: FormData) {
     startTransition(async () => {
-      await addProperty(formData);
+      await surfaceErrors(addProperty(formData));
       setDialogOpen(false);
     });
   }
@@ -54,7 +55,7 @@ export function PropertyClient({ properties }: Props) {
     const fd = new FormData();
     fd.set("propertyId", propertyId);
     startTransition(async () => {
-      await deleteProperty(fd);
+      await surfaceErrors(deleteProperty(fd));
     });
   }
 

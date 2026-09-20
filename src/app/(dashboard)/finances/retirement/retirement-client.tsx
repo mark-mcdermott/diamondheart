@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import Link from "next/link";
 import { ArrowLeft, Plus, PiggyBank, Trash2, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -75,14 +76,14 @@ export function RetirementClient({ plans }: Props) {
 
   function handleAdd(formData: FormData) {
     startTransition(async () => {
-      await addRetirementPlan(formData);
+      await surfaceErrors(addRetirementPlan(formData));
       setAddOpen(false);
     });
   }
 
   function handleUpdate(formData: FormData) {
     startTransition(async () => {
-      await updateRetirementPlan(formData);
+      await surfaceErrors(updateRetirementPlan(formData));
       setEditingPlan(null);
     });
   }
@@ -92,7 +93,7 @@ export function RetirementClient({ plans }: Props) {
     startTransition(async () => {
       const fd = new FormData();
       fd.set("planId", planId);
-      await deleteRetirementPlan(fd);
+      await surfaceErrors(deleteRetirementPlan(fd));
     });
   }
 

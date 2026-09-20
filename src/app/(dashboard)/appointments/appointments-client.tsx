@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -157,9 +158,9 @@ export function AppointmentsClient({ appointments }: AppointmentsClientProps) {
 
       if (editingId) {
         fd.set("appointmentId", editingId);
-        await updateAppointment(fd);
+        await surfaceErrors(updateAppointment(fd));
       } else {
-        await addAppointment(fd);
+        await surfaceErrors(addAppointment(fd));
       }
       setDialogOpen(false);
       setEditingId(null);
@@ -171,7 +172,7 @@ export function AppointmentsClient({ appointments }: AppointmentsClientProps) {
     startTransition(async () => {
       const fd = new FormData();
       fd.set("appointmentId", id);
-      await deleteAppointment(fd);
+      await surfaceErrors(deleteAppointment(fd));
     });
   }
 

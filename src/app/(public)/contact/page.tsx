@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +16,7 @@ export default function ContactPage() {
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
-      const result = await submitContact(formData);
+      const result = await surfaceErrors(submitContact(formData));
       if (result.success) {
         setSent(true);
         setError(null);

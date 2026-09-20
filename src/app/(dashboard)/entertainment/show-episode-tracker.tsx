@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import Image from "next/image";
 import { ChevronDown, Loader2, Check, Film } from "lucide-react";
 import {
@@ -138,7 +139,7 @@ export function ShowEpisodeTracker({
       if (ep.episode !== null) fd.set("episode", String(ep.episode));
       if (ep.title) fd.set("title", ep.title);
       if (ep.airDate) fd.set("airDate", ep.airDate);
-      await setEpisodeWatched(fd);
+      await surfaceErrors(setEpisodeWatched(fd));
     });
   }
 

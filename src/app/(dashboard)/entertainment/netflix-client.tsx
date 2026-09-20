@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition, useCallback } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -367,7 +368,7 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
       if (details?.seasonCount)
         fd.set("seasonCount", String(details.seasonCount));
 
-      await addEntertainment(fd);
+      await surfaceErrors(addEntertainment(fd));
       setAddingResult(null);
       setAddStatus("queued");
       setSearchQuery("");
@@ -391,7 +392,7 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
       fd.set("status", detailStatus);
       if (detailRating) fd.set("rating", String(detailRating));
       fd.set("notes", detailNotes);
-      await updateEntertainment(fd);
+      await surfaceErrors(updateEntertainment(fd));
       setSelectedItem(null);
     });
   }
@@ -401,7 +402,7 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
     startTransition(async () => {
       const fd = new FormData();
       fd.set("itemId", selectedItem.id);
-      await deleteEntertainment(fd);
+      await surfaceErrors(deleteEntertainment(fd));
       setSelectedItem(null);
     });
   }

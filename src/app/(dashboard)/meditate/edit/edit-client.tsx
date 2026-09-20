@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,7 +51,7 @@ export function MeditateEditClient({ styles, presets, defaultTimerSeconds }: Med
       const fd = new FormData();
       fd.set("label", styleLabel);
       fd.set("iconName", styleIcon);
-      await addMeditationStyle(fd);
+      await surfaceErrors(addMeditationStyle(fd));
       setStyleLabel("");
       setStyleIcon("brain");
     });
@@ -63,7 +64,7 @@ export function MeditateEditClient({ styles, presets, defaultTimerSeconds }: Med
       fd.set("styleId", styleId);
       fd.set("label", editStyleLabel);
       fd.set("iconName", editStyleIcon);
-      await updateMeditationStyle(fd);
+      await surfaceErrors(updateMeditationStyle(fd));
       setEditingStyle(null);
     });
   }
@@ -77,7 +78,7 @@ export function MeditateEditClient({ styles, presets, defaultTimerSeconds }: Med
     startTransition(async () => {
       const fd = new FormData();
       fd.set("styleId", styleId);
-      await deleteMeditationStyle(fd);
+      await surfaceErrors(deleteMeditationStyle(fd));
     });
   }
 
@@ -88,7 +89,7 @@ export function MeditateEditClient({ styles, presets, defaultTimerSeconds }: Med
       const fd = new FormData();
       fd.set("label", presetLabel);
       fd.set("seconds", String(mins * 60));
-      await addMeditationPreset(fd);
+      await surfaceErrors(addMeditationPreset(fd));
       setPresetLabel("");
       setPresetMinutes("");
     });
@@ -102,7 +103,7 @@ export function MeditateEditClient({ styles, presets, defaultTimerSeconds }: Med
       fd.set("presetId", presetId);
       fd.set("label", editPresetLabel);
       fd.set("seconds", String(mins * 60));
-      await updateMeditationPreset(fd);
+      await surfaceErrors(updateMeditationPreset(fd));
       setEditingPreset(null);
     });
   }
@@ -116,7 +117,7 @@ export function MeditateEditClient({ styles, presets, defaultTimerSeconds }: Med
     startTransition(async () => {
       const fd = new FormData();
       fd.set("presetId", presetId);
-      await deleteMeditationPreset(fd);
+      await surfaceErrors(deleteMeditationPreset(fd));
     });
   }
 
@@ -126,7 +127,7 @@ export function MeditateEditClient({ styles, presets, defaultTimerSeconds }: Med
     startTransition(async () => {
       const fd = new FormData();
       fd.set("seconds", String(mins * 60));
-      await setDefaultTimerSeconds(fd);
+      await surfaceErrors(setDefaultTimerSeconds(fd));
     });
   }
 

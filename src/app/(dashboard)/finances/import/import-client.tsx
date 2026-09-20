@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import Link from "next/link";
 import { ArrowLeft, Upload, FileText, Code } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -173,7 +174,7 @@ export function ImportClient({ accounts, categories: _categories }: Props) {
     formData.set("accountId", accountId);
     formData.set("transactions", JSON.stringify(mappedTransactions));
 
-    const res = await processImportAction(formData);
+    const res = await surfaceErrors(processImportAction(formData));
     setImporting(false);
 
     if (res.success) {
