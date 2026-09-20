@@ -103,7 +103,7 @@ Other conventions:
 
 - Commit style is gitmoji, single line — see `.claude/commit-style.md`. No AI attribution anywhere.
 - Strict TypeScript, no `any`.
-- PRs are opened ready for review, never draft. Automerge is off.
+- PRs are opened ready for review, never draft. Automerge is on: once every check passes and the PR is mergeable, squash-merge it without asking.
 
 ## Known gaps
 
