@@ -1,13 +1,13 @@
 "use server";
 
 import { z } from "zod";
-import { db } from "@/db";
-import { users } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { getCurrentUser, hashPassword, verifyPassword } from "@/lib/auth";
-import { UTApi } from "uploadthing/server";
+import { getCurrentUser } from "@/lib/auth";
+import { HttpError, type ApiError } from "@/server/api/_lib/http";
+import * as account from "@/server/api/account";
 
-const changePasswordSchema = z
+/** Thin wrappers over `src/server/api/account.ts`, kept until Phase 3 moves the account block onto `/api/account/*`. */
+
+const changePasswordForm = z
   .object({
     currentPassword: z.string().min(1, "Current password is required"),
     newPassword: z.string().min(8, "New password must be at least 8 characters"),
@@ -24,68 +24,38 @@ export type AccountResult = {
   fieldErrors?: Record<string, string[]>;
 };
 
-export async function changePassword(
-  _prevState: AccountResult,
-  formData: FormData
-): Promise<AccountResult> {
+export async function changePassword(_prevState: AccountResult, formData: FormData): Promise<AccountResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Not authenticated" };
 
-  const raw = {
-    currentPassword: formData.get("currentPassword") as string,
-    newPassword: formData.get("newPassword") as string,
-    confirmPassword: formData.get("confirmPassword") as string,
-  };
-
-  const parsed = changePasswordSchema.safeParse(raw);
+  const parsed = changePasswordForm.safeParse({
+    currentPassword: formData.get("currentPassword"),
+    newPassword: formData.get("newPassword"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
   if (!parsed.success) {
-    return { success: false, fieldErrors: parsed.error.flatten().fieldErrors };
+    return { success: false, fieldErrors: z.flattenError(parsed.error).fieldErrors };
   }
 
-  const { currentPassword, newPassword } = parsed.data;
-
-  const [user] = await db
-    .select({ passwordHash: users.passwordHash })
-    .from(users)
-    .where(eq(users.id, session.userId))
-    .limit(1);
-
-  if (!user) return { success: false, error: "User not found" };
-
-  const valid = await verifyPassword(currentPassword, user.passwordHash);
-  if (!valid) return { success: false, error: "Current password is incorrect" };
-
-  const newHash = await hashPassword(newPassword);
-  await db
-    .update(users)
-    .set({ passwordHash: newHash, updatedAt: new Date() })
-    .where(eq(users.id, session.userId));
-
-  return { success: true };
+  try {
+    await account.changePassword(session.userId, parsed.data.currentPassword, parsed.data.newPassword);
+    return { success: true };
+  } catch (cause) {
+    if (!(cause instanceof HttpError)) throw cause;
+    const body = (await cause.response.json()) as ApiError;
+    return body.fields ? { success: false, fieldErrors: body.fields } : { success: false, error: body.error };
+  }
 }
 
 export async function removeAvatar(): Promise<{ error?: string }> {
   const session = await getCurrentUser();
   if (!session) return { error: "Not authenticated" };
 
-  const [user] = await db
-    .select({ avatarUrl: users.avatarUrl })
-    .from(users)
-    .where(eq(users.id, session.userId))
-    .limit(1);
-
-  if (!user?.avatarUrl) return {};
-
-  await db
-    .update(users)
-    .set({ avatarUrl: null, updatedAt: new Date() })
-    .where(eq(users.id, session.userId));
-
-  // Delete from uploadthing
-  const fileKey = user.avatarUrl.split("/").pop();
-  if (fileKey) {
-    await new UTApi().deleteFiles(fileKey).catch(() => {});
+  try {
+    await account.removeAvatar(session.userId);
+    return {};
+  } catch (cause) {
+    if (!(cause instanceof HttpError)) throw cause;
+    return { error: ((await cause.response.json()) as ApiError).error };
   }
-
-  return {};
 }

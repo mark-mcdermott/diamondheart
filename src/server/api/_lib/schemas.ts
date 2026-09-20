@@ -213,3 +213,12 @@ export type CreateFavoriteFood = z.infer<typeof createFavoriteFoodSchema>;
 export type CreateCustomFood = z.infer<typeof createCustomFoodSchema>;
 export type SaveMeal = z.infer<typeof saveMealSchema>;
 export type LogMeal = z.infer<typeof logMealSchema>;
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z.string().min(8, "New password must be at least 8 characters").max(200),
+  })
+  .strict();
+
+export const notificationReadSchema = z.object({ read: z.boolean() }).strict();

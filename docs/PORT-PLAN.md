@@ -258,6 +258,13 @@ half-open — the page and the actions used `lte` on the end bound, so a log dat
 midnight belonged to two days. Search requires a session. The two food chart readers in
 `chart-data.ts` delegate to the one `dailyTotals` query.
 
+**Landed 2026-09-20 — dashboard, account and notifications** (`feat/api-shell`): the
+dashboard as one aggregate read, password change and avatar removal, and the
+notifications the shell shows. Password hashing moved to `src/lib/password.ts` so the
+account module does not import `next/headers`. `createNotification` was an exported
+action any client could call for any user; it is server-side only now. **Every plan
+section has endpoints.** What remains in Phase 1 is the shelved sections.
+
 - `src/server/api/_lib/`: `http.ts` (`json`, `fail`, `HttpError`, `handler`, `readJson`),
   `guard.ts` (`requireSession` → `{ userId }`; ownership helpers that put the owner in the
   `WHERE` clause so a foreign row is a 404, never an oracle), `schemas.ts` (Zod shapes;
