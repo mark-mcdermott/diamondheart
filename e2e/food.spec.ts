@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { signUp, seedFavoriteFood, dailyTotal } from "./helpers";
+import { signUp, seedFavoriteFood, dailyTotal, gotoReady } from "./helpers";
 
 /**
  * Food numbers, end to end.
@@ -12,7 +12,7 @@ import { signUp, seedFavoriteFood, dailyTotal } from "./helpers";
  */
 
 async function openMealPanel(page: Page): Promise<void> {
-  await page.goto("/food");
+  await gotoReady(page, "/food");
   await page.getByRole("button", { name: "Add", exact: true }).first().click();
 }
 
@@ -27,7 +27,7 @@ test("decimal macros survive the round trip to the totals", async ({ page }) => 
   await page.getByRole("button", { name: "Add Food" }).click();
 
   await expect(async () => {
-    await page.goto("/food");
+    await gotoReady(page, "/food");
     expect(await dailyTotal(page, "calories")).toBeCloseTo(99.6, 1);
     expect(await dailyTotal(page, "protein")).toBeCloseTo(12.5, 1);
   }).toPass({ timeout: 30_000 });
@@ -55,7 +55,7 @@ test("half a serving counts as half", async ({ page }) => {
   await page.getByTestId("confirm-staged-food").click();
 
   await expect(async () => {
-    await page.goto("/food");
+    await gotoReady(page, "/food");
     // The bug: 0.5 became 1, and this read 100 / 10.
     expect(await dailyTotal(page, "calories")).toBeCloseTo(50, 1);
     expect(await dailyTotal(page, "protein")).toBeCloseTo(5, 1);

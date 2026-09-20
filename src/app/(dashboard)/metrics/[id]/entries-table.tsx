@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,7 +44,7 @@ export function EntriesTable({ metricId, entries, valueType, unit }: EntriesTabl
     startTransition(async () => {
       const fd = new FormData();
       fd.set("entryId", entryId);
-      await deleteEntry(fd);
+      await surfaceErrors(deleteEntry(fd));
       setPendingId(null);
     });
   }
@@ -138,7 +139,7 @@ export function EntriesTable({ metricId, entries, valueType, unit }: EntriesTabl
                 const fd = new FormData();
                 fd.set("metricId", metricId);
                 fd.set("value", addValue || "done");
-                await quickLog(fd);
+                await surfaceErrors(quickLog(fd));
                 setShowAdd(false);
                 setAddValue("");
               });
@@ -205,7 +206,7 @@ export function EntriesTable({ metricId, entries, valueType, unit }: EntriesTabl
             <form
               action={(formData) => {
                 startTransition(async () => {
-                  await updateEntry(formData);
+                  await surfaceErrors(updateEntry(formData));
                   setEditEntry(null);
                 });
               }}

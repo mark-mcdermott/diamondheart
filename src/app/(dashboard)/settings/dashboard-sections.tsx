@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import { Checkbox } from "@/components/ui/checkbox";
 import { updateDashboardSections } from "@/app/actions/preferences";
 import { DASHBOARD_SECTIONS } from "@/lib/config/dashboard-sections";
@@ -103,7 +104,7 @@ export function DashboardSections({ activeSections: initial }: DashboardSections
     startTransition(async () => {
       const fd = new FormData();
       fd.set("sections", JSON.stringify(newSections));
-      await updateDashboardSections(fd);
+      await surfaceErrors(updateDashboardSections(fd));
     });
   }
 

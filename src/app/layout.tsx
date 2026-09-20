@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "./theme-provider";
 import { ServiceWorkerRegister } from "@/components/blocks/sw-register";
 import { PWADetector } from "@/components/blocks/pwa-detector";
@@ -49,6 +50,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <Toaster position="top-center" richColors />
           <NativeInit />
           <ServiceWorkerRegister />
           <PWADetector />

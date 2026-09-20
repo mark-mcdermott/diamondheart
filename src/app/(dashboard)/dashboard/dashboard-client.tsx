@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { surfaceErrors } from "@/lib/action-result";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -272,7 +273,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
       const fd = new FormData();
       fd.set("metricId", metricId);
       fd.set("value", "done");
-      await quickLog(fd);
+      await surfaceErrors(quickLog(fd));
       hapticSuccess();
       setSettledIds((prev) => new Set(prev).add(metricId));
       setTimeout(() => setSettledIds((prev) => {
@@ -460,7 +461,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                                 const fd = new FormData();
                                 fd.set("metricId", metric.id);
                                 fd.set("value", "1");
-                                await quickLog(fd);
+                                await surfaceErrors(quickLog(fd));
                                 setPendingId(null);
                               });
                             } else {
@@ -524,7 +525,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                               const fd = new FormData();
                               fd.set("metricId", metric.id);
                               fd.set("value", "1");
-                              await quickLog(fd);
+                              await surfaceErrors(quickLog(fd));
                               setPendingId(null);
                             });
                           }}
@@ -662,7 +663,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                   const fd = new FormData();
                   fd.set("metricId", formData.get("metricId") as string);
                   fd.set("value", formData.get("value") as string || "done");
-                  await quickLog(fd);
+                  await surfaceErrors(quickLog(fd));
                   setEntryMetric(null);
                   setEntryValue("");
                 });
