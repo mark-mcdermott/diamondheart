@@ -1,92 +1,27 @@
 "use server";
 
-import { db } from "@/db";
-import { meditationPresence, userPreferences, users } from "@/db/schema";
-import { and, eq, gt, ne, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
-import {
-  PRESENCE_ACTIVE_CUTOFF_MS,
-  redactMeditator,
-  type PresenceMeditator,
-} from "@/lib/presence";
+import * as meditation from "@/server/api/meditation";
+import { asResult, type ActionResult } from "./api-result";
 
-type Result = { success: boolean; error?: string };
+/** Thin wrappers over the presence half of `src/server/api/meditation.ts`, kept until Phase 3. */
 
-export type MeditatingNow = {
-  count: number;
-  meditators: PresenceMeditator[];
-};
+export type MeditatingNow = meditation.MeditatingNow;
 
-const PREVIEW_LIMIT = 8;
-
-export async function pingMeditatingNow(): Promise<Result> {
+export async function pingMeditatingNow(): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
-
-  const now = new Date();
-  await db
-    .insert(meditationPresence)
-    .values({ userId: session.userId, startedAt: now, lastPingAt: now })
-    .onConflictDoUpdate({
-      target: meditationPresence.userId,
-      set: { lastPingAt: now },
-    });
-
-  return { success: true };
+  return asResult(() => meditation.ping(session.userId));
 }
 
-export async function stopMeditatingNow(): Promise<Result> {
+export async function stopMeditatingNow(): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
-
-  await db
-    .delete(meditationPresence)
-    .where(eq(meditationPresence.userId, session.userId));
-
-  return { success: true };
+  return asResult(() => meditation.stop(session.userId));
 }
 
 export async function getMeditatingNow(): Promise<MeditatingNow> {
   const session = await getCurrentUser();
   if (!session) return { count: 0, meditators: [] };
-
-  const cutoff = new Date(Date.now() - PRESENCE_ACTIVE_CUTOFF_MS);
-  const whereClause = and(
-    ne(meditationPresence.userId, session.userId),
-    gt(meditationPresence.lastPingAt, cutoff),
-  );
-
-  const rows = await db
-    .select({
-      userId: meditationPresence.userId,
-      userName: users.name,
-      userAvatarUrl: users.avatarUrl,
-      showName: sql<boolean | null>`${userPreferences.showNameWhenMeditating}`.as("show_name"),
-    })
-    .from(meditationPresence)
-    .innerJoin(users, eq(users.id, meditationPresence.userId))
-    .leftJoin(userPreferences, eq(userPreferences.userId, meditationPresence.userId))
-    .where(whereClause)
-    .orderBy(meditationPresence.startedAt)
-    .limit(PREVIEW_LIMIT);
-
-  const meditators: PresenceMeditator[] = rows.map((r) =>
-    redactMeditator(
-      {
-        userId: r.userId,
-        name: r.userName,
-        avatarUrl: r.userAvatarUrl,
-        isAnonymous: false,
-      },
-      r.showName ?? true,
-    ),
-  );
-
-  const [countRow] = await db
-    .select({ count: sql<number>`count(*)::int`.as("count") })
-    .from(meditationPresence)
-    .where(whereClause);
-
-  return { count: countRow?.count ?? 0, meditators };
+  return meditation.meditatingNow(session.userId);
 }
-

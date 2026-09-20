@@ -2,6 +2,7 @@
 
 import { getCurrentUser } from "@/lib/auth";
 import { type TimeRange, getDateRange } from "@/lib/chart-utils";
+import { dailyTotals as meditationDailyTotals } from "@/server/api/meditation";
 import { totalsBetween as medicalTotals } from "@/server/api/medical";
 import { dailyTotals as workoutDailyTotals } from "@/server/api/workout";
 import { totals as entertainmentTotals } from "@/server/api/entertainment";
@@ -11,23 +12,7 @@ export async function getMeditationChartData(range: TimeRange) {
   if (!session) return [];
 
   const { start, end } = getDateRange(range);
-
-  const rows = await db
-    .select({
-      date: sql<string>`DATE(${meditationSessions.date})`,
-      totalMinutes: sql<number>`COALESCE(SUM(${meditationSessions.duration}), 0) / 60`,
-      count: sql<number>`COUNT(*)`,
-    })
-    .from(meditationSessions)
-    .where(and(eq(meditationSessions.userId, session.userId), gte(meditationSessions.date, start), lte(meditationSessions.date, end)))
-    .groupBy(sql`DATE(${meditationSessions.date})`)
-    .orderBy(sql`DATE(${meditationSessions.date})`);
-
-  return rows.map((r) => ({
-    date: String(r.date),
-    minutes: Number(r.totalMinutes),
-    sessions: Number(r.count),
-  }));
+  return meditationDailyTotals(session.userId, start, end);
 }
 
 export async function getWorkoutChartData(range: TimeRange) {

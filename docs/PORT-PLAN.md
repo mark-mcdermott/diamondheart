@@ -269,6 +269,10 @@ section has endpoints.** What remains in Phase 1 is the shelved sections.
 small shelved sections in one PR, fourteen endpoints. The count increment is one
 `UPDATE … SET count = count + delta`, where the action read the row and wrote back a
 number it might have computed from a stale copy.
+**Landed 2026-09-20 — meditation** (`feat/api-meditation`): the first shelved section,
+seventeen endpoints covering sessions, the chart totals, styles, presets, the default timer
+and presence. The meditation and presence action files are wrappers; the chart reader
+delegates.
 
 **Landed 2026-09-20 — workout, entertainment, episodes and feed** (`feat/api-sections-2`):
 nineteen endpoints. Reactions became an explicit set instead of a toggle. With this,

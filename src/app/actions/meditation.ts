@@ -1,235 +1,107 @@
 "use server";
 
-import { db } from "@/db";
-import { meditationSessions, meditationStyles, meditationPresets, users } from "@/db/schema";
-import { eq, and, asc } from "drizzle-orm";
-import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "@/lib/auth";
+import * as meditation from "@/server/api/meditation";
+import { asResult, type ActionResult } from "./api-result";
 
-type Result = { success: boolean; error?: string };
+/** Thin wrappers over `src/server/api/meditation.ts`, kept until Phase 3 moves the meditate pages onto `/api/meditation/*`. */
 
-export async function logMeditationSession(formData: FormData): Promise<Result> {
+type Result = ActionResult;
+
+function text(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function int(formData: FormData, key: string): number {
+  return Number.parseInt(text(formData, key), 10);
+}
+
+async function run(paths: string[], work: (userId: string) => Promise<unknown>): Promise<Result> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
+  const result = await asResult(() => work(session.userId));
+  for (const path of paths) revalidatePath(path);
+  return result;
+}
 
-  const duration = parseInt(formData.get("duration") as string);
+export async function logMeditationSession(formData: FormData): Promise<Result> {
+  const duration = int(formData, "duration");
   if (!duration || duration <= 0) return { success: false, error: "Duration is required" };
-
-  await db.insert(meditationSessions).values({
-    id: crypto.randomUUID(),
-    userId: session.userId,
-    duration,
-    type: (formData.get("type") as string) || "guided",
-    notes: (formData.get("notes") as string) || null,
-    date: new Date(),
-  });
-
-  revalidatePath("/meditate");
-  revalidatePath("/dashboard");
-  return { success: true };
+  return run(["/meditate", "/dashboard"], (userId) =>
+    meditation.createSession(userId, { duration, type: text(formData, "type") || "guided", notes: text(formData, "notes") || null })
+  );
 }
 
 export async function updateMeditationSession(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const sessionId = formData.get("sessionId") as string;
-  const duration = parseInt(formData.get("duration") as string);
+  const duration = int(formData, "duration");
   if (!duration || duration <= 0) return { success: false, error: "Duration is required" };
-
-  await db.update(meditationSessions)
-    .set({
-      duration,
-      type: (formData.get("type") as string) || "guided",
-      notes: (formData.get("notes") as string) || null,
-    })
-    .where(and(eq(meditationSessions.id, sessionId), eq(meditationSessions.userId, session.userId)));
-
-  revalidatePath("/meditate");
-  revalidatePath("/dashboard");
-  return { success: true };
+  return run(["/meditate", "/dashboard"], (userId) =>
+    meditation.updateSession(userId, text(formData, "sessionId"), { duration, type: text(formData, "type") || "guided", notes: text(formData, "notes") || null })
+  );
 }
 
 export async function deleteMeditationSession(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const sessionId = formData.get("sessionId") as string;
-  await db.delete(meditationSessions)
-    .where(and(eq(meditationSessions.id, sessionId), eq(meditationSessions.userId, session.userId)));
-
-  revalidatePath("/meditate");
-  return { success: true };
+  return run(["/meditate"], (userId) => meditation.deleteSession(userId, text(formData, "sessionId")));
 }
 
-// --- Default Timer ---
-
 export async function getDefaultTimerSeconds(userId: string): Promise<number> {
-  const [user] = await db.select({ defaultTimerSeconds: users.defaultTimerSeconds })
-    .from(users).where(eq(users.id, userId)).limit(1);
-  return user?.defaultTimerSeconds ?? 600;
+  return meditation.defaultTimerSeconds(userId);
 }
 
 export async function setDefaultTimerSeconds(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const seconds = parseInt(formData.get("seconds") as string);
+  const seconds = int(formData, "seconds");
   if (!seconds || seconds <= 0) return { success: false, error: "Duration is required" };
-
-  await db.update(users)
-    .set({ defaultTimerSeconds: seconds, updatedAt: new Date() })
-    .where(eq(users.id, session.userId));
-
-  revalidatePath("/meditate");
-  revalidatePath("/meditate/edit");
-  return { success: true };
+  return run(["/meditate", "/meditate/edit"], (userId) => meditation.setDefaultTimer(userId, seconds));
 }
-
-// --- Seed Defaults ---
 
 export async function seedMeditationDefaults(userId: string, seedStyles: boolean, seedPresets: boolean) {
-  if (seedStyles) {
-    await db.insert(meditationStyles).values([
-      { id: crypto.randomUUID(), userId, label: "Guided", iconName: "brain", sortOrder: 0 },
-      { id: crypto.randomUUID(), userId, label: "Breathing", iconName: "wind", sortOrder: 1 },
-    ]);
-  }
-  if (seedPresets) {
-    await db.insert(meditationPresets).values([
-      { id: crypto.randomUUID(), userId, label: "5 min", seconds: 300, sortOrder: 0 },
-      { id: crypto.randomUUID(), userId, label: "10 min", seconds: 600, sortOrder: 1 },
-      { id: crypto.randomUUID(), userId, label: "15 min", seconds: 900, sortOrder: 2 },
-      { id: crypto.randomUUID(), userId, label: "20 min", seconds: 1200, sortOrder: 3 },
-      { id: crypto.randomUUID(), userId, label: "30 min", seconds: 1800, sortOrder: 4 },
-    ]);
-  }
+  if (seedStyles || seedPresets) await meditation.ensureDefaults(userId);
 }
 
-// --- Styles ---
-
 export async function getMeditationStyles(userId: string) {
-  return db.select().from(meditationStyles)
-    .where(eq(meditationStyles.userId, userId))
-    .orderBy(asc(meditationStyles.sortOrder));
+  return meditation.listStyles(userId);
 }
 
 export async function addMeditationStyle(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const label = (formData.get("label") as string)?.trim();
-  const iconName = (formData.get("iconName") as string)?.trim() || "brain";
+  const label = text(formData, "label");
   if (!label) return { success: false, error: "Label is required" };
-
-  const existing = await db.select().from(meditationStyles)
-    .where(eq(meditationStyles.userId, session.userId));
-
-  await db.insert(meditationStyles).values({
-    id: crypto.randomUUID(),
-    userId: session.userId,
-    label,
-    iconName,
-    sortOrder: existing.length,
-  });
-
-  revalidatePath("/meditate");
-  revalidatePath("/meditate/edit");
-  return { success: true };
+  return run(["/meditate", "/meditate/edit"], (userId) => meditation.createStyle(userId, { label, iconName: text(formData, "iconName") || "brain" }));
 }
 
 export async function updateMeditationStyle(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const styleId = formData.get("styleId") as string;
-  const label = (formData.get("label") as string)?.trim();
-  const iconName = (formData.get("iconName") as string)?.trim() || "brain";
+  const label = text(formData, "label");
   if (!label) return { success: false, error: "Label is required" };
-
-  await db.update(meditationStyles)
-    .set({ label, iconName })
-    .where(and(eq(meditationStyles.id, styleId), eq(meditationStyles.userId, session.userId)));
-
-  revalidatePath("/meditate");
-  revalidatePath("/meditate/edit");
-  return { success: true };
+  return run(["/meditate", "/meditate/edit"], (userId) =>
+    meditation.updateStyle(userId, text(formData, "styleId"), { label, iconName: text(formData, "iconName") || "brain" })
+  );
 }
 
 export async function deleteMeditationStyle(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const styleId = formData.get("styleId") as string;
-  await db.delete(meditationStyles)
-    .where(and(eq(meditationStyles.id, styleId), eq(meditationStyles.userId, session.userId)));
-
-  revalidatePath("/meditate");
-  revalidatePath("/meditate/edit");
-  return { success: true };
+  return run(["/meditate", "/meditate/edit"], (userId) => meditation.deleteStyle(userId, text(formData, "styleId")));
 }
 
-// --- Presets ---
-
 export async function getMeditationPresets(userId: string) {
-  return db.select().from(meditationPresets)
-    .where(eq(meditationPresets.userId, userId))
-    .orderBy(asc(meditationPresets.sortOrder));
+  return meditation.listPresets(userId);
 }
 
 export async function addMeditationPreset(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const label = (formData.get("label") as string)?.trim();
-  const seconds = parseInt(formData.get("seconds") as string);
+  const label = text(formData, "label");
+  const seconds = int(formData, "seconds");
   if (!label) return { success: false, error: "Label is required" };
   if (!seconds || seconds <= 0) return { success: false, error: "Duration is required" };
-
-  const existing = await db.select().from(meditationPresets)
-    .where(eq(meditationPresets.userId, session.userId));
-
-  await db.insert(meditationPresets).values({
-    id: crypto.randomUUID(),
-    userId: session.userId,
-    label,
-    seconds,
-    sortOrder: existing.length,
-  });
-
-  revalidatePath("/meditate");
-  revalidatePath("/meditate/edit");
-  return { success: true };
+  return run(["/meditate", "/meditate/edit"], (userId) => meditation.createPreset(userId, { label, seconds }));
 }
 
 export async function updateMeditationPreset(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const presetId = formData.get("presetId") as string;
-  const label = (formData.get("label") as string)?.trim();
-  const seconds = parseInt(formData.get("seconds") as string);
+  const label = text(formData, "label");
+  const seconds = int(formData, "seconds");
   if (!label) return { success: false, error: "Label is required" };
   if (!seconds || seconds <= 0) return { success: false, error: "Duration is required" };
-
-  await db.update(meditationPresets)
-    .set({ label, seconds })
-    .where(and(eq(meditationPresets.id, presetId), eq(meditationPresets.userId, session.userId)));
-
-  revalidatePath("/meditate");
-  revalidatePath("/meditate/edit");
-  return { success: true };
+  return run(["/meditate", "/meditate/edit"], (userId) => meditation.updatePreset(userId, text(formData, "presetId"), { label, seconds }));
 }
 
 export async function deleteMeditationPreset(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const presetId = formData.get("presetId") as string;
-  await db.delete(meditationPresets)
-    .where(and(eq(meditationPresets.id, presetId), eq(meditationPresets.userId, session.userId)));
-
-  revalidatePath("/meditate");
-  revalidatePath("/meditate/edit");
-  return { success: true };
+  return run(["/meditate", "/meditate/edit"], (userId) => meditation.deletePreset(userId, text(formData, "presetId")));
 }
