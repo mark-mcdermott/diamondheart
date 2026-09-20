@@ -21,7 +21,16 @@ function findNutrient(nutrients: UsdaNutrient[], nutrientId: number): number {
 export async function GET(request: Request) {
   const apiKey = process.env.USDA_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "USDA API key not configured" }, { status: 500 });
+    // Not a bug — a deployment without the key configured. 503 rather than 500
+    // so it reads as "unavailable" in logs, and `reason` lets the UI explain
+    // itself instead of showing an empty result list.
+    return NextResponse.json(
+      {
+        error: "Food search isn't set up on this deployment. Add a food manually with Custom.",
+        reason: "not_configured",
+      },
+      { status: 503 }
+    );
   }
 
   const { searchParams } = new URL(request.url);
@@ -32,9 +41,27 @@ export async function GET(request: Request) {
 
   const apiUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${encodeURIComponent(q)}&dataType=Foundation,SR%20Legacy&pageSize=15`;
 
-  const response = await fetch(apiUrl);
+  let response: Response;
+  try {
+    response = await fetch(apiUrl);
+  } catch {
+    return NextResponse.json(
+      { error: "Couldn't reach the food database. Try again shortly.", reason: "unreachable" },
+      { status: 502 }
+    );
+  }
+
   if (!response.ok) {
-    return NextResponse.json({ error: "Failed to fetch from USDA API" }, { status: 502 });
+    return NextResponse.json(
+      {
+        error:
+          response.status === 403 || response.status === 401
+            ? "The food database rejected our key. Check USDA_API_KEY."
+            : "The food database is having trouble. Try again shortly.",
+        reason: response.status === 403 || response.status === 401 ? "bad_key" : "upstream_error",
+      },
+      { status: 502 }
+    );
   }
 
   const data = await response.json();

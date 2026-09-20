@@ -122,6 +122,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [showFavorites, setShowFavorites] = useState(false);
   const [savingMeal, setSavingMeal] = useState<string | null>(null);
   const [mealName, setMealName] = useState("");
@@ -174,6 +175,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
         setActiveMeal(null);
         setSearchQuery("");
         setSearchResults([]);
+        setSearchError(null);
       }
     }
     document.addEventListener("mousedown", handleClick);
@@ -183,17 +185,26 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
   const doSearch = useCallback(async (q: string) => {
     if (q.length < 2) {
       setSearchResults([]);
+      setSearchError(null);
       return;
     }
     setSearching(true);
     try {
       const res = await fetch(`/api/food/search?q=${encodeURIComponent(q)}`);
+      const data = await res.json().catch(() => ({}));
+
       if (res.ok) {
-        const data = await res.json();
-        setSearchResults(data.foods || []);
+        setSearchResults(data.foods ?? []);
+        setSearchError(null);
+      } else {
+        // Swallowing this used to render as "no matches", which is a different
+        // thing entirely and left people retyping a search that could not work.
+        setSearchResults([]);
+        setSearchError(data.error ?? "Food search is unavailable right now.");
       }
     } catch {
-      // silent
+      setSearchResults([]);
+      setSearchError("Couldn't reach food search. Check your connection.");
     }
     setSearching(false);
   }, []);
@@ -594,6 +605,16 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
                   </div>
                   {searching && (
                     <p className="text-xs text-muted-foreground">Searching...</p>
+                  )}
+
+                  {!searching && searchError && (
+                    <p
+                      data-testid="search-error"
+                      className="text-xs text-destructive"
+                      role="status"
+                    >
+                      {searchError}
+                    </p>
                   )}
                   {searchResults.length > 0 && (
                     <div className="max-h-60 overflow-y-auto space-y-1">
