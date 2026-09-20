@@ -19,6 +19,7 @@ Each finished before the next starts:
 1. **Coffee** — ✅ settled as a counter metric rather than a section. See below.
 2. **Weight** — ✅ daily single-value tracking with history. The first real take-it-to-done feature.
 3. **Food** — ✅ the largest, and the one with the most existing code to salvage.
+4. **The Astro port** — started 2026-09-20 as Phase 3. Plan and status in `docs/PORT-PLAN.md`.
 
 "Finished" means: logs, displays, edits, deletes; empty, loading and error states; works on mobile; survives a fresh account with no data; covered by a test that would catch a regression.
 
@@ -63,9 +64,11 @@ Production runs on the Neon `production` branch, which holds one real account �
 
 ---
 
-## The Astro port
+## Phase 3 — The Astro port
 
-**Decided: diamondheart moves to Astro + React islands — but not yet.**
+**Decided: diamondheart moves to Astro + React islands.** Started 2026-09-20, after
+Phase 2 closed. **The plan is `docs/PORT-PLAN.md`** — decisions, six phases, and the
+checkpoint for each. This section keeps the reasoning that led there.
 
 The trigger was committing to real bundled App Store apps. Capacitor bundles a static build into the webview, and Next cannot produce one here: `output: 'export'` disables server actions (20 files, ~3,900 lines), `middleware.ts`, cookie sessions, and dynamic routes like `/metrics/[id]`. Diamondheart is built on all four.
 
@@ -76,7 +79,12 @@ What is *not* a reason to port:
 - **Speed.** Diamondheart is already fully SSR — every route renders on the server. There is no rendering gain on the web, and the reference pattern would make the dashboard client-rendered.
 - **Svelte.** It was SvelteKit as Ortholinear and moved to Next in April 2026. No Svelte remains; the Svelte projects are `themeforseen.com` and `sidvid`.
 
-**Sequence: deploy (done) → finish weight → then port as its own project.** It is a rewrite, not a tidy-up, and should not be folded into feature work.
+**Sequence: deploy (done) → finish weight (done) → finish food (done) → port.** It is a
+rewrite of the data layer, not a tidy-up, and is not folded into feature work. Unlike
+frunk's port it runs as a strangler inside the live Next app first — REST endpoints and
+Better Auth land section by section while every merge still ships — and the shell swap
+to Astro is one PR at the end, verified on a preview deploy. `docs/PORT-PLAN.md`
+Decision 1 records why.
 
 ---
 
