@@ -58,9 +58,11 @@ describe("meditation", () => {
   });
 
   it("sums minutes and sessions per day", async () => {
-    await meditation.createSession(user.id, { duration: 600, date: new Date("2026-09-20T08:00:00") });
-    await meditation.createSession(user.id, { duration: 300, date: new Date("2026-09-20T20:00:00") });
-    await meditation.createSession(user.id, { duration: 1200, date: new Date("2026-09-21T08:00:00") });
+    // Days are grouped by the database's DATE(), which reads the UTC day — the same
+    // rule the food and dashboard totals follow — so the fixtures sit mid-day UTC.
+    await meditation.createSession(user.id, { duration: 600, date: new Date("2026-09-20T10:00:00Z") });
+    await meditation.createSession(user.id, { duration: 300, date: new Date("2026-09-20T14:00:00Z") });
+    await meditation.createSession(user.id, { duration: 1200, date: new Date("2026-09-21T10:00:00Z") });
     const res = await call(meditation.totals.GET, `${PATH}/totals?from=2026-09-20&to=2026-09-21`, { as: user });
     expect(res.status).toBe(200);
     expect((res.json as { days: unknown[] }).days).toEqual([
