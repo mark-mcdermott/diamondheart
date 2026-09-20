@@ -11,32 +11,6 @@ import {
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { type TimeRange, getDateRange } from "@/lib/chart-utils";
-import { dailyTotals } from "@/server/api/food";
-
-export async function getFoodChartData(range: TimeRange) {
-  const session = await getCurrentUser();
-  if (!session) return [];
-
-  const { start, end } = getDateRange(range);
-  return dailyTotals(session.userId, start, end);
-}
-
-export async function getFoodDailyTotals(startISO: string, endISO: string) {
-  const session = await getCurrentUser();
-  if (!session) return [];
-
-  const start = new Date(startISO);
-  const end = new Date(endISO);
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) return [];
-
-  return (await dailyTotals(session.userId, start, end)).map((day) => ({
-    date: day.date,
-    calories: Math.round(day.calories),
-    protein: Math.round(day.protein),
-    carbs: Math.round(day.carbs),
-    fat: Math.round(day.fat),
-  }));
-}
 
 export async function getMeditationChartData(range: TimeRange) {
   const session = await getCurrentUser();

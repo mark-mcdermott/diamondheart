@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition, useCallback, useRef, useEffect, lazy, Suspense } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { toast } from "sonner";
+import { api, errorMessage } from "@/app/api";
 import { targetProgress, type FoodTargets, type MacroKey } from "@/lib/targets";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,16 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { DatePickerCalendar } from "@/components/ui/date-picker-calendar";
 import { toISODate } from "@/lib/dates";
-import {
-  addFood,
-  removeFood,
-  favoriteFood,
-  unfavoriteFood,
-  saveFavoriteMeal,
-  deleteFavoriteMeal,
-  logFavoriteMeal,
-  createCustomFood,
-} from "@/app/actions/food";
+import { parseNumberField, parsePositiveNumberField } from "@/lib/numbers";
+import type { MealType } from "@/server/api/_lib/schemas";
 import {
   ArrowLeft,
   Plus,
@@ -92,6 +85,8 @@ interface FavMeal {
 }
 
 interface FoodClientProps {
+  /** Refetches the day (and whatever else changed) after a write lands. */
+  onChanged: () => Promise<unknown>;
   meals: Record<string, FoodItem[]>;
   totals: { calories: number; protein: number; carbs: number; fat: number };
   targets: FoodTargets;
@@ -117,7 +112,7 @@ function formatDate(date: Date): string {
   });
 }
 
-export function FoodClient({ meals, totals, targets, favoriteFoods, favoriteMeals, selectedDate }: FoodClientProps) {
+export function FoodClient({ onChanged, meals, totals, targets, favoriteFoods, favoriteMeals, selectedDate }: FoodClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -246,129 +241,117 @@ export function FoodClient({ meals, totals, targets, favoriteFoods, favoriteMeal
     setStagedQty("1");
   }
 
+  /** Runs a write, surfaces its failure, and refetches. Kept inside a transition so `isPending` still gates the buttons. */
+  function write(work: () => Promise<unknown>, after?: () => void) {
+    startTransition(async () => {
+      try {
+        await work();
+        after?.();
+      } catch (error) {
+        toast.error(errorMessage(error));
+      }
+      await onChanged();
+    });
+  }
+
   function confirmStagedFood() {
     if (!activeMeal || !stagedFood) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("mealType", activeMeal);
-      fd.set("date", selectedDate);
-      fd.set("name", stagedFood.name);
-      fd.set("fdcId", stagedFood.fdcId || "");
-      fd.set("servingSize", String(stagedFood.servingSize));
-      fd.set("servingUnit", stagedFood.servingUnit);
-      fd.set("calories", String(stagedFood.calories));
-      fd.set("protein", String(stagedFood.protein));
-      fd.set("carbs", String(stagedFood.carbs));
-      fd.set("fat", String(stagedFood.fat));
-      fd.set("quantity", stagedQty);
-      await surfaceErrors(addFood(fd));
-      setStagedFood(null);
-      setSearchQuery("");
-      setSearchResults([]);
-      setActiveMeal(null);
-    });
+    const meal = activeMeal as MealType;
+    write(
+      () =>
+        api.food.log({
+          mealType: meal,
+          date: selectedDate,
+          name: stagedFood.name,
+          fdcId: stagedFood.fdcId || null,
+          servingSize: stagedFood.servingSize,
+          servingUnit: stagedFood.servingUnit,
+          calories: stagedFood.calories,
+          protein: stagedFood.protein,
+          carbs: stagedFood.carbs,
+          fat: stagedFood.fat,
+          quantity: parsePositiveNumberField(stagedQty, 1),
+        }),
+      () => {
+        setStagedFood(null);
+        setSearchQuery("");
+        setSearchResults([]);
+        setActiveMeal(null);
+      }
+    );
   }
 
   function handleCreateCustom() {
     if (!activeMeal || !customName) return;
-    startTransition(async () => {
-      // Save as custom food
-      const cfd = new FormData();
-      cfd.set("name", customName);
-      cfd.set("calories", customCal || "0");
-      cfd.set("protein", customProtein || "0");
-      cfd.set("carbs", customCarbs || "0");
-      cfd.set("fat", customFat || "0");
-      cfd.set("servingSize", customServing || "1");
-      cfd.set("servingUnit", customUnit || "serving");
-      await createCustomFood(cfd);
-
-      // Also add it to the selected day's meal
-      const fd = new FormData();
-      fd.set("mealType", activeMeal);
-      fd.set("date", selectedDate);
-      fd.set("name", customName);
-      fd.set("servingSize", customServing || "1");
-      fd.set("servingUnit", customUnit || "serving");
-      fd.set("calories", customCal || "0");
-      fd.set("protein", customProtein || "0");
-      fd.set("carbs", customCarbs || "0");
-      fd.set("fat", customFat || "0");
-      fd.set("quantity", "1");
-      await surfaceErrors(addFood(fd));
-
-      setShowCustom(false);
-      setCustomName("");
-      setCustomCal("");
-      setCustomProtein("");
-      setCustomCarbs("");
-      setCustomFat("");
-      setCustomServing("1");
-      setCustomUnit("serving");
-      setActiveMeal(null);
-    });
+    const meal = activeMeal as MealType;
+    const macros = {
+      calories: parseNumberField(customCal, 0),
+      protein: parseNumberField(customProtein, 0),
+      carbs: parseNumberField(customCarbs, 0),
+      fat: parseNumberField(customFat, 0),
+      servingSize: parsePositiveNumberField(customServing, 1),
+      servingUnit: customUnit || "serving",
+    };
+    write(
+      async () => {
+        // Save it as a custom food, then add it to the selected day's meal.
+        await api.food.createCustom({ name: customName, ...macros });
+        await api.food.log({ mealType: meal, date: selectedDate, name: customName, quantity: 1, ...macros });
+      },
+      () => {
+        setShowCustom(false);
+        setCustomName("");
+        setCustomCal("");
+        setCustomProtein("");
+        setCustomCarbs("");
+        setCustomFat("");
+        setCustomServing("1");
+        setCustomUnit("serving");
+        setActiveMeal(null);
+      }
+    );
   }
 
   function handleRemoveFood(itemId: string) {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("itemId", itemId);
-      await surfaceErrors(removeFood(fd));
-    });
+    write(() => api.food.removeItem(itemId));
   }
 
   function handleStarFood(food: SearchResult) {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("name", food.description);
-      fd.set("fdcId", food.fdcId);
-      fd.set("servingSize", String(food.servingSize));
-      fd.set("servingUnit", food.servingUnit);
-      fd.set("calories", String(food.calories));
-      fd.set("protein", String(food.protein));
-      fd.set("carbs", String(food.carbs));
-      fd.set("fat", String(food.fat));
-      await surfaceErrors(favoriteFood(fd));
-    });
+    write(() =>
+      api.food.favorite({
+        name: food.description,
+        fdcId: food.fdcId,
+        servingSize: food.servingSize,
+        servingUnit: food.servingUnit,
+        calories: food.calories,
+        protein: food.protein,
+        carbs: food.carbs,
+        fat: food.fat,
+      })
+    );
   }
 
   function handleUnstarFood(favId: string) {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("favoriteId", favId);
-      await surfaceErrors(unfavoriteFood(fd));
-    });
+    write(() => api.food.unfavorite(favId));
   }
 
   function handleSaveMeal(mealType: string) {
     if (!mealName.trim()) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("mealName", mealName);
-      fd.set("mealType", mealType);
-      fd.set("date", selectedDate);
-      await surfaceErrors(saveFavoriteMeal(fd));
-      setSavingMeal(null);
-      setMealName("");
-    });
+    write(
+      () => api.food.saveMeal({ name: mealName.trim(), mealType: mealType as MealType, date: selectedDate }),
+      () => {
+        setSavingMeal(null);
+        setMealName("");
+      }
+    );
   }
 
   function handleLogFavMeal(mealId: string, mealType: string) {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("mealId", mealId);
-      fd.set("mealType", mealType);
-      fd.set("date", selectedDate);
-      await surfaceErrors(logFavoriteMeal(fd));
-    });
+    write(() => api.food.logMeal(mealId, { mealType: mealType as MealType, date: selectedDate }));
   }
 
   function handleDeleteFavMeal(mealId: string) {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("mealId", mealId);
-      await surfaceErrors(deleteFavoriteMeal(fd));
-    });
+    write(() => api.food.deleteMeal(mealId));
   }
 
   return (

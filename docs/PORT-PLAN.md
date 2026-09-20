@@ -320,7 +320,13 @@ three pages read `GET /api/metrics/:id` and `GET /api/metrics`, and write entrie
 metric edits through the endpoints, passing the viewer's unit so mass readings convert on
 the server as before. A foreign or missing metric renders its own "page not found", which
 is what the isolation spec asserts. Four more actions gone; `quickLog` is the last
-tracker action and moves with the dashboard. Food and the dashboard remain.
+tracker action and moves with the dashboard.
+
+**Landed 2026-09-20 — food** (`feat/applet-food`): the day view reads the log, the
+targets, favourites and saved meals through the API; the 778-line client kept its markup
+and its eight handlers became API calls that refetch. The chart and the overview read
+`GET /api/food/totals`. The food action file is gone, and so are the two food chart
+readers. The dashboard is the last plan section.
 
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the
