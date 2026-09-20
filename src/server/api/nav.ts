@@ -11,7 +11,7 @@ import {
 import type { ApiHandler } from "./_lib/context";
 import { requireSession } from "./_lib/guard";
 import { HttpError, fail, handler, json, notFound, readJson } from "./_lib/http";
-import { navVisibilitySchema, reorderNavSchema } from "./_lib/schemas";
+import { navVisibilitySchema, reorderSchema } from "./_lib/schemas";
 
 const FEED_HREF = "/feed";
 
@@ -313,7 +313,7 @@ export const GET: ApiHandler = ({ request }) =>
 export const PATCH: ApiHandler = ({ request }) =>
   handler(async () => {
     const { userId } = await requireSession(request);
-    const { ids } = await readJson(request, reorderNavSchema);
+    const { ids } = await readJson(request, reorderSchema);
     return json({ items: await reorderNav(userId, ids) });
   });
 

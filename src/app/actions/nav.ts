@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { TRACKING_SECTIONS } from "@/lib/nav-utils";
-import { HttpError, type ApiError } from "@/server/api/_lib/http";
+import { asResult, type ActionResult } from "./api-result";
 import {
   categoryNavStatus,
   readNavItems,
@@ -20,11 +20,6 @@ import {
  * translate a form field and a toggle into an explicit `visible` value.
  */
 
-export type ActionResult = {
-  success: boolean;
-  error?: string;
-};
-
 export async function getNavItems(userId: string) {
   return readNavItems(userId);
 }
@@ -35,19 +30,6 @@ export async function getTrackingSectionStatus(userId: string) {
 
 export async function getCategoryNavStatus(userId: string, categoryIds: string[]) {
   return categoryNavStatus(userId, categoryIds);
-}
-
-/** Turns the API's error response into the `{ success, error }` the clients still read. */
-async function asResult(work: () => Promise<unknown>): Promise<ActionResult> {
-  try {
-    await work();
-    return { success: true };
-  } catch (cause) {
-    if (!(cause instanceof HttpError)) throw cause;
-    const body = (await cause.response.json()) as ApiError;
-    const detail = body.fields ? Object.values(body.fields)[0]?.[0] : undefined;
-    return { success: false, error: detail ?? body.error };
-  }
 }
 
 export async function toggleNavItemVisibility(formData: FormData): Promise<ActionResult> {

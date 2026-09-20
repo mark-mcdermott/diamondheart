@@ -243,6 +243,15 @@ minted random ids while the client held the deterministic virtual ones, so a fre
 account's first reorder or toggle matched nothing and reported success. The seed now
 keeps the virtual ids, and a reorder with an id that is not yours is a 422.
 
+**Landed 2026-09-20 — categories, metrics and entries** (`feat/api-metrics`): fourteen
+endpoints over the tracker tables, with the action files reduced to wrappers. Entry writes
+take an explicit `unit` for what the value is expressed in, so the conversion decision is
+the caller's to state rather than the server's to guess from a preference; the wrappers
+pass the viewer's unit to keep today's behaviour. `slugify` moved to `src/lib/slug.ts`
+from two copies. The default category is now consistently named General.
+Reminders came with it: four endpoints replacing route handlers that spread the raw
+request body into the update, which would have let a body rewrite `user_id`.
+
 - `src/server/api/_lib/`: `http.ts` (`json`, `fail`, `HttpError`, `handler`, `readJson`),
   `guard.ts` (`requireSession` → `{ userId }`; ownership helpers that put the owner in the
   `WHERE` clause so a foreign row is a 404, never an oracle), `schemas.ts` (Zod shapes;

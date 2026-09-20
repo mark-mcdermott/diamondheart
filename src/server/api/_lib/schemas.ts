@@ -37,8 +37,8 @@ export const updatePreferencesSchema = z
 
 export type UpdatePreferences = z.infer<typeof updatePreferencesSchema>;
 
-/** A full ordering of the caller's nav: every id once, nothing that is not theirs. */
-export const reorderNavSchema = z
+/** A full ordering of the caller's rows: every id once, nothing that is not theirs. */
+export const reorderSchema = z
   .object({
     ids: z
       .array(z.string().min(1))
@@ -48,3 +48,106 @@ export const reorderNavSchema = z
   .strict();
 
 export const navVisibilitySchema = z.object({ visible: z.boolean() }).strict();
+
+const name = z.string().trim().min(1, "Name is required").max(100);
+/** Free text where "" from an empty form field means "clear it". */
+const optionalText = z
+  .string()
+  .trim()
+  .max(2000)
+  .transform((v) => v || null)
+  .nullable();
+
+export const createCategorySchema = z.object({ name }).strict();
+export const updateCategorySchema = z.object({ name }).strict();
+
+const metricFields = {
+  name,
+  valueType: z.string().trim().min(1).max(32),
+  unit: z
+    .string()
+    .trim()
+    .max(32)
+    .transform((v) => v || null)
+    .nullable(),
+  dailyGoal: z.number().int().min(1, "Daily goal must be at least 1").nullable(),
+  /** Field definitions for structured value types; stored as JSON as given. */
+  fields: z.unknown().nullable(),
+  categoryId: z.string().min(1).nullable(),
+  counter: z.boolean(),
+  singleValuePerDay: z.boolean(),
+  hidden: z.boolean(),
+};
+
+export const createMetricSchema = z
+  .object({
+    ...metricFields,
+    unit: metricFields.unit.optional(),
+    dailyGoal: metricFields.dailyGoal.optional(),
+    fields: metricFields.fields.optional(),
+    categoryId: metricFields.categoryId.optional(),
+    counter: metricFields.counter.optional(),
+    singleValuePerDay: metricFields.singleValuePerDay.optional(),
+  })
+  .omit({ hidden: true })
+  .strict();
+
+export const updateMetricSchema = z.object(metricFields).partial().strict();
+
+/** Timestamps cross the wire as ISO strings and reach Drizzle as `Date`. */
+const isoDate = z.string().datetime({ offset: true }).transform((v) => new Date(v));
+
+/** An entry value; "done" is what a bare quick-log records. */
+const entryValue = z.string().trim().min(1).max(200);
+
+export const createEntrySchema = z
+  .object({
+    value: entryValue.default("done"),
+    date: isoDate.optional(),
+    notes: optionalText.optional(),
+    /** The unit `value` is expressed in when the metric measures mass; omitted means the metric's own. */
+    unit: z.enum(MASS_UNITS).optional(),
+  })
+  .strict();
+
+export const updateEntrySchema = z
+  .object({
+    value: entryValue,
+    notes: optionalText,
+    unit: z.enum(MASS_UNITS),
+  })
+  .partial()
+  .strict();
+
+export type CreateMetric = z.infer<typeof createMetricSchema>;
+export type UpdateMetric = z.infer<typeof updateMetricSchema>;
+export type CreateEntry = z.infer<typeof createEntrySchema>;
+export type UpdateEntry = z.infer<typeof updateEntrySchema>;
+
+const reminderFields = {
+  label: z.string().trim().min(1, "Label is required").max(100),
+  /** 24-hour wall-clock time, `HH:MM`. */
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be HH:MM"),
+  /** Days of the week, 0 = Sunday. */
+  days: z
+    .array(z.number().int().min(0).max(6))
+    .min(1, "Pick at least one day")
+    .refine((d) => new Set(d).size === d.length, "Days must not repeat"),
+  timezone: z.string().trim().min(1).max(64),
+  enabled: z.boolean(),
+  metricId: z.string().min(1).nullable(),
+};
+
+export const createReminderSchema = z
+  .object({
+    ...reminderFields,
+    timezone: reminderFields.timezone.optional(),
+    enabled: reminderFields.enabled.optional(),
+    metricId: reminderFields.metricId.optional(),
+  })
+  .strict();
+
+export const updateReminderSchema = z.object(reminderFields).partial().strict();
+
+export type CreateReminder = z.infer<typeof createReminderSchema>;
+export type UpdateReminder = z.infer<typeof updateReminderSchema>;

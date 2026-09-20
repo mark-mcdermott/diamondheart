@@ -23,7 +23,7 @@ rely on, so every endpoint is safe when reached directly.
 
 `200` ok · `201` created · `204` deleted / signed out · `400` malformed JSON ·
 `401` no session · `403` signed in but not allowed · `404` missing or not yours ·
-`422` validation failed · `500` unexpected
+`409` conflicts with what exists · `422` validation failed · `500` unexpected
 
 401 precedes 422: an unauthenticated request with a bad body learns nothing about the schema.
 
@@ -57,6 +57,49 @@ saw is always the id a mutation finds.
 | `PATCH` | `/api/nav/:id` | `{ visible }`. Visible items are packed first, then hidden. Setting the state an item already has is a no-op. The locked Dashboard item cannot be hidden (422). Someone else's item is a 404. |
 | `PUT` | `/api/nav/sections/:key` | `{ visible }` for a tracking section by key (`food`, `workout`, …). Unknown key → 404. |
 | `PUT` | `/api/nav/categories/:categoryId` | `{ visible }` for one of the caller's metric categories, creating its nav item on first show. A category that is not theirs → 404. |
+
+### Categories
+
+Metric categories. Every account gets a **General** category (slug `default`) the first
+time something needs one; it cannot be deleted.
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/categories` | `{ categories }` in sort order. |
+| `POST` | `/api/categories` | `{ name }` → 201 `{ category }`. The slug comes from the name; a name whose slug already exists is a **409**. |
+| `PATCH` | `/api/categories/:id` | `{ name }` — renames the category, its slug, and the nav item that points at it. |
+| `DELETE` | `/api/categories/:id` | 204. Its metrics move to General; its nav item is removed. The default category is a 409. |
+
+### Metrics
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/metrics` | `{ metrics }` — the caller's non-archived metrics in sort order. |
+| `POST` | `/api/metrics` | `name`, `valueType` required; `unit`, `dailyGoal` (default 1, `null` for none), `fields`, `categoryId` (default General; someone else's is a 404), `counter`, `singleValuePerDay` optional → 201 `{ metric }`. |
+| `PATCH` | `/api/metrics` | `{ ids }` — reorder; every id must be the caller's (422 otherwise). Returns `{ metrics }`. |
+| `GET` | `/api/metrics/:id` | `{ metric, entries }`, entries newest first, **values as stored** in the metric's own unit — convert for display client-side with `toDisplayValue`. |
+| `PATCH` | `/api/metrics/:id` | Any subset of the create fields plus `hidden`. A metric cannot both accumulate and hold one reading per day: `singleValuePerDay: true` forces `counter: false`. |
+| `DELETE` | `/api/metrics/:id` | 204. Entries cascade. |
+
+### Entries
+
+| Method | Path | Notes |
+|---|---|---|
+| `POST` | `/api/metrics/:id/entries` | `value` (default `"done"`), `date` (ISO, default now), `notes`, `unit` (`kg`/`lb`: the unit `value` is in, for a mass metric — the server converts to the metric's unit). **201** for a new entry; **200** when a single-value-per-day metric replaced that day's entry. |
+| `PATCH` | `/api/entries/:id` | `value`, `notes`, `unit` — partial. |
+| `DELETE` | `/api/entries/:id` | 204. |
+
+Values are text in the database (`"done"`, free text, or a number), so they cross the wire
+as strings.
+
+### Reminders
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/reminders` | `{ reminders }`, ordered by time. |
+| `POST` | `/api/reminders` | `label`, `time` (`HH:MM`), `days` (0–6, Sunday first, no repeats) required; `timezone` (default `America/Chicago`), `enabled` (default true), `metricId` (must be the caller's, else 404) optional → 201 `{ reminder }`. |
+| `PATCH` | `/api/reminders/:id` | Any subset of the same fields. Unknown keys are a 422 — the old handler spread the raw body into the update, so a body could have rewritten `user_id`. |
+| `DELETE` | `/api/reminders/:id` | 204. |
 
 ## Verifying against a deploy
 
