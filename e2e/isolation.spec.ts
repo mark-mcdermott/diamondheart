@@ -40,3 +40,26 @@ test("one user cannot see or open another user's metric", async ({ browser }) =>
   await aliceContext.close();
   await bobContext.close();
 });
+
+test("a failed action tells the user why, instead of appearing to work", async ({ page }) => {
+  await signUp(page);
+  await page.goto("/metrics");
+
+  async function createCategory(name: string) {
+    await page.getByRole("button", { name: /add section|add category/i }).click();
+    await page.getByPlaceholder(/Section name/i).fill(name);
+    await page.getByRole("button", { name: "Create", exact: true }).click();
+  }
+
+  // On success the component closes the form — the app's own signal that the
+  // write landed, rather than guessing at how categories render.
+  await createCategory("Duplicate Probe");
+  await expect(page.getByPlaceholder(/Section name/i)).toBeHidden({ timeout: 20_000 });
+
+  // The same name again is rejected by createCategory. Before the Toaster was
+  // mounted, that rejection had nowhere to go: the form simply sat there.
+  await createCategory("Duplicate Probe");
+  await expect(page.getByText(/already exists/i)).toBeVisible({ timeout: 15_000 });
+  // And the form stays open, because it did not succeed.
+  await expect(page.getByPlaceholder(/Section name/i)).toBeVisible();
+});

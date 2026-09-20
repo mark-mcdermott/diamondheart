@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -169,7 +170,7 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
     startTransition(async () => {
       const fd = new FormData();
       fd.set("ids", JSON.stringify(reordered.map((i) => i.id)));
-      await reorderNavItems(fd);
+      await surfaceErrors(reorderNavItems(fd));
     });
   }
 
@@ -193,7 +194,7 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
     startTransition(async () => {
       const fd = new FormData();
       fd.set("itemId", itemId);
-      await toggleNavItemVisibility(fd);
+      await surfaceErrors(toggleNavItemVisibility(fd));
     });
   }
 
@@ -230,7 +231,7 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
                 setNetflixUI((prev) => !prev);
                 startTransition(async () => {
                   const fd = new FormData();
-                  await toggleNetflixUI(fd);
+                  await surfaceErrors(toggleNetflixUI(fd));
                 });
               }}
               className="mt-0.5"
@@ -267,7 +268,7 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
                 setShowInFeed((prev) => !prev);
                 startTransition(async () => {
                   const fd = new FormData();
-                  await toggleMeditationFeedVisibility(fd);
+                  await surfaceErrors(toggleMeditationFeedVisibility(fd));
                 });
               }}
               className="mt-0.5"
@@ -292,7 +293,7 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
                 setShowName((prev) => !prev);
                 startTransition(async () => {
                   const fd = new FormData();
-                  await toggleShowNameWhenMeditating(fd);
+                  await surfaceErrors(toggleShowNameWhenMeditating(fd));
                 });
               }}
               className="mt-0.5"
@@ -330,7 +331,7 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
                 setSiteName((prev) => !prev);
                 startTransition(async () => {
                   const fd = new FormData();
-                  await toggleSiteName(fd);
+                  await surfaceErrors(toggleSiteName(fd));
                 });
               }}
               className="mt-0.5"
@@ -385,7 +386,7 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
                     startTransition(async () => {
                       const fd = new FormData();
                       fd.set("weightUnit", unit);
-                      await setWeightUnit(fd);
+                      await surfaceErrors(setWeightUnit(fd));
                     });
                   }}
                   className={`px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useCallback, useRef, useEffect, lazy, Suspense } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -258,7 +259,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
       fd.set("carbs", String(stagedFood.carbs));
       fd.set("fat", String(stagedFood.fat));
       fd.set("quantity", stagedQty);
-      await addFood(fd);
+      await surfaceErrors(addFood(fd));
       setStagedFood(null);
       setSearchQuery("");
       setSearchResults([]);
@@ -292,7 +293,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
       fd.set("carbs", customCarbs || "0");
       fd.set("fat", customFat || "0");
       fd.set("quantity", "1");
-      await addFood(fd);
+      await surfaceErrors(addFood(fd));
 
       setShowCustom(false);
       setCustomName("");
@@ -310,7 +311,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
     startTransition(async () => {
       const fd = new FormData();
       fd.set("itemId", itemId);
-      await removeFood(fd);
+      await surfaceErrors(removeFood(fd));
     });
   }
 
@@ -325,7 +326,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
       fd.set("protein", String(food.protein));
       fd.set("carbs", String(food.carbs));
       fd.set("fat", String(food.fat));
-      await favoriteFood(fd);
+      await surfaceErrors(favoriteFood(fd));
     });
   }
 
@@ -333,7 +334,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
     startTransition(async () => {
       const fd = new FormData();
       fd.set("favoriteId", favId);
-      await unfavoriteFood(fd);
+      await surfaceErrors(unfavoriteFood(fd));
     });
   }
 
@@ -344,7 +345,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
       fd.set("mealName", mealName);
       fd.set("mealType", mealType);
       fd.set("date", selectedDate);
-      await saveFavoriteMeal(fd);
+      await surfaceErrors(saveFavoriteMeal(fd));
       setSavingMeal(null);
       setMealName("");
     });
@@ -356,7 +357,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
       fd.set("mealId", mealId);
       fd.set("mealType", mealType);
       fd.set("date", selectedDate);
-      await logFavoriteMeal(fd);
+      await surfaceErrors(logFavoriteMeal(fd));
     });
   }
 
@@ -364,7 +365,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
     startTransition(async () => {
       const fd = new FormData();
       fd.set("mealId", mealId);
-      await deleteFavoriteMeal(fd);
+      await surfaceErrors(deleteFavoriteMeal(fd));
     });
   }
 

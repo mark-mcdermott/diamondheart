@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import { VALUE_TYPES } from "@/lib/metric-types";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -314,7 +315,7 @@ export function MetricsClient({
     startTransition(async () => {
       const fd = new FormData();
       fd.set("ids", JSON.stringify(reordered.map((m) => m.id)));
-      await reorderMetrics(fd);
+      await surfaceErrors(reorderMetrics(fd));
     });
   }
 
@@ -325,7 +326,7 @@ export function MetricsClient({
       fd.set("valueType", newType);
       fd.set("unit", newUnit);
       fd.set("dailyGoal", newGoal);
-      const result = await addMetric(fd);
+      const result = await surfaceErrors(addMetric(fd));
       if (result.success) {
         setNewName("");
         setNewType("none");
@@ -340,7 +341,7 @@ export function MetricsClient({
     startTransition(async () => {
       const fd = new FormData();
       fd.set("metricId", metricId);
-      await deleteMetric(fd);
+      await surfaceErrors(deleteMetric(fd));
     });
   }
 
@@ -348,7 +349,7 @@ export function MetricsClient({
     startTransition(async () => {
       const fd = new FormData();
       fd.set("metricId", metricId);
-      await toggleHidden(fd);
+      await surfaceErrors(toggleHidden(fd));
     });
   }
 
@@ -357,7 +358,7 @@ export function MetricsClient({
     startTransition(async () => {
       const fd = new FormData();
       fd.set("name", newCategoryName.trim());
-      const result = await createCategory(fd);
+      const result = await surfaceErrors(createCategory(fd));
       if (result.success) {
         setNewCategoryName("");
         setShowAddCategory(false);
@@ -370,7 +371,7 @@ export function MetricsClient({
       const fd = new FormData();
       fd.set("categoryId", categoryId);
       fd.set("name", name);
-      await renameCategory(fd);
+      await surfaceErrors(renameCategory(fd));
     });
   }
 
@@ -378,7 +379,7 @@ export function MetricsClient({
     startTransition(async () => {
       const fd = new FormData();
       fd.set("categoryId", categoryId);
-      await deleteCategory(fd);
+      await surfaceErrors(deleteCategory(fd));
     });
   }
 
@@ -387,7 +388,7 @@ export function MetricsClient({
     startTransition(async () => {
       const fd = new FormData();
       fd.set("categoryId", categoryId);
-      await toggleCategoryInNav(fd);
+      await surfaceErrors(toggleCategoryInNav(fd));
     });
   }
 
@@ -398,7 +399,7 @@ export function MetricsClient({
     startTransition(async () => {
       const fd = new FormData();
       fd.set("sectionHref", section.href);
-      await toggleTrackingSectionInNav(fd);
+      await surfaceErrors(toggleTrackingSectionInNav(fd));
     });
   }
 
