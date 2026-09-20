@@ -270,6 +270,11 @@ small shelved sections in one PR, fourteen endpoints. The count increment is one
 `UPDATE … SET count = count + delta`, where the action read the row and wrote back a
 number it might have computed from a stale copy.
 
+**Landed 2026-09-20 — workout, entertainment, episodes and feed** (`feat/api-sections-2`):
+nineteen endpoints. Reactions became an explicit set instead of a toggle. With this,
+`chart-data.ts` is nothing but delegates, and finances is the last section without
+endpoints.
+
 - `src/server/api/_lib/`: `http.ts` (`json`, `fail`, `HttpError`, `handler`, `readJson`),
   `guard.ts` (`requireSession` → `{ userId }`; ownership helpers that put the owner in the
   `WHERE` clause so a foreign row is a 404, never an oracle), `schemas.ts` (Zod shapes;

@@ -286,3 +286,73 @@ export type UpdateTrackingItem = z.infer<typeof updateTrackingItemSchema>;
 export type CreateMedicalLog = z.infer<typeof createMedicalLogSchema>;
 export type CreateAppointment = z.infer<typeof createAppointmentSchema>;
 export type UpdateAppointment = z.infer<typeof updateAppointmentSchema>;
+
+export const createWorkoutSchema = z.object({ name: optionalShort(200).optional() }).strict();
+export const finishWorkoutSchema = z.object({ duration: z.number().int().min(0).nullable(), notes: optionalText }).partial().strict();
+export const addSetSchema = z
+  .object({
+    exerciseId: z.string().min(1),
+    reps: z.number().int().min(0),
+    weight: z.number().int().min(0),
+    unit: shortText(16).optional(),
+    type: shortText(32).optional(),
+    notes: optionalText.optional(),
+  })
+  .strict();
+
+const entertainmentFields = {
+  type: shortText(32),
+  title: shortText(300),
+  creator: optionalShort(200),
+  status: shortText(32),
+  rating: z.number().int().min(1).max(5).nullable(),
+  notes: optionalText,
+  startDate: isoDate.nullable(),
+  endDate: isoDate.nullable(),
+  imdbId: optionalShort(32),
+  posterUrl: optionalShort(2000),
+  overview: optionalText,
+  releaseDate: optionalShort(32),
+  genres: optionalShort(300),
+  seasonCount: z.number().int().min(0).nullable(),
+  episodeCount: z.number().int().min(0).nullable(),
+  runtime: z.number().int().min(0).nullable(),
+  voteAverage: optionalShort(16),
+};
+export const createEntertainmentSchema = z
+  .object({
+    type: entertainmentFields.type,
+    title: entertainmentFields.title,
+    ...Object.fromEntries(
+      Object.entries(entertainmentFields)
+        .filter(([k]) => k !== "type" && k !== "title")
+        .map(([k, v]) => [k, v.optional()])
+    ),
+  })
+  .strict();
+export const updateEntertainmentSchema = z.object(entertainmentFields).partial().strict();
+
+export const episodeWatchedSchema = z
+  .object({
+    seriesImdbId: shortText(32),
+    episodeImdbId: shortText(32),
+    watched: z.boolean(),
+    season: z.number().int().min(0).optional(),
+    episode: z.number().int().min(0).optional(),
+    title: optionalShort(300).optional(),
+    airDate: optionalShort(32).optional(),
+  })
+  .strict()
+  .refine((v) => !v.watched || (v.season !== undefined && v.episode !== undefined), {
+    message: "Season and episode are required to mark an episode watched",
+    path: ["season"],
+  });
+
+export const reactionSchema = z.object({ reacted: z.boolean() }).strict();
+
+export type CreateWorkout = z.infer<typeof createWorkoutSchema>;
+export type FinishWorkout = z.infer<typeof finishWorkoutSchema>;
+export type AddSet = z.infer<typeof addSetSchema>;
+export type CreateEntertainment = z.infer<typeof createEntertainmentSchema>;
+export type UpdateEntertainment = z.infer<typeof updateEntertainmentSchema>;
+export type EpisodeWatched = z.infer<typeof episodeWatchedSchema>;

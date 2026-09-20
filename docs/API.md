@@ -163,6 +163,34 @@ Three shelved sections, each a plain owned list.
 | `GET` / `POST` | `/api/appointments` | `{ appointments }` newest first / `title`, `date` (ISO) required; `appointmentType` (default `doctor`), `provider`, `location`, `durationMinutes`, `status` (default `upcoming`), `notes`, `followUp` → 201 `{ appointment }`. |
 | `PATCH` / `DELETE` | `/api/appointments/:id` | Partial → `{ appointment }` / 204. |
 
+### Workout
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/workout?active=` | `{ exercises, recentWorkouts, active }` — built-in then custom exercises, the last five hundred workouts, and the named workout with its sets (exercise names joined in) or `null`. |
+| `POST` | `/api/workout/workouts` | `{ name? }` → 201 `{ workout }`. |
+| `PATCH` | `/api/workout/workouts/:id` | `{ duration?, notes? }` → `{ workout }` — finishing. |
+| `POST` | `/api/workout/workouts/:id/sets` | `{ exerciseId, reps, weight, unit?, type?, notes? }` → 201 `{ set, isPR }`. The exercise must be built-in or the caller's; the set number continues per exercise; a heavier weight at the same rep count is a personal record. |
+| `DELETE` | `/api/workout/sets/:id` | 204. Sets have no `user_id`; ownership is the workout's. |
+| `GET` | `/api/workout/totals?from=&to=` | `{ days: [{ date, duration, volume, sessions }] }`. |
+
+### Entertainment
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` / `POST` | `/api/entertainment` | `{ items }` by last update / `type`, `title` required; `creator`, `status` (default `completed`), `rating` 1–5, `notes`, `startDate`, `endDate`, and the OMDB fields → 201 `{ item }`. |
+| `PATCH` / `DELETE` | `/api/entertainment/:id` | Partial → `{ item }` / 204. |
+| `GET` | `/api/entertainment/totals` | `{ byType, byStatus }`. |
+| `GET` | `/api/entertainment/episodes?series=` | `{ episodes }` the caller has watched of a series. |
+| `PUT` | `/api/entertainment/episodes` | `{ seriesImdbId, episodeImdbId, watched, season?, episode?, title?, airDate? }` → `{ episode }` or `{ episode: null }` when cleared. Marking is idempotent; season and episode are required to mark. |
+
+### Feed
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/feed` | `{ items }` — the last thirty meditations by other members who have not opted out, with reaction counts and whether the caller reacted. |
+| `PUT` | `/api/feed/reactions/:sessionId` | `{ reacted }` → `{ reacted, reactionCount }`. Explicit rather than a toggle, so a retry cannot flip it twice. |
+
 ## Verifying against a deploy
 
 ```bash

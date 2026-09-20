@@ -1,76 +1,43 @@
 "use server";
 
-import { db } from "@/db";
-import { showEpisodes } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
-import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "@/lib/auth";
+import * as entertainment from "@/server/api/entertainment";
+import { asResult, type ActionResult } from "./api-result";
 
-type Result = { success: boolean; error?: string };
+/** Thin wrappers over the episode half of `src/server/api/entertainment.ts`, kept until Phase 3. */
+
+function text(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
 
 export async function getWatchedEpisodes(seriesImdbId: string) {
   const session = await getCurrentUser();
   if (!session) return [];
-
-  return db
-    .select()
-    .from(showEpisodes)
-    .where(
-      and(
-        eq(showEpisodes.userId, session.userId),
-        eq(showEpisodes.seriesImdbId, seriesImdbId),
-      ),
-    );
+  return entertainment.listWatched(session.userId, seriesImdbId);
 }
 
-export async function setEpisodeWatched(formData: FormData): Promise<Result> {
+export async function setEpisodeWatched(formData: FormData): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  const seriesImdbId = formData.get("seriesImdbId") as string;
-  const episodeImdbId = formData.get("episodeImdbId") as string;
-  const watched = formData.get("watched") === "true";
+  const seriesImdbId = text(formData, "seriesImdbId");
+  const episodeImdbId = text(formData, "episodeImdbId");
+  if (!seriesImdbId || !episodeImdbId) return { success: false, error: "Missing identifiers" };
+  const watched = text(formData, "watched") === "true";
+  const season = Number.parseInt(text(formData, "season"), 10);
+  const episode = Number.parseInt(text(formData, "episode"), 10);
+  if (watched && (!Number.isInteger(season) || !Number.isInteger(episode))) return { success: false, error: "Invalid season/episode" };
 
-  if (!seriesImdbId || !episodeImdbId) {
-    return { success: false, error: "Missing identifiers" };
-  }
-
-  if (!watched) {
-    await db
-      .delete(showEpisodes)
-      .where(
-        and(
-          eq(showEpisodes.userId, session.userId),
-          eq(showEpisodes.episodeImdbId, episodeImdbId),
-        ),
-      );
-    revalidatePath("/entertainment");
-    return { success: true };
-  }
-
-  const season = parseInt(formData.get("season") as string, 10);
-  const episode = parseInt(formData.get("episode") as string, 10);
-  if (!Number.isInteger(season) || !Number.isInteger(episode)) {
-    return { success: false, error: "Invalid season/episode" };
-  }
-
-  const title = (formData.get("title") as string) || null;
-  const airDate = (formData.get("airDate") as string) || null;
-
-  await db
-    .insert(showEpisodes)
-    .values({
-      id: crypto.randomUUID(),
-      userId: session.userId,
+  const result = await asResult(() =>
+    entertainment.setWatched(session.userId, {
       seriesImdbId,
       episodeImdbId,
-      season,
-      episode,
-      title,
-      airDate,
+      watched,
+      ...(watched ? { season, episode, title: text(formData, "title") || null, airDate: text(formData, "airDate") || null } : {}),
     })
-    .onConflictDoNothing();
-
+  );
   revalidatePath("/entertainment");
-  return { success: true };
+  return result;
 }

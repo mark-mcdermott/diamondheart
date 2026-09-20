@@ -1,15 +1,12 @@
 "use server";
 
-import { db } from "@/db";
-import {
-  workouts,
-  workoutSets,
-  personalRecords,
-} from "@/db/schema";
-import { eq, and, desc, inArray } from "drizzle-orm";
-import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "@/lib/auth";
+import { HttpError, type ApiError } from "@/server/api/_lib/http";
+import * as workout from "@/server/api/workout";
+
+/** Thin wrappers over `src/server/api/workout.ts`, kept until Phase 3. */
 
 export type WorkoutActionResult = {
   success: boolean;
@@ -18,168 +15,67 @@ export type WorkoutActionResult = {
   workoutId?: string;
 };
 
+function text(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+async function failure(cause: unknown): Promise<WorkoutActionResult> {
+  if (!(cause instanceof HttpError)) throw cause;
+  const body = (await cause.response.json()) as ApiError;
+  return { success: false, error: body.fields ? Object.values(body.fields)[0]?.[0] ?? body.error : body.error };
+}
+
 export async function startWorkout(formData: FormData): Promise<void> {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
-
-  const name = (formData.get("name") as string) || null;
-  const workoutId = crypto.randomUUID();
-
-  await db.insert(workouts).values({
-    id: workoutId,
-    userId: session.userId,
-    name,
-    date: new Date(),
-  });
-
-  redirect(`/workout?active=${workoutId}`);
+  const created = await workout.startWorkout(session.userId, { name: text(formData, "name") || null });
+  redirect(`/workout?active=${created.id}`);
 }
 
 export async function addSet(formData: FormData): Promise<WorkoutActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  const workoutId = formData.get("workoutId") as string;
-  const exerciseId = formData.get("exerciseId") as string;
-  const reps = parseInt(formData.get("reps") as string);
-  const weight = parseInt(formData.get("weight") as string);
-  const unit = (formData.get("unit") as string) || "lbs";
-  const type = (formData.get("type") as string) || "regular";
+  const workoutId = text(formData, "workoutId");
+  const exerciseId = text(formData, "exerciseId");
+  const reps = Number.parseInt(text(formData, "reps"), 10);
+  const weight = Number.parseInt(text(formData, "weight"), 10);
+  if (!workoutId || !exerciseId || Number.isNaN(reps) || Number.isNaN(weight)) return { success: false, error: "Missing required fields" };
 
-  if (!workoutId || !exerciseId || isNaN(reps) || isNaN(weight)) {
-    return { success: false, error: "Missing required fields" };
+  try {
+    const { isPR } = await workout.addSet(session.userId, workoutId, { exerciseId, reps, weight, unit: text(formData, "unit") || "lbs", type: text(formData, "type") || "regular" });
+    revalidatePath("/workout");
+    return { success: true, isPR, workoutId };
+  } catch (cause) {
+    return failure(cause);
   }
-
-  const [workout] = await db
-    .select({ id: workouts.id })
-    .from(workouts)
-    .where(and(eq(workouts.id, workoutId), eq(workouts.userId, session.userId)))
-    .limit(1);
-
-  if (!workout) return { success: false, error: "Workout not found" };
-
-  // Get next set number
-  const existingSets = await db
-    .select({ setNumber: workoutSets.setNumber })
-    .from(workoutSets)
-    .where(
-      and(
-        eq(workoutSets.workoutId, workoutId),
-        eq(workoutSets.exerciseId, exerciseId)
-      )
-    )
-    .orderBy(desc(workoutSets.setNumber))
-    .limit(1);
-
-  const setNumber = existingSets.length > 0 ? existingSets[0].setNumber + 1 : 1;
-  const setId = crypto.randomUUID();
-
-  await db.insert(workoutSets).values({
-    id: setId,
-    workoutId,
-    exerciseId,
-    setNumber,
-    reps,
-    weight,
-    unit,
-    type,
-  });
-
-  // Check for personal record
-  const existingPR = await db
-    .select()
-    .from(personalRecords)
-    .where(
-      and(
-        eq(personalRecords.userId, session.userId),
-        eq(personalRecords.exerciseId, exerciseId),
-        eq(personalRecords.repCount, reps)
-      )
-    )
-    .limit(1);
-
-  let isPR = false;
-
-  if (existingPR.length === 0) {
-    await db.insert(personalRecords).values({
-      id: crypto.randomUUID(),
-      userId: session.userId,
-      exerciseId,
-      repCount: reps,
-      weight,
-      unit,
-      date: new Date(),
-      setId,
-    });
-    isPR = true;
-  } else if (weight > existingPR[0].weight) {
-    await db.delete(personalRecords).where(eq(personalRecords.id, existingPR[0].id));
-    await db.insert(personalRecords).values({
-      id: crypto.randomUUID(),
-      userId: session.userId,
-      exerciseId,
-      repCount: reps,
-      weight,
-      unit,
-      date: new Date(),
-      setId,
-    });
-    isPR = true;
-  }
-
-  revalidatePath("/workout");
-  return { success: true, isPR, workoutId };
 }
 
 export async function deleteSet(formData: FormData): Promise<WorkoutActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
-
-  const setId = formData.get("setId") as string;
-  const workoutId = formData.get("workoutId") as string;
-
+  const setId = text(formData, "setId");
   if (!setId) return { success: false, error: "Set ID is required" };
-
-  const deleted = await db
-    .delete(workoutSets)
-    .where(
-      and(
-        eq(workoutSets.id, setId),
-        inArray(
-          workoutSets.workoutId,
-          db
-            .select({ id: workouts.id })
-            .from(workouts)
-            .where(eq(workouts.userId, session.userId))
-        )
-      )
-    )
-    .returning({ id: workoutSets.id });
-
-  if (deleted.length === 0) return { success: false, error: "Set not found" };
-
-  revalidatePath("/workout");
-  return { success: true, workoutId };
+  try {
+    await workout.deleteSet(session.userId, setId);
+    revalidatePath("/workout");
+    return { success: true, workoutId: text(formData, "workoutId") };
+  } catch (cause) {
+    return failure(cause);
+  }
 }
 
 export async function finishWorkout(formData: FormData): Promise<void> {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
-
-  const workoutId = formData.get("workoutId") as string;
-  const duration = parseInt(formData.get("duration") as string);
-  const notes = (formData.get("notes") as string) || null;
-
+  const workoutId = text(formData, "workoutId");
   if (!workoutId) return;
-
-  await db
-    .update(workouts)
-    .set({
-      duration: isNaN(duration) ? null : duration,
-      notes,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(workouts.id, workoutId), eq(workouts.userId, session.userId)));
-
+  const duration = Number.parseInt(text(formData, "duration"), 10);
+  try {
+    await workout.finishWorkout(session.userId, workoutId, { duration: Number.isNaN(duration) ? null : duration, notes: text(formData, "notes") || null });
+  } catch (cause) {
+    if (!(cause instanceof HttpError)) throw cause;
+  }
   redirect("/workout");
 }
