@@ -7,9 +7,26 @@ export function unique(): string {
   return Math.random().toString(36).slice(2, 10);
 }
 
+
+/**
+ * Navigates and waits until the page can actually respond to input.
+ *
+ * Server-rendered markup is clickable before React attaches handlers, so
+ * Playwright will happily click a button that does nothing — the element is
+ * "actionable" by its rules, but the app is not listening yet. Locally the gap
+ * is invisible; on CI's slower runners it is wide enough to swallow clicks,
+ * which is what made three separate tests flaky.
+ */
+export async function gotoReady(page: Page, path: string): Promise<void> {
+  await page.goto(path);
+  await page.waitForLoadState("domcontentloaded");
+  // Hydration finishes in an idle callback after the last chunk lands.
+  await page.waitForLoadState("networkidle").catch(() => {});
+}
+
 export async function signUp(page: Page): Promise<string> {
   const email = `e2e-${unique()}@example.test`;
-  await page.goto("/signup");
+  await gotoReady(page, "/signup");
   await page.fill('input[name="email"]', email);
   await page.fill('input[name="name"]', "E2E User");
   await page.fill('input[name="password"]', PASSWORD);
@@ -20,7 +37,7 @@ export async function signUp(page: Page): Promise<string> {
 }
 
 export async function createMetric(page: Page, name: string): Promise<string> {
-  await page.goto("/metrics");
+  await gotoReady(page, "/metrics");
   await page.getByRole("button", { name: "Add Metric" }).click();
   await page.getByPlaceholder("e.g. Water intake").fill(name);
   await page.getByRole("button", { name: "Save Metric" }).click();
@@ -35,7 +52,7 @@ export async function createMetric(page: Page, name: string): Promise<string> {
     .first();
 
   await expect(async () => {
-    await page.goto("/metrics");
+    await gotoReady(page, "/metrics");
     await expect(link).toBeVisible({ timeout: 5_000 });
   }).toPass({ timeout: 30_000 });
 
@@ -47,7 +64,7 @@ export async function createMetric(page: Page, name: string): Promise<string> {
 
 /** Logs a value through the /entry form, which redirects to the dashboard. */
 export async function logEntry(page: Page, metricId: string, value: string): Promise<void> {
-  await page.goto("/entry");
+  await gotoReady(page, "/entry");
   await page.selectOption('select[name="metricId"]', metricId);
   await page.fill('input[name="value"]', value);
   await page.getByRole("button", { name: /save entry/i }).click();
