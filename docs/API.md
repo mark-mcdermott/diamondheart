@@ -101,6 +101,27 @@ as strings.
 | `PATCH` | `/api/reminders/:id` | Any subset of the same fields. Unknown keys are a 422 — the old handler spread the raw body into the update, so a body could have rewritten `user_id`. |
 | `DELETE` | `/api/reminders/:id` | 204. |
 
+### Food
+
+Days are calendar days, `YYYY-MM-DD`, read in the server's local time the way the pages
+read them. Meal types are `breakfast`, `lunch`, `dinner`, `snack`. Macro numbers are per
+serving; a logged item also carries `quantity`, and every total multiplies the two.
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/food/log?date=` | `{ date, meals: { breakfast, lunch, dinner, snack }, totals }` for one day (today when omitted). |
+| `POST` | `/api/food/log` | `mealType`, `name` required; `date`, `fdcId`, `servingSize`, `servingUnit`, `calories`, `protein`, `carbs`, `fat`, `quantity` optional → 201 `{ item }`. |
+| `DELETE` | `/api/food/log/items/:id` | 204. Items have no `user_id`; ownership is the parent log's, checked in the same query. |
+| `GET` | `/api/food/totals?from=&to=` | `{ days: [{ date, calories, protein, carbs, fat }] }`, inclusive of both days, unrounded, days with nothing logged absent. |
+| `GET` / `POST` | `/api/food/custom` | `{ customFoods }` / `name` + macros → 201 `{ customFood }`. |
+| `DELETE` | `/api/food/custom/:id` | 204. |
+| `GET` / `POST` | `/api/food/favorites` | `{ favorites }` / `name` + macros, optional `fdcId` or `customFoodId` (must be the caller's) → 201 `{ favorite }`. |
+| `DELETE` | `/api/food/favorites/:id` | 204. |
+| `GET` / `POST` | `/api/food/meals` | `{ meals }`, each with its `items` / `{ name, mealType, date? }` saves what is logged under that meal on that day → 201 `{ meal }`; nothing logged is a 422. |
+| `DELETE` | `/api/food/meals/:id` | 204. Items cascade. |
+| `POST` | `/api/food/meals/:id/log` | `{ mealType, date? }` logs every item of the saved meal → 201 `{ items }`. |
+| `GET` | `/api/food/search?q=` | `{ foods }` from USDA FoodData Central. **Signed-in only now** — the deployment's key was reachable by anyone who found the URL. 503 `reason: not_configured` without a key; 502 with `reason` when USDA is unreachable, rejects the key, or errors. |
+
 ## Verifying against a deploy
 
 ```bash
