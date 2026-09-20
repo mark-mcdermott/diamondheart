@@ -307,7 +307,13 @@ the API and owns the query keys; `src/app/query-provider.tsx` is Decision 5's on
 PATCH with an optimistic cache patch that is put back if the server disagrees; nav
 toggles and reorders work the same way. Nine server actions were deleted with it. The
 page shows a skeleton while loading and a retry card on failure, which the
-server-rendered version never had to. Sections and metrics are next.
+server-rendered version never had to.
+
+**Landed 2026-09-20 — the metrics page** (`feat/applet-metrics`): `GET /api/metrics/overview`
+replaces the nine queries the page ran, and the client does every edit — add, hide,
+reorder, delete, section create/rename/delete, nav toggles — through the endpoints with
+optimistic cache patches. Seven more server actions and the whole categories action file
+are gone. The metric detail, edit and entry pages are next.
 
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the

@@ -1,4 +1,6 @@
-import type { UpdatePreferences } from "@/server/api/_lib/schemas";
+import type { TrackerCategory, TrackerMetric } from "@/db/schema";
+import type { CreateMetric, UpdateMetric, UpdatePreferences } from "@/server/api/_lib/schemas";
+import type { MetricsOverview } from "@/server/api/metrics";
 import type { Preferences } from "@/server/api/preferences";
 
 /**
@@ -62,9 +64,17 @@ export interface NavItem {
   locked: boolean;
 }
 
+/** A row as JSON delivers it: every `Date` column is an ISO string. */
+export type Serialized<T> = { [K in keyof T]: T[K] extends Date ? string : T[K] };
+
+export type Metric = Serialized<TrackerMetric>;
+export type Category = Serialized<TrackerCategory>;
+export type Overview = Omit<MetricsOverview, "categories" | "metrics"> & { categories: Category[]; metrics: Metric[] };
+
 export const keys = {
   preferences: ["preferences"] as const,
   nav: ["nav"] as const,
+  metricsOverview: ["metrics", "overview"] as const,
 };
 
 export const api = {
@@ -79,10 +89,29 @@ export const api = {
       request<{ items: NavItem[] }>("/api/nav", { method: "PATCH", ...json({ ids }) }).then((r) => r.items),
     setVisible: (id: string, visible: boolean) =>
       request<{ items: NavItem[] }>(`/api/nav/${id}`, { method: "PATCH", ...json({ visible }) }).then((r) => r.items),
+    setCategory: (categoryId: string, visible: boolean) =>
+      request<{ items: NavItem[] }>(`/api/nav/categories/${categoryId}`, { method: "PUT", ...json({ visible }) }).then((r) => r.items),
+    setSection: (key: string, visible: boolean) =>
+      request<{ items: NavItem[] }>(`/api/nav/sections/${key}`, { method: "PUT", ...json({ visible }) }).then((r) => r.items),
+  },
+  metrics: {
+    overview: () => request<Overview>("/api/metrics/overview"),
+    create: (input: CreateMetric) => request<{ metric: Metric }>("/api/metrics", { method: "POST", ...json(input) }).then((r) => r.metric),
+    update: (id: string, patch: UpdateMetric) =>
+      request<{ metric: Metric }>(`/api/metrics/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.metric),
+    remove: (id: string) => request<void>(`/api/metrics/${id}`, { method: "DELETE" }),
+    reorder: (ids: string[]) =>
+      request<{ metrics: Metric[] }>("/api/metrics", { method: "PATCH", ...json({ ids }) }).then((r) => r.metrics),
+  },
+  categories: {
+    create: (name: string) => request<{ category: Category }>("/api/categories", { method: "POST", ...json({ name }) }).then((r) => r.category),
+    rename: (id: string, name: string) =>
+      request<{ category: Category }>(`/api/categories/${id}`, { method: "PATCH", ...json({ name }) }).then((r) => r.category),
+    remove: (id: string) => request<void>(`/api/categories/${id}`, { method: "DELETE" }),
   },
 };
 
-export type { Preferences, UpdatePreferences };
+export type { Preferences, UpdatePreferences, CreateMetric, UpdateMetric };
 
 /** What to show a person when a call fails: the first field message, else the error, else a generic line. */
 export function errorMessage(error: unknown): string {

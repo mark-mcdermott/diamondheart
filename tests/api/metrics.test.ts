@@ -171,6 +171,20 @@ describe("metrics", () => {
     expect((await call(metrics.entry.DELETE, "/api/entries/x", { method: "DELETE", as: user, params: { id: entry.id } })).status).toBe(404);
   });
 
+  it("the overview gathers categories, metrics and nav and section status in one read", async () => {
+    const res = await call(metrics.overview.GET, `${PATH}/overview`, { as: user });
+    expect(res.status).toBe(200);
+    const body = res.json as metrics.MetricsOverview;
+    expect(body.metrics.length).toBeGreaterThan(0);
+    expect(body.categories.length).toBeGreaterThan(0);
+    for (const c of body.categories) expect(body.categoryNavStatus[c.id]).toBe(false);
+    expect(body.sectionStatus.food).toBe(true);
+    expect(body.sectionStatus.workout).toBe(false);
+    expect(body.sectionSummaries.food).toMatch(/cal today$/);
+    expect(body.sectionSummaries.meditate).toMatch(/sessions, \d+ min this week$/);
+    expect((await call(metrics.overview.GET, `${PATH}/overview`)).status).toBe(401);
+  });
+
   it("deleting a metric takes its entries with it, and a foreign metric is a 404", async () => {
     const coffeeId = ((await call(metrics.GET, PATH, { as: user })).json as Many).metrics.find((m) => m.slug === "coffee")!.id;
     expect((await call(metrics.item.DELETE, `${PATH}/x`, { method: "DELETE", as: other, params: { id: coffeeId } })).status).toBe(404);
