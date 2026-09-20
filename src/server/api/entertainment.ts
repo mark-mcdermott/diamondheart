@@ -63,12 +63,19 @@ export function listWatched(userId: string, seriesImdbId: string): Promise<ShowE
   return db.select().from(showEpisodes).where(and(eq(showEpisodes.userId, userId), eq(showEpisodes.seriesImdbId, seriesImdbId)));
 }
 
-/** Marks an episode watched (idempotent) or clears it. */
+/**
+ * Marks an episode watched or clears it. The table has no unique constraint on
+ * the pair, so idempotence is a read first rather than an upsert — the old
+ * action's `onConflictDoNothing` had nothing to conflict on and duplicated rows.
+ */
 export async function setWatched(userId: string, input: EpisodeWatched): Promise<ShowEpisode | null> {
+  const owned = and(eq(showEpisodes.userId, userId), eq(showEpisodes.episodeImdbId, input.episodeImdbId));
   if (!input.watched) {
-    await db.delete(showEpisodes).where(and(eq(showEpisodes.userId, userId), eq(showEpisodes.episodeImdbId, input.episodeImdbId)));
+    await db.delete(showEpisodes).where(owned);
     return null;
   }
+  const [existing] = await db.select().from(showEpisodes).where(owned).limit(1);
+  if (existing) return existing;
   const [inserted] = await db
     .insert(showEpisodes)
     .values({
@@ -81,11 +88,8 @@ export async function setWatched(userId: string, input: EpisodeWatched): Promise
       title: input.title ?? null,
       airDate: input.airDate ?? null,
     })
-    .onConflictDoNothing()
     .returning();
-  if (inserted) return inserted;
-  const [existing] = await db.select().from(showEpisodes).where(and(eq(showEpisodes.userId, userId), eq(showEpisodes.episodeImdbId, input.episodeImdbId))).limit(1);
-  return existing ?? null;
+  return inserted;
 }
 
 export const GET: ApiHandler = ({ request }) =>

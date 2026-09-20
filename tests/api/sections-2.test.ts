@@ -109,9 +109,11 @@ describe("workout, entertainment and feed", () => {
     const theirs = await meditation.createSession(other.id, { duration: 600 });
     await meditation.createSession(user.id, { duration: 300 });
 
+    // The development database holds other members too, so assert on presence, not the whole list.
     const mine = (await call(feed.GET, "/api/feed", { as: user })).json as { items: feed.FeedItem[] };
-    expect(mine.items.map((i) => i.sessionId)).toEqual([theirs.id]);
-    expect(mine.items[0]).toMatchObject({ reactionCount: 0, reactedByMe: false });
+    const theirsInFeed = mine.items.find((i) => i.sessionId === theirs.id);
+    expect(theirsInFeed).toMatchObject({ userId: other.id, reactionCount: 0, reactedByMe: false });
+    expect(mine.items.some((i) => i.userId === user.id)).toBe(false);
 
     const on = (await call(feed.reaction.PUT, "/api/feed/reactions/x", { method: "PUT", as: user, params: { sessionId: theirs.id }, body: { reacted: true } })).json;
     expect(on).toEqual({ reacted: true, reactionCount: 1 });
@@ -122,7 +124,7 @@ describe("workout, entertainment and feed", () => {
     expect((await call(feed.reaction.PUT, "/api/feed/reactions/x", { method: "PUT", as: user, params: { sessionId: "nope" }, body: { reacted: true } })).status).toBe(404);
 
     await db.insert(userPreferences).values({ id: crypto.randomUUID(), userId: other.id, showMeditationInFeed: false });
-    const hidden = (await call(feed.GET, "/api/feed", { as: user })).json as { items: unknown[] };
-    expect(hidden.items).toEqual([]);
+    const hidden = (await call(feed.GET, "/api/feed", { as: user })).json as { items: feed.FeedItem[] };
+    expect(hidden.items.some((i) => i.userId === other.id)).toBe(false);
   });
 });

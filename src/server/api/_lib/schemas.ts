@@ -355,11 +355,21 @@ export const createEntertainmentSchema = z
   .object({
     type: entertainmentFields.type,
     title: entertainmentFields.title,
-    ...Object.fromEntries(
-      Object.entries(entertainmentFields)
-        .filter(([k]) => k !== "type" && k !== "title")
-        .map(([k, v]) => [k, v.optional()])
-    ),
+    creator: entertainmentFields.creator.optional(),
+    status: entertainmentFields.status.optional(),
+    rating: entertainmentFields.rating.optional(),
+    notes: entertainmentFields.notes.optional(),
+    startDate: entertainmentFields.startDate.optional(),
+    endDate: entertainmentFields.endDate.optional(),
+    imdbId: entertainmentFields.imdbId.optional(),
+    posterUrl: entertainmentFields.posterUrl.optional(),
+    overview: entertainmentFields.overview.optional(),
+    releaseDate: entertainmentFields.releaseDate.optional(),
+    genres: entertainmentFields.genres.optional(),
+    seasonCount: entertainmentFields.seasonCount.optional(),
+    episodeCount: entertainmentFields.episodeCount.optional(),
+    runtime: entertainmentFields.runtime.optional(),
+    voteAverage: entertainmentFields.voteAverage.optional(),
   })
   .strict();
 export const updateEntertainmentSchema = z.object(entertainmentFields).partial().strict();
