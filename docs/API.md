@@ -44,6 +44,20 @@ Sign-in and sign-up are still server actions until Phase 2 replaces them with Be
 | `GET` | `/api/preferences` | `{ preferences }` — defaults for a user who has never saved any. |
 | `PATCH` | `/api/preferences` | Any subset of `useNetflixUI`, `showSiteName`, `showMeditationInFeed`, `showNameWhenMeditating`, `weightUnit` (`kg`/`lb`), `dashboardSections` (unique keys), `targets` (`calories`/`protein`/`carbs`/`fat`, each a positive number or `null`). Returns the new `{ preferences }`. |
 
+### Nav
+
+The sidebar. A fresh account has no rows; `GET` answers with in-memory defaults whose ids
+are deterministic, and the first mutation persists those same ids — so an id the client
+saw is always the id a mutation finds.
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/nav` | `{ items }` in display order. |
+| `PATCH` | `/api/nav` | `{ ids }` — the full ordering. Every id must be the caller's; an unknown one is a 422 naming it, never a silent no-op. Returns `{ items }`. |
+| `PATCH` | `/api/nav/:id` | `{ visible }`. Visible items are packed first, then hidden. Setting the state an item already has is a no-op. The locked Dashboard item cannot be hidden (422). Someone else's item is a 404. |
+| `PUT` | `/api/nav/sections/:key` | `{ visible }` for a tracking section by key (`food`, `workout`, …). Unknown key → 404. |
+| `PUT` | `/api/nav/categories/:categoryId` | `{ visible }` for one of the caller's metric categories, creating its nav item on first show. A category that is not theirs → 404. |
+
 ## Verifying against a deploy
 
 ```bash
