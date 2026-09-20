@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,7 +42,7 @@ export function TrackingClient({ items }: TrackingClientProps) {
       fd.set("count", count);
       fd.set("unit", unit);
       fd.set("notes", notes);
-      await addTrackingItem(fd);
+      await surfaceErrors(addTrackingItem(fd));
       resetForm();
       setShowAdd(false);
     });
@@ -53,7 +54,7 @@ export function TrackingClient({ items }: TrackingClientProps) {
       const fd = new FormData();
       fd.set("itemId", itemId);
       fd.set("delta", String(delta));
-      await updateTrackingCount(fd);
+      await surfaceErrors(updateTrackingCount(fd));
       setPendingId(null);
     });
   }
@@ -68,7 +69,7 @@ export function TrackingClient({ items }: TrackingClientProps) {
       fd.set("count", count);
       fd.set("unit", unit);
       fd.set("notes", notes);
-      await updateTrackingItem(fd);
+      await surfaceErrors(updateTrackingItem(fd));
       setEditItem(null);
       resetForm();
     });
@@ -78,7 +79,7 @@ export function TrackingClient({ items }: TrackingClientProps) {
     startTransition(async () => {
       const fd = new FormData();
       fd.set("itemId", itemId);
-      await deleteTrackingItem(fd);
+      await surfaceErrors(deleteTrackingItem(fd));
     });
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useTransition, lazy, Suspense } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -190,7 +191,7 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
       fd.set("duration", String(duration));
       fd.set("type", sessionType);
       if (notes) fd.set("notes", notes);
-      await logMeditationSession(fd);
+      await surfaceErrors(logMeditationSession(fd));
       handleReset();
       setNotes("");
     });
@@ -228,7 +229,7 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
     startTransition(async () => {
       const fd = new FormData();
       fd.set("sessionId", sessionId);
-      await deleteMeditationSession(fd);
+      await surfaceErrors(deleteMeditationSession(fd));
     });
   }
 
@@ -249,7 +250,7 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
       fd.set("duration", String(mins * 60));
       fd.set("type", editType);
       fd.set("notes", editNotes);
-      await updateMeditationSession(fd);
+      await surfaceErrors(updateMeditationSession(fd));
       setEditSession(null);
     });
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import Link from "next/link";
 import { ArrowLeft, Plus, Wallet, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,14 +42,14 @@ export function AccountsClient({ accounts }: Props) {
 
   function handleAdd(formData: FormData) {
     startTransition(async () => {
-      await addAccount(formData);
+      await surfaceErrors(addAccount(formData));
       setAddOpen(false);
     });
   }
 
   function handleEdit(formData: FormData) {
     startTransition(async () => {
-      await updateAccount(formData);
+      await surfaceErrors(updateAccount(formData));
       setEditOpen(false);
       setEditingAccount(null);
     });
@@ -58,7 +59,7 @@ export function AccountsClient({ accounts }: Props) {
     startTransition(async () => {
       const fd = new FormData();
       fd.append("accountId", account.id);
-      await deleteAccount(fd);
+      await surfaceErrors(deleteAccount(fd));
       setDeleteOpen(false);
       setDeletingAccount(null);
     });

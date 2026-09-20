@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, lazy, Suspense } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,7 +94,7 @@ export function WorkoutClient({
       fd.set("reps", reps);
       fd.set("weight", weight);
       fd.set("unit", unit);
-      const result = await addSet(fd);
+      const result = await surfaceErrors(addSet(fd));
       if (result.isPR) {
         const ex = exercises.find((e) => e.id === selectedExercise);
         setPrAlert(`New PR! ${ex?.name ?? "Exercise"} — ${weight} ${unit} x ${reps}`);
@@ -110,7 +111,7 @@ export function WorkoutClient({
       const fd = new FormData();
       fd.set("setId", setId);
       fd.set("workoutId", activeWorkout.id);
-      await deleteSet(fd);
+      await surfaceErrors(deleteSet(fd));
     });
   }
 

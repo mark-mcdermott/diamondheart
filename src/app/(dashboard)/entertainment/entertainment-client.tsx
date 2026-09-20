@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, lazy, Suspense } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,7 +93,7 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
       fd.set("status", status);
       if (rating) fd.set("rating", String(rating));
       fd.set("notes", notes);
-      await addEntertainment(fd);
+      await surfaceErrors(addEntertainment(fd));
       resetForm();
       setShowAdd(false);
     });
@@ -107,7 +108,7 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
       fd.set("status", status);
       if (rating) fd.set("rating", String(rating));
       fd.set("notes", notes);
-      await updateEntertainment(fd);
+      await surfaceErrors(updateEntertainment(fd));
       setEditItem(null);
       resetForm();
     });
@@ -117,7 +118,7 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
     startTransition(async () => {
       const fd = new FormData();
       fd.set("itemId", itemId);
-      await deleteEntertainment(fd);
+      await surfaceErrors(deleteEntertainment(fd));
     });
   }
 

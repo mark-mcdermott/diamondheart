@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { addTransaction, deleteTransaction } from "@/app/actions/financial";
@@ -86,7 +87,7 @@ export function TransactionsClient({ transactions, accounts, categories }: Props
 
   function handleAdd(formData: FormData) {
     startTransition(async () => {
-      const result = await addTransaction(formData);
+      const result = await surfaceErrors(addTransaction(formData));
       if (result.success) {
         setDialogOpen(false);
       }
@@ -97,7 +98,7 @@ export function TransactionsClient({ transactions, accounts, categories }: Props
     startTransition(async () => {
       const fd = new FormData();
       fd.append("transactionId", transactionId);
-      await deleteTransaction(fd);
+      await surfaceErrors(deleteTransaction(fd));
     });
   }
 

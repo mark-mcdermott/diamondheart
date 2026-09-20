@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { surfaceErrors } from "@/lib/action-result";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -68,7 +69,7 @@ export function BudgetsClient({ budgets, categories, monthlySpending }: Props) {
 
   function handleSetBudget(formData: FormData) {
     startTransition(async () => {
-      await setBudget(formData);
+      await surfaceErrors(setBudget(formData));
       setDialogOpen(false);
       setSelectedCategoryId("");
     });
@@ -78,7 +79,7 @@ export function BudgetsClient({ budgets, categories, monthlySpending }: Props) {
     startTransition(async () => {
       const fd = new FormData();
       fd.append("budgetId", budgetId);
-      await deleteBudget(fd);
+      await surfaceErrors(deleteBudget(fd));
     });
   }
 

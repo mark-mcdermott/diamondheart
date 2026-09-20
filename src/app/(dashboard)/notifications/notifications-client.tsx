@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { surfaceErrors } from "@/lib/action-result";
 import { useTransition } from "react";
 import { Bell, Check, Trash2, Film, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,7 @@ export function NotificationsClient({
     startTransition(async () => {
       const formData = new FormData();
       formData.set("notificationId", notificationId);
-      await markAsRead(formData);
+      await surfaceErrors(markAsRead(formData));
       router.refresh();
     });
   }
@@ -76,7 +77,7 @@ export function NotificationsClient({
     startTransition(async () => {
       const formData = new FormData();
       formData.set("notificationId", notificationId);
-      await deleteNotification(formData);
+      await surfaceErrors(deleteNotification(formData));
       router.refresh();
     });
   }
