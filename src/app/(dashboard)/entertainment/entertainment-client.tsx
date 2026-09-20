@@ -1,21 +1,23 @@
 "use client";
 
-import { useState, useTransition, lazy, Suspense } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useState, lazy, Suspense } from "react";
+import { api, type CreateEntertainmentInput, type EntertainmentItemView, type UpdateEntertainmentInput } from "@/app/api";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { addEntertainment, updateEntertainment, deleteEntertainment } from "@/app/actions/entertainment";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { EntertainmentItem } from "@/db/schema";
 import { Plus, Trash2, Pencil, Tv, Film, BookOpen, Music, Gamepad2, Podcast, Star } from "lucide-react";
 import { useViewRange } from "@/lib/use-view-range";
 import { viewRangeBounds, viewRangeLabel } from "@/lib/view-range";
 
 interface EntertainmentClientProps {
-  items: EntertainmentItem[];
+  items: EntertainmentItemView[];
 }
+
+/** The list and the chart's totals both live under "entertainment". */
+const AFTER_WRITE = [["entertainment"]] as const;
 
 const TYPES = [
   { key: "show", label: "Shows", icon: Tv },
@@ -67,9 +69,8 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
     return d >= bounds.start && d < bounds.end;
   });
 
-  const [isPending, startTransition] = useTransition();
   const [showAdd, setShowAdd] = useState(false);
-  const [editItem, setEditItem] = useState<EntertainmentItem | null>(null);
+  const [editItem, setEditItem] = useState<EntertainmentItemView | null>(null);
   const [activeType, setActiveType] = useState("show");
 
   // Form state
@@ -84,45 +85,39 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
     setTitle(""); setCreator(""); setStatus("completed"); setRating(null); setNotes("");
   }
 
+  function closeDialog() {
+    setShowAdd(false);
+    setEditItem(null);
+    resetForm();
+  }
+
+  const create = useApiMutation({
+    mutationFn: (input: CreateEntertainmentInput) => api.entertainment.create(input),
+    invalidates: AFTER_WRITE,
+    onSuccess: closeDialog,
+  });
+  const update = useApiMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: UpdateEntertainmentInput }) => api.entertainment.update(id, patch),
+    invalidates: AFTER_WRITE,
+    onSuccess: closeDialog,
+  });
+  const remove = useApiMutation({ mutationFn: (id: string) => api.entertainment.remove(id), invalidates: AFTER_WRITE });
+  const isPending = create.isPending || update.isPending || remove.isPending;
+
   function handleAdd() {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("title", title);
-      fd.set("type", type);
-      fd.set("creator", creator);
-      fd.set("status", status);
-      if (rating) fd.set("rating", String(rating));
-      fd.set("notes", notes);
-      await surfaceErrors(addEntertainment(fd));
-      resetForm();
-      setShowAdd(false);
-    });
+    create.mutate({ title: title.trim(), type, creator: creator.trim() || null, status, rating, notes: notes.trim() || null });
   }
 
   function handleUpdate() {
     if (!editItem) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("itemId", editItem.id);
-      fd.set("title", title);
-      fd.set("status", status);
-      if (rating) fd.set("rating", String(rating));
-      fd.set("notes", notes);
-      await surfaceErrors(updateEntertainment(fd));
-      setEditItem(null);
-      resetForm();
-    });
+    update.mutate({ id: editItem.id, patch: { title: title.trim(), status, rating, notes: notes.trim() || null } });
   }
 
   function handleDelete(itemId: string) {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("itemId", itemId);
-      await surfaceErrors(deleteEntertainment(fd));
-    });
+    remove.mutate(itemId);
   }
 
-  function openEdit(item: EntertainmentItem) {
+  function openEdit(item: EntertainmentItemView) {
     setEditItem(item);
     setTitle(item.title);
     setType(item.type);
@@ -191,10 +186,10 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon-xs" onClick={() => openEdit(item)}>
+                  <Button variant="ghost" size="icon-xs" aria-label={`Edit ${item.title}`} onClick={() => openEdit(item)}>
                     <Pencil className="w-3.5 h-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(item.id)} disabled={isPending}>
+                  <Button variant="ghost" size="icon-xs" aria-label={`Delete ${item.title}`} onClick={() => handleDelete(item.id)} disabled={isPending}>
                     <Trash2 className="w-3.5 h-3.5 text-destructive" />
                   </Button>
                 </div>
@@ -205,7 +200,7 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
       )}
 
       {/* Add/Edit Modal */}
-      <Dialog open={showAdd || !!editItem} onOpenChange={(open) => { if (!open) { setShowAdd(false); setEditItem(null); resetForm(); } }}>
+      <Dialog open={showAdd || !!editItem} onOpenChange={(open) => { if (!open) closeDialog(); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editItem ? "Edit" : "Add"} {TYPES.find((t) => t.key === type)?.label.slice(0, -1) || "Item"}</DialogTitle>
@@ -249,10 +244,10 @@ export function EntertainmentClient({ items }: EntertainmentClientProps) {
               <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" className="mt-1" />
             </div>
             <div className="flex gap-3 pt-2 justify-end">
-              <Button onClick={editItem ? handleUpdate : handleAdd} disabled={!title || isPending}>
+              <Button onClick={editItem ? handleUpdate : handleAdd} disabled={!title.trim() || isPending}>
                 {editItem ? "Save" : "Add"}
               </Button>
-              <Button variant="secondary" onClick={() => { setShowAdd(false); setEditItem(null); resetForm(); }}>Cancel</Button>
+              <Button variant="secondary" onClick={closeDialog}>Cancel</Button>
             </div>
           </div>
         </DialogContent>

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition, useCallback } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,12 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  addEntertainment,
-  updateEntertainment,
-  deleteEntertainment,
-} from "@/app/actions/entertainment";
-import type { EntertainmentItem } from "@/db/schema";
+import { api, type CreateEntertainmentInput, type EntertainmentItemView, type UpdateEntertainmentInput } from "@/app/api";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { ShowEpisodeTracker } from "./show-episode-tracker";
 import {
   Search,
@@ -38,7 +33,7 @@ import {
 // ---------------------------------------------------------------------------
 
 interface NetflixClientProps {
-  items: EntertainmentItem[];
+  items: EntertainmentItemView[];
 }
 
 interface OmdbResult {
@@ -257,16 +252,17 @@ function ScrollRow({
 // Main component
 // ---------------------------------------------------------------------------
 
-export function NetflixClient({ items: serverItems }: NetflixClientProps) {
-  const [isPending, startTransition] = useTransition();
-  const [items, setItems] = useState(serverItems);
+/** The list and the chart's totals both live under "entertainment". */
+const AFTER_WRITE = [["entertainment"]] as const;
+
+export function NetflixClient({ items }: NetflixClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<OmdbResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [activeType, setActiveType] = useState("all");
 
   // Detail modal state
-  const [selectedItem, setSelectedItem] = useState<EntertainmentItem | null>(
+  const [selectedItem, setSelectedItem] = useState<EntertainmentItemView | null>(
     null
   );
   const [detailRating, setDetailRating] = useState<number | null>(null);
@@ -277,11 +273,6 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
   const [addingResult, setAddingResult] = useState<OmdbResult | null>(null);
   const [addStatus, setAddStatus] = useState("queued");
   const [addDetails, setAddDetails] = useState<OmdbDetails | null>(null);
-
-  // Sync server items into local state
-  useEffect(() => {
-    setItems(serverItems);
-  }, [serverItems]);
 
   // Debounced OMDB search
   useEffect(() => {
@@ -347,36 +338,49 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
 
   // ------- Handlers -------
 
+  const create = useApiMutation({
+    mutationFn: (input: CreateEntertainmentInput) => api.entertainment.create(input),
+    invalidates: AFTER_WRITE,
+    onSuccess: () => {
+      setAddingResult(null);
+      setAddStatus("queued");
+      setSearchQuery("");
+      setSearchResults([]);
+    },
+  });
+  const update = useApiMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: UpdateEntertainmentInput }) => api.entertainment.update(id, patch),
+    invalidates: AFTER_WRITE,
+    onSuccess: () => setSelectedItem(null),
+  });
+  const remove = useApiMutation({
+    mutationFn: (id: string) => api.entertainment.remove(id),
+    invalidates: AFTER_WRITE,
+    onSuccess: () => setSelectedItem(null),
+  });
+  const isPending = create.isPending || update.isPending || remove.isPending;
+
   function handleAddFromOmdb() {
     if (!addingResult) return;
     const result = addingResult;
     const details = addDetails;
 
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("title", result.title);
-      fd.set("type", result.type);
-      fd.set("status", addStatus);
-      fd.set("imdbId", result.imdbId);
-      if (result.posterUrl) fd.set("posterUrl", result.posterUrl);
-      if (details?.overview) fd.set("overview", details.overview);
-      if (details?.releaseDate) fd.set("releaseDate", details.releaseDate);
-      else if (result.year) fd.set("releaseDate", result.year);
-      if (details?.imdbRating) fd.set("voteAverage", details.imdbRating);
-      if (details?.genres?.length) fd.set("genres", details.genres.join(", "));
-      if (details?.runtime) fd.set("runtime", String(details.runtime));
-      if (details?.seasonCount)
-        fd.set("seasonCount", String(details.seasonCount));
-
-      await surfaceErrors(addEntertainment(fd));
-      setAddingResult(null);
-      setAddStatus("queued");
-      setSearchQuery("");
-      setSearchResults([]);
+    create.mutate({
+      title: result.title,
+      type: result.type,
+      status: addStatus,
+      imdbId: result.imdbId,
+      posterUrl: result.posterUrl,
+      overview: details?.overview ?? null,
+      releaseDate: details?.releaseDate ?? result.year ?? null,
+      voteAverage: details?.imdbRating ?? null,
+      genres: details?.genres?.length ? details.genres.join(", ") : null,
+      runtime: details?.runtime ?? null,
+      seasonCount: details?.seasonCount ?? null,
     });
   }
 
-  function openDetail(item: EntertainmentItem) {
+  function openDetail(item: EntertainmentItemView) {
     setSelectedItem(item);
     setDetailRating(item.rating);
     setDetailStatus(item.status);
@@ -385,26 +389,12 @@ export function NetflixClient({ items: serverItems }: NetflixClientProps) {
 
   function handleSaveDetail() {
     if (!selectedItem) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("itemId", selectedItem.id);
-      fd.set("title", selectedItem.title);
-      fd.set("status", detailStatus);
-      if (detailRating) fd.set("rating", String(detailRating));
-      fd.set("notes", detailNotes);
-      await surfaceErrors(updateEntertainment(fd));
-      setSelectedItem(null);
-    });
+    update.mutate({ id: selectedItem.id, patch: { status: detailStatus, rating: detailRating, notes: detailNotes.trim() || null } });
   }
 
   function handleDeleteDetail() {
     if (!selectedItem) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("itemId", selectedItem.id);
-      await surfaceErrors(deleteEntertainment(fd));
-      setSelectedItem(null);
-    });
+    remove.mutate(selectedItem.id);
   }
 
   // ------- Filtered items -------
