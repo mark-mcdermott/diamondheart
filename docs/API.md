@@ -148,6 +148,20 @@ Sign-in and sign-up remain server actions until Phase 2 replaces them with Bette
 
 Notifications are created server-side only. The old action file exported `createNotification`, which made it a callable action for any signed-in client against any user id; it has no callers and now lives in the server module.
 
+### Tracking, medical and appointments
+
+Three shelved sections, each a plain owned list.
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` / `POST` | `/api/tracking` | `{ items }` by category then name / `name` required; `category`, `count`, `unit`, `icon`, `notes` → 201 `{ item }`. |
+| `PATCH` / `DELETE` | `/api/tracking/:id` | Partial → `{ item }` / 204. |
+| `POST` | `/api/tracking/:id/count` | `{ delta }` (non-zero) adds to the count in one statement → `{ item }`. |
+| `GET` / `POST` | `/api/medical` | `{ logs }` newest first / `type` required; `subtype`, `severity` (1–5), `notes`, `date` → 201 `{ log }`. |
+| `DELETE` | `/api/medical/:id` | 204. |
+| `GET` | `/api/medical/totals?from=&to=` | `{ byType, bySeverity }` — counts per type, and average severity per day where one was recorded. |
+| `GET` / `POST` | `/api/appointments` | `{ appointments }` newest first / `title`, `date` (ISO) required; `appointmentType` (default `doctor`), `provider`, `location`, `durationMinutes`, `status` (default `upcoming`), `notes`, `followUp` → 201 `{ appointment }`. |
+| `PATCH` / `DELETE` | `/api/appointments/:id` | Partial → `{ appointment }` / 204. |
 ### Meditation
 
 The first shelved section with endpoints. Durations are seconds.
