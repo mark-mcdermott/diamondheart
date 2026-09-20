@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { DEFAULT_DASHBOARD_SECTIONS } from "@/lib/config/dashboard-sections";
 import { DEFAULT_MASS_UNIT, isMassUnit, type MassUnit } from "@/lib/units";
+import { MACRO_KEYS, NO_TARGETS, parseTargetField, type FoodTargets, type MacroKey } from "@/lib/targets";
 import { revalidatePath } from "next/cache";
 
 type Result = { success: boolean; error?: string };
@@ -16,6 +17,7 @@ const DEFAULT_PREFERENCES = {
   showMeditationInFeed: true,
   showNameWhenMeditating: true,
   weightUnit: DEFAULT_MASS_UNIT,
+  targets: NO_TARGETS,
 } as const;
 
 export async function getUserPreferences(userId: string) {
@@ -36,6 +38,12 @@ export async function getUserPreferences(userId: string) {
     showNameWhenMeditating: prefs.showNameWhenMeditating,
     // A value written before this column existed, or by hand, must not break display.
     weightUnit: (isMassUnit(prefs.weightUnit) ? prefs.weightUnit : DEFAULT_MASS_UNIT) as MassUnit,
+    targets: {
+      calories: prefs.calorieTarget ?? null,
+      protein: prefs.proteinTarget ?? null,
+      carbs: prefs.carbsTarget ?? null,
+      fat: prefs.fatTarget ?? null,
+    } satisfies FoodTargets,
     dashboardSections: (prefs.dashboardSections as string[] | null) ?? DEFAULT_DASHBOARD_SECTIONS,
   };
 }
@@ -167,5 +175,56 @@ export async function setWeightUnit(formData: FormData): Promise<Result> {
   // paths misses the dynamic ones: revalidatePath("/metrics") does not cover
   // "/metrics/<id>", which is exactly where the readings are read.
   revalidatePath("/", "layout");
+  return { success: true };
+}
+
+const TARGET_LABELS: Record<MacroKey, string> = {
+  calories: "Calories",
+  protein: "Protein",
+  carbs: "Carbs",
+  fat: "Fat",
+};
+
+export async function setFoodTargets(formData: FormData): Promise<Result> {
+  const session = await getCurrentUser();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  const parsed = {} as FoodTargets;
+  for (const key of MACRO_KEYS) {
+    const value = parseTargetField(formData.get(key));
+    if (value === "invalid") {
+      return { success: false, error: `${TARGET_LABELS[key]} target must be a positive number, or left blank.` };
+    }
+    parsed[key] = value;
+  }
+
+  const columns = {
+    calorieTarget: parsed.calories,
+    proteinTarget: parsed.protein,
+    carbsTarget: parsed.carbs,
+    fatTarget: parsed.fat,
+  };
+
+  const [existing] = await db
+    .select({ id: userPreferences.id })
+    .from(userPreferences)
+    .where(eq(userPreferences.userId, session.userId))
+    .limit(1);
+
+  if (existing) {
+    await db
+      .update(userPreferences)
+      .set({ ...columns, updatedAt: new Date() })
+      .where(eq(userPreferences.id, existing.id));
+  } else {
+    await db.insert(userPreferences).values({
+      id: crypto.randomUUID(),
+      userId: session.userId,
+      ...columns,
+    });
+  }
+
+  revalidatePath("/food");
+  revalidatePath("/settings");
   return { success: true };
 }

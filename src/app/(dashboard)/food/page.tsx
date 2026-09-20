@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { parseDate, toISODate } from "@/lib/dates";
 import { FoodClient } from "./food-client";
 import { FoodOverviewClient } from "./food-overview-client";
+import { getUserPreferences } from "@/app/actions/preferences";
 import { PageViewToggle } from "@/components/ui/view-toggle";
 import { DateNavigator } from "@/components/ui/date-navigator";
 import { isViewRange, type ViewRange } from "@/lib/view-range";
@@ -81,6 +82,7 @@ export default async function FoodPage({
     quantity: number;
   }>> = { breakfast: [], lunch: [], dinner: [], snack: [] };
 
+  const { targets } = await getUserPreferences(session.userId);
   const totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
   for (const row of dayLogs) {
@@ -123,6 +125,7 @@ export default async function FoodPage({
       <FoodClient
         meals={meals}
         totals={totals}
+        targets={targets}
         favoriteFoods={userFavFoods.map((f) => ({
           id: f.id,
           name: f.name,

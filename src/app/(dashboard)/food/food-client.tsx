@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useCallback, useRef, useEffect, lazy, Suspense } from "react";
 import { surfaceErrors } from "@/lib/action-result";
+import { targetProgress, type FoodTargets, type MacroKey } from "@/lib/targets";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,7 @@ interface FavMeal {
 interface FoodClientProps {
   meals: Record<string, FoodItem[]>;
   totals: { calories: number; protein: number; carbs: number; fat: number };
+  targets: FoodTargets;
   favoriteFoods: FavFood[];
   favoriteMeals: FavMeal[];
   selectedDate: string;
@@ -115,7 +117,7 @@ function formatDate(date: Date): string {
   });
 }
 
-export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, selectedDate }: FoodClientProps) {
+export function FoodClient({ meals, totals, targets, favoriteFoods, favoriteMeals, selectedDate }: FoodClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -419,24 +421,51 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
 
       {/* Daily Totals */}
       <div className="grid grid-cols-4 gap-3 mb-8">
-        {[
-          { label: "Calories", value: totals.calories, unit: "kcal", icon: Flame, color: "#C4653A" },
-          { label: "Protein", value: totals.protein, unit: "g", icon: Beef, color: "#5B8C5A" },
-          { label: "Carbs", value: totals.carbs, unit: "g", icon: Wheat, color: "#D4964A" },
-          { label: "Fat", value: totals.fat, unit: "g", icon: Droplet, color: "#C75B4A" },
-        ].map((item) => (
-          <div key={item.label} className="bg-card rounded-[28px] border border-border/80 px-4 py-7 text-center card-texture">
-            <item.icon className="mx-auto mb-5 h-4 w-4" strokeWidth={1.8} style={{ color: item.color }} />
-            <p
-              data-testid={`total-${item.label.toLowerCase()}`}
-              className="font-mono text-[2rem] font-semibold leading-none"
-              style={{ color: item.color }}
-            >
-              {item.value}
-            </p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
-          </div>
-        ))}
+        {(
+          [
+            { key: "calories", label: "Calories", value: totals.calories, unit: "kcal", icon: Flame, color: "#C4653A" },
+            { key: "protein", label: "Protein", value: totals.protein, unit: "g", icon: Beef, color: "#5B8C5A" },
+            { key: "carbs", label: "Carbs", value: totals.carbs, unit: "g", icon: Wheat, color: "#D4964A" },
+            { key: "fat", label: "Fat", value: totals.fat, unit: "g", icon: Droplet, color: "#C75B4A" },
+          ] as { key: MacroKey; label: string; value: number; unit: string; icon: typeof Flame; color: string }[]
+        ).map((item) => {
+          // null until the user sets a target — the tile then reads exactly as it
+          // did before targets existed, rather than inventing a goal.
+          const progress = targetProgress(item.value, targets[item.key]);
+          const target = targets[item.key];
+          return (
+            <div key={item.key} className="bg-card rounded-[28px] border border-border/80 px-4 py-7 text-center card-texture">
+              <item.icon className="mx-auto mb-5 h-4 w-4" strokeWidth={1.8} style={{ color: item.color }} />
+              <p
+                data-testid={`total-${item.key}`}
+                className="font-mono text-[2rem] font-semibold leading-none"
+                style={{ color: progress?.over ? "var(--color-destructive)" : item.color }}
+              >
+                {item.value}
+              </p>
+              {progress && target !== null ? (
+                <>
+                  <p
+                    data-testid={`target-${item.key}`}
+                    className="mt-1 text-[11px] text-muted-foreground"
+                  >
+                    of {target} {item.unit}
+                  </p>
+                  <div className="mx-auto mt-3 h-1 w-3/4 overflow-hidden rounded-full bg-muted" aria-hidden>
+                    <div
+                      className="h-full rounded-full transition-[width]"
+                      style={{
+                        width: `${Math.min(progress.ratio, 1) * 100}%`,
+                        backgroundColor: progress.over ? "var(--color-destructive)" : item.color,
+                      }}
+                    />
+                  </div>
+                </>
+              ) : null}
+              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
+            </div>
+          );
+        })}
       </div>
 
       {/* Saved Meals */}

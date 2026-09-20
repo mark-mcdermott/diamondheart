@@ -17,8 +17,8 @@ The correction is to go the other way: **a small number of features, each genuin
 Each finished before the next starts:
 
 1. **Coffee** — ✅ settled as a counter metric rather than a section. See below.
-2. **Weight** — daily single-value tracking with history. The first real take-it-to-done feature.
-3. **Food** — the largest, and the one with the most existing code to salvage.
+2. **Weight** — ✅ daily single-value tracking with history. The first real take-it-to-done feature.
+3. **Food** — ✅ the largest, and the one with the most existing code to salvage.
 
 "Finished" means: logs, displays, edits, deletes; empty, loading and error states; works on mobile; survives a fresh account with no data; covered by a test that would catch a regression.
 
@@ -119,14 +119,18 @@ Half a portion logging as a full one is the weight-rounding bug again, louder: t
 
 **Nothing to measure against.** There is no calorie or macro target anywhere in the schema or the code. You can log a day perfectly and the app will not tell you whether it was a good one.
 
-| # | Task | Acceptance |
-|---|---|---|
-| 2.1 | Fix the numeric model | Macros and quantities stored as decimals; `0.5` of a serving logs as 0.5; existing integer rows migrate unchanged |
-| 2.2 | Make search work in production | Key configured; when it is absent the UI says so plainly instead of failing with a 500 |
-| 2.3 | Daily targets | Per-user calorie and macro goals; the day reads against them; sensible before any goal is set |
-| 2.4 | Tests | Unit: the quantity and serving-size regressions above. e2e: log a food, see totals change; log half a serving, see half |
+**Done.**
+
+| # | Task | Acceptance | |
+|---|---|---|---|
+| 2.1 | Fix the numeric model | Macros and quantities stored as decimals; `0.5` of a serving logs as 0.5; existing integer rows migrate unchanged | ✅ #208 |
+| 2.2 | Make search work in production | Key configured; when it is absent the UI says so plainly instead of failing with a 500 | ✅ #211 |
+| 2.3 | Daily targets | Per-user calorie and macro goals; the day reads against them; sensible before any goal is set | ✅ #214 |
+| 2.4 | Tests | Unit: the quantity and serving-size regressions above. e2e: log a food, see totals change; log half a serving, see half | ✅ #208, #210 |
 
 Do 2.1 first. Everything else builds on numbers that are currently wrong, and migrating later means migrating data that has already been corrupted.
+
+What Phase 2 found, for the port to remember: the custom-food dialog had never saved — a click-outside handler fired on clicks inside its own portal — search failed with an empty list rather than a message, and server actions across the app returned errors nobody read. All three were silent: the page looked fine and did nothing. That is why #212 and #213 surface every action result, and why targets are nullable — no goal means no progress bar, not a bar toward a default of 1.
 
 ---
 

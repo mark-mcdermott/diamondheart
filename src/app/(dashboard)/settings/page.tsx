@@ -20,6 +20,7 @@ export default async function SettingsPage() {
       showSiteName={prefs.showSiteName}
       showMeditationInFeed={prefs.showMeditationInFeed}
       weightUnit={prefs.weightUnit}
+      targets={prefs.targets}
       showNameWhenMeditating={prefs.showNameWhenMeditating}
       dashboardSections={prefs.dashboardSections}
     />

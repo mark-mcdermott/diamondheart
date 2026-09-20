@@ -578,6 +578,12 @@ export const userPreferences = pgTable('user_preferences', {
 	dashboardSections: jsonb('dashboard_sections'), // ordered list of visible section keys
 	// Display preference only — readings stay in the unit their metric declares.
 	weightUnit: text('weight_unit').notNull().default('lb'),
+	// Daily food targets. Nullable on purpose: null means "not set", and the UI
+	// must not invent a number to show progress toward.
+	calorieTarget: doublePrecision('calorie_target'),
+	proteinTarget: doublePrecision('protein_target'),
+	carbsTarget: doublePrecision('carbs_target'),
+	fatTarget: doublePrecision('fat_target'),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
