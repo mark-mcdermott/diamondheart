@@ -151,3 +151,65 @@ export const updateReminderSchema = z.object(reminderFields).partial().strict();
 
 export type CreateReminder = z.infer<typeof createReminderSchema>;
 export type UpdateReminder = z.infer<typeof updateReminderSchema>;
+
+export const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
+export type MealType = (typeof MEAL_TYPES)[number];
+
+/** A calendar day as the user sees it, `YYYY-MM-DD`; parsed in local time like the pages do. */
+export const calendarDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD");
+
+const macro = z.number().min(0).finite();
+const positive = z.number().positive().finite();
+
+/** What a logged, favourited or saved food carries; the same columns on every food table. */
+const foodFields = {
+  name: z.string().trim().min(1, "Food name is required").max(200),
+  fdcId: z.string().trim().min(1).max(32).nullable().optional(),
+  servingSize: positive.optional(),
+  servingUnit: z.string().trim().min(1).max(32).optional(),
+  calories: macro.optional(),
+  protein: macro.optional(),
+  carbs: macro.optional(),
+  fat: macro.optional(),
+};
+
+export const logFoodSchema = z
+  .object({
+    ...foodFields,
+    date: calendarDay.optional(),
+    mealType: z.enum(MEAL_TYPES),
+    quantity: positive.optional(),
+  })
+  .strict();
+
+export const createFavoriteFoodSchema = z
+  .object({ ...foodFields, customFoodId: z.string().min(1).nullable().optional() })
+  .strict();
+
+export const createCustomFoodSchema = z
+  .object({
+    name: foodFields.name,
+    servingSize: foodFields.servingSize,
+    servingUnit: foodFields.servingUnit,
+    calories: foodFields.calories,
+    protein: foodFields.protein,
+    carbs: foodFields.carbs,
+    fat: foodFields.fat,
+  })
+  .strict();
+
+export const saveMealSchema = z
+  .object({
+    name: z.string().trim().min(1, "Meal name is required").max(100),
+    mealType: z.enum(MEAL_TYPES),
+    date: calendarDay.optional(),
+  })
+  .strict();
+
+export const logMealSchema = z.object({ mealType: z.enum(MEAL_TYPES), date: calendarDay.optional() }).strict();
+
+export type LogFood = z.infer<typeof logFoodSchema>;
+export type CreateFavoriteFood = z.infer<typeof createFavoriteFoodSchema>;
+export type CreateCustomFood = z.infer<typeof createCustomFoodSchema>;
+export type SaveMeal = z.infer<typeof saveMealSchema>;
+export type LogMeal = z.infer<typeof logMealSchema>;

@@ -252,6 +252,12 @@ from two copies. The default category is now consistently named General.
 Reminders came with it: four endpoints replacing route handlers that spread the raw
 request body into the update, which would have let a body rewrite `user_id`.
 
+**Landed 2026-09-20 — food** (`feat/api-food`): the day log, per-day totals, custom foods,
+favourites, saved meals and the USDA search, seventeen endpoints. Day windows are now
+half-open — the page and the actions used `lte` on the end bound, so a log dated exactly
+midnight belonged to two days. Search requires a session. The two food chart readers in
+`chart-data.ts` delegate to the one `dailyTotals` query.
+
 - `src/server/api/_lib/`: `http.ts` (`json`, `fail`, `HttpError`, `handler`, `readJson`),
   `guard.ts` (`requireSession` → `{ userId }`; ownership helpers that put the owner in the
   `WHERE` clause so a foreign row is a 404, never an oracle), `schemas.ts` (Zod shapes;
