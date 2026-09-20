@@ -361,7 +361,9 @@ read. A tracking count tap patches the cached list and only refetches once the l
 a burst has settled, so two quick taps never snap back to one. The medical chart reads
 `GET /api/medical/totals` through Query with the range in its key. An appointment's date
 is now turned into an instant in the browser, in the zone it was typed, where the action
-used to parse it in the server's zone. Three action files gone.
+used to parse it in the server's zone. Three action files gone. `e2e/sections.spec.ts` covers one
+round trip per section, and its first run found that the base dialog never scrolled, so a tall
+form's buttons sat below the fold on a phone; the shared component now caps at the viewport.
 
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the
