@@ -285,6 +285,26 @@ section has endpoints.** What remains in Phase 1 is the shelved sections.
 
 ## Phase 2 — Better Auth under Next
 
+**Landed 2026-09-20** (`feat/better-auth`). What the docs settled that the plan had guessed:
+
+- `users` maps in by `modelName` with `image → avatarUrl`; one column was needed
+  (`email_verified`), plus Better Auth's own `session`, `account` and `verification`
+  tables. `scripts/migrate-better-auth.ts` applies both as explicit SQL and backfills a
+  credential `account` row per user from `password_hash`, which is where Better Auth reads
+  the hash. Development is migrated; production is applied with the same script and
+  `--production`.
+- The custom hasher keeps bcrypt (`src/lib/password.ts`), so no password was reset and new
+  ones are hashed the same way as old ones.
+- The server actions kept their signatures: `login` and `signup` call
+  `auth.api.signInEmail` / `signUpEmail` and the `nextCookies` plugin sets the cookie.
+  `getCurrentUser()` and `resolveSession()` both read `auth.api.getSession`; the return
+  shapes did not change, so no endpoint or page changed.
+- `middleware.ts` is now the thin cookie-presence redirect from Decision 2.
+- The secret falls back to `AUTH_SECRET` so the deployment needs no new variable today.
+  Nothing is sealed under it yet; it becomes permanent the moment passkeys or TOTP arrive.
+- The API tests sign up through Better Auth and authenticate with the bearer token by
+  default, which is the native build's path; one test covers the cookie path.
+
 - Mount `betterAuth()` at `src/app/api/auth/[...all]/route.ts` with the Drizzle adapter,
   `user` mapped to `users`, `emailAndPassword` with the bcrypt-compatible `verify`,
   `bearer` plugin. Generate the `session` / `account` / `verification` tables with the CLI

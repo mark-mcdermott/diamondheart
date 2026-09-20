@@ -14,7 +14,7 @@ rely on, so every endpoint is safe when reached directly.
 | | |
 |---|---|
 | Request body | JSON. `content-type: application/json` on every write. |
-| Auth | The `session` cookie (a signed JWT), or the same token as `Authorization: Bearer` — which is what the bundled native build sends, and what makes curl work. |
+| Auth | Better Auth's `better-auth.session_token` cookie on the web, or the session token as `Authorization: Bearer` — which is what the bundled native build sends, and what makes curl work. |
 | Errors | `{ "error": string }`, plus `{ "fields": { path: string[] } }` on a 422. |
 | PATCH | Genuinely partial. An omitted key is left alone; an explicit `null` clears a nullable column; an unknown key is a 422. |
 | Ownership | Enforced by a `user_id` predicate inside the query, so someone else's row is a 404, never a 403. |
@@ -31,11 +31,19 @@ rely on, so every endpoint is safe when reached directly.
 
 ### Auth
 
+Better Auth is mounted at `/api/auth/*` (`src/lib/server/auth.ts`). The routes below are
+the ones the app uses; the full surface is Better Auth's.
+
 | Method | Path | Notes |
 |---|---|---|
-| `GET` | `/api/auth/me` | `{ user }` or `{ user: null }`. **200 either way** — signed-out is a state, not an error. A token for a deleted account reads as signed out. |
+| `GET` | `/api/auth/me` | Ours. `{ user }` or `{ user: null }`. **200 either way** — signed-out is a state, not an error. A token for a deleted account reads as signed out. |
+| `POST` | `/api/auth/sign-in/email` | `{ email, password }`. Sets the cookie and returns the session token in the `set-auth-token` response header for bearer use. A wrong password or an unknown address is the same 401. |
+| `POST` | `/api/auth/sign-up/email` | `{ name, email, password }`; password at least 8 characters. Signs the new account in. |
+| `POST` | `/api/auth/sign-out` | Ends the session behind the cookie or bearer token. |
+| `GET` | `/api/auth/get-session` | Better Auth's own session read; the client library uses it. |
 
-Sign-in and sign-up are still server actions until Phase 2 replaces them with Better Auth.
+Passwords are bcrypt, verified through the app's own `verifyPassword`, so hashes from
+before Phase 2 (and the SvelteKit era's `pbkdf2:` ones) keep working.
 
 ### Preferences
 
@@ -134,8 +142,6 @@ serving; a logged item also carries `quantity`, and every total multiplies the t
 |---|---|---|
 | `PATCH` | `/api/account/password` | `{ currentPassword, newPassword }` → 204. A wrong current password is a 422 on `currentPassword`, not a 401 — the session is fine. |
 | `DELETE` | `/api/account/avatar` | 204. Clears the avatar and, best effort, deletes the file. Nothing to clear is still a 204. |
-
-Sign-in and sign-up remain server actions until Phase 2 replaces them with Better Auth.
 
 ### Notifications
 

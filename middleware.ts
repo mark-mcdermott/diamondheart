@@ -1,114 +1,51 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify, SignJWT } from "jose";
+import { getSessionCookie } from "better-auth/cookies";
 
-const SECRET = new TextEncoder().encode(process.env.AUTH_SECRET);
-const SESSION_COOKIE = "session";
-const SESSION_DURATION = 60 * 60 * 24 * 30;
+/**
+ * A convenience redirect for the web only: no session cookie on an app path
+ * sends you to sign in, and a cookie on an auth page sends you to the
+ * dashboard. It checks presence, not validity — every page and endpoint
+ * resolves the real session itself. Phase 4 of docs/PORT-PLAN.md deletes this.
+ */
 
-const PUBLIC_ROUTES = [
-  "/",
-  "/about",
-  "/contact",
-  "/services",
-  "/team",
-  "/terms",
-  "/privacy",
-  "/login",
-  "/signup",
-  "/merch",
-  "/u",
-];
+const PUBLIC_ROUTES = ["/", "/about", "/contact", "/services", "/team", "/terms", "/privacy", "/login", "/signup", "/merch", "/u"];
 
 function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(route + "/")
-  );
+  return PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route + "/"));
 }
 
 function isAuthRoute(pathname: string): boolean {
-  return ["/login", "/signup"].some((route) => pathname === route);
+  return pathname === "/login" || pathname === "/signup";
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip static files, images, favicon, API routes
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
-    pathname.includes(".") ||
-    pathname === "/favicon.ico"
-  ) {
+  if (pathname.startsWith("/_next") || pathname.startsWith("/api") || pathname.includes(".") || pathname === "/favicon.ico") {
     return NextResponse.next();
   }
 
-  // PWA/standalone mode: skip homepage, go straight to dashboard or login
-  const isPWA =
-    request.headers.get("sec-fetch-dest") === "document" &&
-    (request.headers.get("x-pwa-mode") === "standalone" ||
-      request.nextUrl.searchParams.has("pwa"));
-  const displayMode = request.cookies.get("pwa-mode")?.value;
+  // Installed as a PWA: the marketing homepage is skipped in favour of the app.
+  const standalone =
+    request.headers.get("x-pwa-mode") === "standalone" ||
+    request.nextUrl.searchParams.has("pwa") ||
+    request.cookies.get("pwa-mode")?.value === "standalone";
 
-  if (pathname === "/" && (isPWA || displayMode === "standalone")) {
-    // Will redirect to /dashboard or /login based on auth below
-  }
+  const signedIn = Boolean(getSessionCookie(request));
 
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
-  let session: { sub?: string } | null = null;
-
-  if (token) {
-    try {
-      const { payload } = await jwtVerify(token, SECRET);
-      session = payload;
-    } catch {
-      session = null;
+  if (signedIn) {
+    if (isAuthRoute(pathname) || (pathname === "/" && standalone)) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
+    return NextResponse.next();
   }
 
-  // Refresh session if valid
-  if (session?.sub) {
-    const response = NextResponse.next();
-    try {
-      const newToken = await new SignJWT({ sub: session.sub })
-        .setProtectedHeader({ alg: "HS256" })
-        .setIssuedAt()
-        .setExpirationTime(`${SESSION_DURATION}s`)
-        .sign(SECRET);
-      response.cookies.set(SESSION_COOKIE, newToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: SESSION_DURATION,
-        path: "/",
-      });
-
-      // Redirect authenticated users away from auth pages or homepage in PWA mode
-      if (isAuthRoute(pathname)) {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
-      }
-
-      if (pathname === "/" && (isPWA || displayMode === "standalone")) {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
-      }
-
-      return response;
-    } catch {
-      // Token refresh failed, treat as unauthenticated
-    }
-  }
-
-  // PWA mode + unauthenticated + homepage → go to login
-  if (pathname === "/" && (isPWA || displayMode === "standalone")) {
+  if (pathname === "/" && standalone) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
+  if (isPublicRoute(pathname)) return NextResponse.next();
 
-  // Unauthenticated — allow public routes, block everything else
-  if (isPublicRoute(pathname)) {
-    return NextResponse.next();
-  }
-
-  // Redirect to login
   const loginUrl = new URL("/login", request.url);
   loginUrl.searchParams.set("redirect", pathname);
   return NextResponse.redirect(loginUrl);
