@@ -1,15 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef, useTransition, lazy, Suspense } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import {
+  api,
+  type CreateMeditationSessionInput,
+  type MeditationPresetView,
+  type MeditationSessionView,
+  type MeditationStyleView,
+  type UpdateMeditationSession,
+} from "@/app/api";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { logMeditationSession, updateMeditationSession, deleteMeditationSession } from "@/app/actions/meditation";
-import { pingMeditatingNow, stopMeditatingNow } from "@/app/actions/presence";
 import { PRESENCE_HEARTBEAT_MS } from "@/lib/presence";
-import type { MeditationSession, MeditationStyle, MeditationPreset } from "@/db/schema";
 import { Play, Pause, RotateCcw, Trash2, Pencil } from "lucide-react";
 import { hapticHeavy } from "@/lib/haptics";
 import { LucideIconByName } from "./icon-map";
@@ -17,11 +22,14 @@ import { useViewRange } from "@/lib/use-view-range";
 import { filterByBounds, viewRangeBounds, viewRangeLabel } from "@/lib/view-range";
 
 interface MeditateClientProps {
-  sessions: MeditationSession[];
-  styles: MeditationStyle[];
-  presets: MeditationPreset[];
+  sessions: MeditationSessionView[];
+  styles: MeditationStyleView[];
+  presets: MeditationPresetView[];
   defaultTimerSeconds?: number;
 }
+
+/** A session write touches the overview, the chart's totals and the dashboard's summary. */
+const AFTER_SESSION_WRITE = [["meditation"], ["dashboard"]] as const;
 
 const DEFAULT_PRESETS = [
   { label: "5 min", seconds: 300 },
@@ -92,7 +100,6 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
     ? presets.map((p) => ({ label: p.label, seconds: p.seconds }))
     : DEFAULT_PRESETS;
 
-  const [isPending, startTransition] = useTransition();
   const [sessionType, setSessionType] = useState(resolvedStyles[0]?.key || "guided");
   const [targetSeconds, setTargetSeconds] = useState(defaultTimerSeconds);
   const [elapsed, setElapsed] = useState(0);
@@ -100,7 +107,7 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
   const [finished, setFinished] = useState(false);
   const [notes, setNotes] = useState("");
   const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
-  const [editSession, setEditSession] = useState<MeditationSession | null>(null);
+  const [editSession, setEditSession] = useState<MeditationSessionView | null>(null);
   const [editDuration, setEditDuration] = useState("");
   const [editType, setEditType] = useState("guided");
   const [editNotes, setEditNotes] = useState("");
@@ -132,15 +139,34 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
 
   useEffect(() => {
     if (!running) return;
-    pingMeditatingNow().catch(() => {});
+    api.meditation.presence.ping().catch(() => {});
     const heartbeat = setInterval(() => {
-      pingMeditatingNow().catch(() => {});
+      api.meditation.presence.ping().catch(() => {});
     }, PRESENCE_HEARTBEAT_MS);
     return () => {
       clearInterval(heartbeat);
-      stopMeditatingNow().catch(() => {});
+      api.meditation.presence.stop().catch(() => {});
     };
   }, [running]);
+
+  const logSession = useApiMutation({
+    mutationFn: (input: CreateMeditationSessionInput) => api.meditation.createSession(input),
+    invalidates: AFTER_SESSION_WRITE,
+    onSuccess: () => {
+      handleReset();
+      setNotes("");
+    },
+  });
+  const saveEdit = useApiMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: UpdateMeditationSession }) => api.meditation.updateSession(id, patch),
+    invalidates: AFTER_SESSION_WRITE,
+    onSuccess: () => setEditSession(null),
+  });
+  const removeSession = useApiMutation({
+    mutationFn: (id: string) => api.meditation.removeSession(id),
+    invalidates: AFTER_SESSION_WRITE,
+  });
+  const isPending = logSession.isPending || saveEdit.isPending || removeSession.isPending;
 
   useEffect(() => {
     if (editingTime && timeInputRef.current) {
@@ -186,15 +212,7 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
   function handleSave() {
     const duration = finished ? targetSeconds : elapsed;
     if (duration <= 0) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("duration", String(duration));
-      fd.set("type", sessionType);
-      if (notes) fd.set("notes", notes);
-      await surfaceErrors(logMeditationSession(fd));
-      handleReset();
-      setNotes("");
-    });
+    logSession.mutate({ duration, type: sessionType, notes: notes.trim() || null });
   }
 
   function handleQuickAdd(seconds: number) {
@@ -226,14 +244,10 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
   }
 
   function handleDelete(sessionId: string) {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("sessionId", sessionId);
-      await surfaceErrors(deleteMeditationSession(fd));
-    });
+    removeSession.mutate(sessionId);
   }
 
-  function openEdit(s: MeditationSession) {
+  function openEdit(s: MeditationSessionView) {
     setEditSession(s);
     setEditDuration(String(Math.floor(s.duration / 60)));
     setEditType(s.type);
@@ -244,15 +258,7 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
     if (!editSession) return;
     const mins = parseInt(editDuration);
     if (!mins || mins <= 0) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("sessionId", editSession.id);
-      fd.set("duration", String(mins * 60));
-      fd.set("type", editType);
-      fd.set("notes", editNotes);
-      await surfaceErrors(updateMeditationSession(fd));
-      setEditSession(null);
-    });
+    saveEdit.mutate({ id: editSession.id, patch: { duration: mins * 60, type: editType, notes: editNotes.trim() || null } });
   }
 
   return (
@@ -502,10 +508,10 @@ export function MeditateClient({ sessions, styles, presets, defaultTimerSeconds 
                     {s.notes && <span className="text-xs text-muted-foreground">{s.notes}</span>}
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon-xs" onClick={() => openEdit(s)} disabled={isPending}>
+                    <Button variant="ghost" size="icon-xs" aria-label="Edit session" onClick={() => openEdit(s)} disabled={isPending}>
                       <Pencil className="w-3 h-3" />
                     </Button>
-                    <Button variant="ghost" size="icon-xs" onClick={() => handleDelete(s.id)} disabled={isPending}>
+                    <Button variant="ghost" size="icon-xs" aria-label="Delete session" onClick={() => handleDelete(s.id)} disabled={isPending}>
                       <Trash2 className="w-3.5 h-3.5 text-destructive" />
                     </Button>
                   </div>

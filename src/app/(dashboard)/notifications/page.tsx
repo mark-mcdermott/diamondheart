@@ -1,13 +1,11 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { getNotifications } from "@/app/actions/notifications";
-import { NotificationsClient } from "./notifications-client";
+import { NotificationsPageClient } from "./notifications-page-client";
 
+/** Reads `GET /api/notifications` from the browser (docs/PORT-PLAN.md, Phase 3). */
 export default async function NotificationsPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
 
-  const notifications = await getNotifications(session.userId);
-
-  return <NotificationsClient notifications={notifications} />;
+  return <NotificationsPageClient />;
 }

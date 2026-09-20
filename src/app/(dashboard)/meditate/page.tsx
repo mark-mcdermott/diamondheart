@@ -1,29 +1,15 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
-import { db } from "@/db";
-import { meditationSessions } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowLeft, Pencil } from "lucide-react";
-import { getMeditationStyles, getMeditationPresets, getDefaultTimerSeconds } from "@/app/actions/meditation";
-import { MeditateClient } from "./meditate-client";
+import { getCurrentUser } from "@/lib/auth";
 import { PageViewToggle } from "@/components/ui/view-toggle";
 import { DateNavigator } from "@/components/ui/date-navigator";
+import { MeditatePageClient } from "./meditate-page-client";
 
+/** Reads `GET /api/meditation` from the browser (docs/PORT-PLAN.md, Phase 3). */
 export default async function MeditatePage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
-
-  const [sessions, styles, presets, defaultTimerSeconds] = await Promise.all([
-    db.select()
-      .from(meditationSessions)
-      .where(eq(meditationSessions.userId, session.userId))
-      .orderBy(desc(meditationSessions.date))
-      .limit(1000),
-    getMeditationStyles(session.userId),
-    getMeditationPresets(session.userId),
-    getDefaultTimerSeconds(session.userId),
-  ]);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -37,11 +23,11 @@ export default async function MeditatePage() {
         </div>
         <DateNavigator />
         <PageViewToggle />
-        <Link href="/meditate/edit" className="text-muted-foreground hover:text-foreground">
+        <Link href="/meditate/edit" className="text-muted-foreground hover:text-foreground" aria-label="Edit meditation">
           <Pencil className="w-4 h-4" />
         </Link>
       </div>
-      <MeditateClient sessions={sessions} styles={styles} presets={presets} defaultTimerSeconds={defaultTimerSeconds} />
+      <MeditatePageClient />
     </div>
   );
 }

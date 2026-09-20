@@ -1,17 +1,21 @@
-import type { TrackerCategory, TrackerEntry, TrackerMetric } from "@/db/schema";
+import type { MeditationPreset, MeditationSession, MeditationStyle, Notification, TrackerCategory, TrackerEntry, TrackerMetric } from "@/db/schema";
 import type {
   CreateAppointment,
   CreateCustomFood,
   CreateEntry,
   CreateFavoriteFood,
   CreateMedicalLog,
+  CreateMeditationSession,
   CreateMetric,
   CreateTrackingItem,
   LogFood,
   LogMeal,
+  MeditationPresetInput,
+  MeditationStyleInput,
   SaveMeal,
   UpdateAppointment,
   UpdateEntry,
+  UpdateMeditationSession,
   UpdateMetric,
   UpdatePreferences,
   UpdateTrackingItem,
@@ -19,7 +23,9 @@ import type {
 import type { Appointment } from "@/server/api/appointments";
 import type { CustomFood, FavoriteFood, FavoriteMeal, FoodDay, FoodLogItem, MacroTotals } from "@/server/api/food";
 import type { Dashboard } from "@/server/api/dashboard";
+import type { FeedItem } from "@/server/api/feed";
 import type { MedicalLog, MedicalTotals } from "@/server/api/medical";
+import type { MeditatingNow, MeditationOverview } from "@/server/api/meditation";
 import type { MetricsOverview } from "@/server/api/metrics";
 import type { Preferences } from "@/server/api/preferences";
 import type { TrackingItem } from "@/server/api/tracking";
@@ -115,6 +121,23 @@ export type AppointmentView = Serialized<Appointment>;
 export type CreateMedicalLogInput = Omit<CreateMedicalLog, "date"> & { date?: string };
 export type CreateAppointmentInput = Omit<CreateAppointment, "date"> & { date: string };
 export type UpdateAppointmentInput = Omit<UpdateAppointment, "date"> & { date?: string };
+export type MeditationSessionView = Serialized<MeditationSession>;
+export type MeditationStyleView = Serialized<MeditationStyle>;
+export type MeditationPresetView = Serialized<MeditationPreset>;
+export type MeditationOverviewView = Omit<MeditationOverview, "sessions" | "styles" | "presets"> & {
+  sessions: MeditationSessionView[];
+  styles: MeditationStyleView[];
+  presets: MeditationPresetView[];
+};
+export type CreateMeditationSessionInput = Omit<CreateMeditationSession, "date"> & { date?: string };
+/** One calendar day of meditation, minutes summed across its sessions. */
+export interface MeditationDay {
+  date: string;
+  minutes: number;
+  sessions: number;
+}
+export type FeedItemView = Serialized<FeedItem>;
+export type NotificationView = Serialized<Notification>;
 
 export const keys = {
   preferences: ["preferences"] as const,
@@ -131,6 +154,11 @@ export const keys = {
   medical: ["medical", "logs"] as const,
   medicalTotals: (from: string, to: string) => ["medical", "totals", from, to] as const,
   appointments: ["appointments"] as const,
+  meditation: ["meditation", "overview"] as const,
+  meditationTotals: (from: string, to: string) => ["meditation", "totals", from, to] as const,
+  meditatingNow: ["meditation", "presence"] as const,
+  feed: ["feed"] as const,
+  notifications: ["notifications"] as const,
 };
 
 export const api = {
@@ -221,9 +249,66 @@ export const api = {
       request<{ appointment: AppointmentView }>(`/api/appointments/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.appointment),
     remove: (id: string) => request<void>(`/api/appointments/${id}`, { method: "DELETE" }),
   },
+  meditation: {
+    overview: () => request<MeditationOverviewView>("/api/meditation"),
+    /** Seeds the starter styles and presets for whichever list is empty; safe to repeat. */
+    seedDefaults: () =>
+      request<{ styles: MeditationStyleView[]; presets: MeditationPresetView[] }>("/api/meditation/defaults", { method: "POST" }),
+    totals: (from: string, to: string) =>
+      request<{ days: MeditationDay[] }>(`/api/meditation/totals?from=${from}&to=${to}`).then((r) => r.days),
+    createSession: (input: CreateMeditationSessionInput) =>
+      request<{ session: MeditationSessionView }>("/api/meditation/sessions", { method: "POST", ...json(input) }).then((r) => r.session),
+    updateSession: (id: string, patch: UpdateMeditationSession) =>
+      request<{ session: MeditationSessionView }>(`/api/meditation/sessions/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.session),
+    removeSession: (id: string) => request<void>(`/api/meditation/sessions/${id}`, { method: "DELETE" }),
+    createStyle: (input: MeditationStyleInput) =>
+      request<{ style: MeditationStyleView }>("/api/meditation/styles", { method: "POST", ...json(input) }).then((r) => r.style),
+    updateStyle: (id: string, input: MeditationStyleInput) =>
+      request<{ style: MeditationStyleView }>(`/api/meditation/styles/${id}`, { method: "PATCH", ...json(input) }).then((r) => r.style),
+    removeStyle: (id: string) => request<void>(`/api/meditation/styles/${id}`, { method: "DELETE" }),
+    createPreset: (input: MeditationPresetInput) =>
+      request<{ preset: MeditationPresetView }>("/api/meditation/presets", { method: "POST", ...json(input) }).then((r) => r.preset),
+    updatePreset: (id: string, input: MeditationPresetInput) =>
+      request<{ preset: MeditationPresetView }>(`/api/meditation/presets/${id}`, { method: "PATCH", ...json(input) }).then((r) => r.preset),
+    removePreset: (id: string) => request<void>(`/api/meditation/presets/${id}`, { method: "DELETE" }),
+    setTimer: (seconds: number) =>
+      request<{ defaultTimerSeconds: number }>("/api/meditation/timer", { method: "PATCH", ...json({ seconds }) }).then((r) => r.defaultTimerSeconds),
+    presence: {
+      get: () => request<MeditatingNow>("/api/meditation/presence"),
+      ping: () => request<void>("/api/meditation/presence", { method: "PUT" }),
+      stop: () => request<void>("/api/meditation/presence", { method: "DELETE" }),
+    },
+  },
+  feed: {
+    list: () => request<{ items: FeedItemView[] }>("/api/feed").then((r) => r.items),
+    /** Explicit rather than a toggle, so a retry cannot flip it twice. */
+    react: (sessionId: string, reacted: boolean) =>
+      request<{ reacted: boolean; reactionCount: number }>(`/api/feed/reactions/${sessionId}`, { method: "PUT", ...json({ reacted }) }),
+  },
+  notifications: {
+    list: () => request<{ notifications: NotificationView[]; unread: number }>("/api/notifications"),
+    markAllRead: () => request<{ unread: number }>("/api/notifications", { method: "PATCH", ...json({ read: true }) }).then((r) => r.unread),
+    setRead: (id: string, read: boolean) =>
+      request<{ notification: NotificationView }>(`/api/notifications/${id}`, { method: "PATCH", ...json({ read }) }).then((r) => r.notification),
+    remove: (id: string) => request<void>(`/api/notifications/${id}`, { method: "DELETE" }),
+  },
 };
 
-export type { Preferences, UpdatePreferences, CreateMetric, UpdateMetric, CreateEntry, UpdateEntry, CreateTrackingItem, UpdateTrackingItem, MedicalTotals };
+export type {
+  Preferences,
+  UpdatePreferences,
+  CreateMetric,
+  UpdateMetric,
+  CreateEntry,
+  UpdateEntry,
+  CreateTrackingItem,
+  UpdateTrackingItem,
+  MedicalTotals,
+  UpdateMeditationSession,
+  MeditationStyleInput,
+  MeditationPresetInput,
+  MeditatingNow,
+};
 
 /** What to show a person when a call fails: the first field message, else the error, else a generic line. */
 export function errorMessage(error: unknown): string {

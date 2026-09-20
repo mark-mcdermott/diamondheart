@@ -1,18 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { surfaceErrors } from "@/lib/action-result";
-import { useTransition } from "react";
 import { Bell, Check, Trash2, Film, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Card } from "@/components/ui/card";
-import {
-  markAsRead,
-  markAllAsRead,
-  deleteNotification,
-} from "@/app/actions/notifications";
-import type { Notification } from "@/db/schema";
+import { api, keys, type NotificationView } from "@/app/api";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 
 function relativeTime(date: Date): string {
   const now = new Date();
@@ -46,40 +40,36 @@ function NotificationIcon({ type }: { type: string }) {
 }
 
 interface NotificationsClientProps {
-  notifications: Notification[];
+  notifications: NotificationView[];
 }
+
+const AFTER_WRITE = [keys.notifications] as const;
 
 export function NotificationsClient({
   notifications,
 }: NotificationsClientProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  // The sidebar's unread badge is still server-rendered until Phase 4, so a
+  // route refresh is what updates it.
+  const refreshBadge = () => router.refresh();
+
+  const markRead = useApiMutation({ mutationFn: (id: string) => api.notifications.setRead(id, true), invalidates: AFTER_WRITE, onSuccess: refreshBadge });
+  const markAllRead = useApiMutation({ mutationFn: () => api.notifications.markAllRead(), invalidates: AFTER_WRITE, onSuccess: refreshBadge });
+  const remove = useApiMutation({ mutationFn: (id: string) => api.notifications.remove(id), invalidates: AFTER_WRITE, onSuccess: refreshBadge });
+  const isPending = markRead.isPending || markAllRead.isPending || remove.isPending;
 
   const hasUnread = notifications.some((n) => !n.read);
 
   function handleMarkAsRead(notificationId: string) {
-    startTransition(async () => {
-      const formData = new FormData();
-      formData.set("notificationId", notificationId);
-      await surfaceErrors(markAsRead(formData));
-      router.refresh();
-    });
+    markRead.mutate(notificationId);
   }
 
   function handleMarkAllAsRead() {
-    startTransition(async () => {
-      await markAllAsRead();
-      router.refresh();
-    });
+    markAllRead.mutate();
   }
 
   function handleDelete(notificationId: string) {
-    startTransition(async () => {
-      const formData = new FormData();
-      formData.set("notificationId", notificationId);
-      await surfaceErrors(deleteNotification(formData));
-      router.refresh();
-    });
+    remove.mutate(notificationId);
   }
 
   function handleCardClick(href: string | null) {

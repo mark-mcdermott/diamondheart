@@ -365,6 +365,17 @@ used to parse it in the server's zone. Three action files gone. `e2e/sections.sp
 round trip per section, and its first run found that the base dialog never scrolled, so a tall
 form's buttons sat below the fold on a phone; the shared component now caps at the viewport.
 
+**Landed 2026-09-20 — meditation, community and notifications**
+(`feat/applet-meditation-feed-notifications`): the meditate page reads its one aggregate
+endpoint; the timer's presence heartbeat is a `PUT` and its stop a `DELETE`; the edit page
+seeds the starter styles and presets with one explicit call instead of while rendering. The
+community feed's heart flips in the cached list and is put back if the server disagrees;
+"meditating now" is a Query that refetches on the heartbeat cadence. Notifications read and
+write through the endpoints, with a route refresh after each write because the sidebar badge
+is still server-rendered until Phase 4. `useApiMutation` is the write pattern the clients
+share: toast the failure, refetch what was touched. Four action files gone; `chart-data.ts`
+has two delegates left (workout, entertainment).
+
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the
   dashboard layout (Decision 5).

@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { Flower } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  getMeditatingNow,
-  type MeditatingNow,
-} from "@/app/actions/presence";
+import { api, keys } from "@/app/api";
 import {
   PRESENCE_HEARTBEAT_MS,
   summarizeMeditators,
@@ -16,31 +13,16 @@ import {
 
 const AVATAR_CAP = 5;
 
-export function MeditatingNowRow({
-  initial,
-}: {
-  initial: MeditatingNow;
-}) {
-  const [data, setData] = useState<MeditatingNow>(initial);
+/** Polls presence on the heartbeat cadence; a failed poll keeps the last answer and the next one retries. */
+export function MeditatingNowRow() {
+  const presence = useQuery({
+    queryKey: keys.meditatingNow,
+    queryFn: api.meditation.presence.get,
+    refetchInterval: PRESENCE_HEARTBEAT_MS,
+  });
+  const data = presence.data;
 
-  useEffect(() => {
-    let cancelled = false;
-    const tick = async () => {
-      try {
-        const next = await getMeditatingNow();
-        if (!cancelled) setData(next);
-      } catch {
-        // ignore — next tick retries
-      }
-    };
-    const id = window.setInterval(tick, PRESENCE_HEARTBEAT_MS);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, []);
-
-  if (data.count === 0) return null;
+  if (!data || data.count === 0) return null;
 
   const preview = data.meditators.slice(0, AVATAR_CAP);
   const overflow = Math.max(0, data.count - preview.length);
