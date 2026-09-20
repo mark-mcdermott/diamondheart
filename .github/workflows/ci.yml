@@ -6,9 +6,16 @@ on:
   pull_request:
     branches: [main]
 
+# A new push supersedes the run already going for that ref. Actions minutes
+# are metered, and a stale run has nothing left to tell us.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
@@ -37,6 +44,9 @@ jobs:
   # rather than silently passing, so a missing key is visible in the run.
   e2e:
     runs-on: ubuntu-latest
+    # Normally ~4 minutes. A clone missing a column fails every test and, with
+    # retries, would otherwise run toward GitHub's six-hour default.
+    timeout-minutes: 15
     needs: verify
     if: ${{ github.event_name == 'pull_request' }}
     steps:
