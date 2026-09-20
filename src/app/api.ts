@@ -1,6 +1,7 @@
 import type { TrackerCategory, TrackerEntry, TrackerMetric } from "@/db/schema";
 import type { CreateCustomFood, CreateEntry, CreateFavoriteFood, CreateMetric, LogFood, LogMeal, SaveMeal, UpdateEntry, UpdateMetric, UpdatePreferences } from "@/server/api/_lib/schemas";
 import type { CustomFood, FavoriteFood, FavoriteMeal, FoodDay, FoodLogItem, MacroTotals } from "@/server/api/food";
+import type { Dashboard } from "@/server/api/dashboard";
 import type { MetricsOverview } from "@/server/api/metrics";
 import type { Preferences } from "@/server/api/preferences";
 
@@ -76,6 +77,12 @@ export type FoodDayView = Omit<FoodDay, "meals"> & { meals: Record<keyof FoodDay
 export type Favorite = Serialized<FavoriteFood>;
 export type SavedMeal = Omit<Serialized<FavoriteMeal>, "items"> & { items: FavoriteMeal["items"] };
 export type DailyTotal = MacroTotals & { date: string };
+export type DashboardEntry = { id: string; metricId: string; value: string; date: string };
+export type DashboardView = Omit<Dashboard, "metrics" | "todayEntries" | "recentEntries"> & {
+  metrics: Metric[];
+  todayEntries: DashboardEntry[];
+  recentEntries: DashboardEntry[];
+};
 export interface MetricDetail {
   metric: Metric;
   /** Newest first, values as stored in the metric's own unit. */
@@ -93,6 +100,7 @@ export const keys = {
   foodFavorites: ["food", "favorites"] as const,
   foodMeals: ["food", "meals"] as const,
   foodTotals: (from: string, to: string) => ["food", "totals", from, to] as const,
+  dashboard: (date: string) => ["dashboard", date] as const,
 };
 
 export const api = {
@@ -130,6 +138,9 @@ export const api = {
     update: (id: string, patch: UpdateEntry) =>
       request<{ entry: Entry }>(`/api/entries/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.entry),
     remove: (id: string) => request<void>(`/api/entries/${id}`, { method: "DELETE" }),
+  },
+  dashboard: {
+    get: (date: string) => request<DashboardView>(`/api/dashboard?date=${date}`),
   },
   food: {
     day: (date: string) => request<FoodDayView>(`/api/food/log?date=${date}`),

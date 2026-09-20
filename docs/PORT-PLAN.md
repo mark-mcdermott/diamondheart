@@ -326,7 +326,14 @@ tracker action and moves with the dashboard.
 targets, favourites and saved meals through the API; the 778-line client kept its markup
 and its eight handlers became API calls that refetch. The chart and the overview read
 `GET /api/food/totals`. The food action file is gone, and so are the two food chart
-readers. The dashboard is the last plan section.
+readers.
+
+**Landed 2026-09-20 — the dashboard** (`feat/applet-dashboard`): one aggregate read plus
+the preferences; the four quick-log buttons became one API call that refetches, and
+pull-to-refresh refetches instead of reloading the route. The tracker action file is gone.
+**Every plan section now reads and writes through the API.** What remains for Phase 3 is
+the account block, the login and signup forms (which Better Auth's client will take over),
+and the shelved sections once their endpoints exist.
 
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the
