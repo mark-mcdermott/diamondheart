@@ -135,31 +135,3 @@ export async function toggleReaction(formData: FormData): Promise<Result> {
   return { success: true };
 }
 
-export async function toggleMeditationFeedVisibility(formData: FormData): Promise<Result> {
-  void formData;
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const [existing] = await db
-    .select()
-    .from(userPreferences)
-    .where(eq(userPreferences.userId, session.userId))
-    .limit(1);
-
-  if (existing) {
-    await db
-      .update(userPreferences)
-      .set({ showMeditationInFeed: !existing.showMeditationInFeed, updatedAt: new Date() })
-      .where(eq(userPreferences.id, existing.id));
-  } else {
-    await db.insert(userPreferences).values({
-      id: crypto.randomUUID(),
-      userId: session.userId,
-      showMeditationInFeed: false,
-    });
-  }
-
-  revalidatePath("/feed");
-  revalidatePath("/settings");
-  return { success: true };
-}

@@ -300,6 +300,15 @@ section has endpoints.** What remains in Phase 1 is the shelved sections.
 
 ## Phase 3 — Applet-ize under Next
 
+**Landed 2026-09-20 — settings** (`feat/applet-settings`): the first page that reads and
+writes through the API from the browser. `src/app/api.ts` is the applet's whole view of
+the API and owns the query keys; `src/app/query-provider.tsx` is Decision 5's one
+`QueryClient`, mounted in the dashboard layout. Every preference write is one partial
+PATCH with an optimistic cache patch that is put back if the server disagrees; nav
+toggles and reorders work the same way. Nine server actions were deleted with it. The
+page shows a skeleton while loading and a retry card on failure, which the
+server-rendered version never had to. Sections and metrics are next.
+
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the
   dashboard layout (Decision 5).

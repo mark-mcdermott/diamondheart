@@ -7,9 +7,7 @@ import { asResult, type ActionResult } from "./api-result";
 import {
   categoryNavStatus,
   readNavItems,
-  reorderNav,
   setCategoryInNav,
-  setNavItemVisibility,
   setSectionInNav,
   trackingSectionStatus,
 } from "@/server/api/nav";
@@ -30,41 +28,6 @@ export async function getTrackingSectionStatus(userId: string) {
 
 export async function getCategoryNavStatus(userId: string, categoryIds: string[]) {
   return categoryNavStatus(userId, categoryIds);
-}
-
-export async function toggleNavItemVisibility(formData: FormData): Promise<ActionResult> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const itemId = formData.get("itemId");
-  if (typeof itemId !== "string" || !itemId) return { success: false, error: "Item ID is required" };
-
-  const item = (await readNavItems(session.userId)).find((i) => i.id === itemId);
-  if (!item) return { success: false, error: "Item not found" };
-
-  const result = await asResult(() => setNavItemVisibility(session.userId, itemId, !item.visible));
-  revalidatePath("/settings");
-  revalidatePath("/metrics");
-  return result;
-}
-
-export async function reorderNavItems(formData: FormData): Promise<ActionResult> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const idsJson = formData.get("ids");
-  if (typeof idsJson !== "string" || !idsJson) return { success: false, error: "IDs are required" };
-
-  let ids: string[];
-  try {
-    ids = JSON.parse(idsJson);
-  } catch {
-    return { success: false, error: "Invalid IDs" };
-  }
-
-  const result = await asResult(() => reorderNav(session.userId, ids));
-  revalidatePath("/settings");
-  return result;
 }
 
 export async function toggleCategoryInNav(formData: FormData): Promise<ActionResult> {
