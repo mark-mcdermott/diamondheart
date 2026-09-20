@@ -1,360 +1,184 @@
 "use server";
 
-import { db } from "@/db";
-import {
-  trackerCategories,
-  trackerMetrics,
-  trackerEntries,
-} from "@/db/schema";
-import { and, eq, gte, lt, sql } from "drizzle-orm";
-import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { dayBounds } from "@/lib/dates";
-import { getUserPreferences } from "@/app/actions/preferences";
-import { toStoredValue } from "@/lib/units";
-
-export type ActionResult = {
-  success: boolean;
-  error?: string;
-};
-
-type OwnedMetric = { id: string; singleValuePerDay: boolean; unit: string | null };
-
-async function ownedMetric(
-  metricId: string,
-  userId: string
-): Promise<OwnedMetric | null> {
-  const [metric] = await db
-    .select({
-      id: trackerMetrics.id,
-      singleValuePerDay: trackerMetrics.singleValuePerDay,
-      unit: trackerMetrics.unit,
-    })
-    .from(trackerMetrics)
-    .where(and(eq(trackerMetrics.id, metricId), eq(trackerMetrics.userId, userId)))
-    .limit(1);
-  return metric ?? null;
-}
+import { getCurrentUser } from "@/lib/auth";
+import { readPreferences } from "@/server/api/preferences";
+import * as metrics from "@/server/api/metrics";
+import { asResult, type ActionResult } from "./api-result";
 
 /**
- * Values arrive in whatever unit the user is viewing. For a mass metric that
- * may not be the unit the metric stores in, so convert here rather than trust
- * the client — the form, the dashboard and any future caller all land here.
+ * Thin wrappers over `src/server/api/metrics.ts`, kept until Phase 3 moves the
+ * clients onto the endpoints. Values typed into the forms are in the viewer's
+ * unit, so each write passes `unit: weightUnit` and the server converts.
  */
-async function toStored(value: string, metric: OwnedMetric, userId: string): Promise<string> {
-  const numeric = parseFloat(value);
-  if (Number.isNaN(numeric)) return value; // "done", "true", free text
-  const { weightUnit } = await getUserPreferences(userId);
-  const stored = toStoredValue(numeric, metric.unit, weightUnit);
-  return stored === numeric ? value : String(stored);
+
+export type { ActionResult };
+
+function text(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
 }
 
-/**
- * Writes an entry. Metrics that hold one reading per day (weight) replace that
- * day's entry; metrics that accumulate (coffee) add another.
- */
-async function recordEntry(
-  metric: OwnedMetric,
-  userId: string,
-  value: string,
-  date: Date,
-  notes: string | null = null
-): Promise<void> {
-  value = await toStored(value, metric, userId);
-
-  if (metric.singleValuePerDay) {
-    const { start, end } = dayBounds(date);
-    const [existing] = await db
-      .select({ id: trackerEntries.id })
-      .from(trackerEntries)
-      .where(
-        and(
-          eq(trackerEntries.metricId, metric.id),
-          eq(trackerEntries.userId, userId),
-          gte(trackerEntries.date, start),
-          lt(trackerEntries.date, end)
-        )
-      )
-      .limit(1);
-
-    if (existing) {
-      await db
-        .update(trackerEntries)
-        .set({ value, notes, date, updatedAt: new Date() })
-        .where(eq(trackerEntries.id, existing.id));
-      return;
-    }
-  }
-
-  await db.insert(trackerEntries).values({
-    id: crypto.randomUUID(),
-    userId,
-    metricId: metric.id,
-    value,
-    notes,
-    date,
-  });
+async function viewerUnit(userId: string) {
+  return (await readPreferences(userId)).weightUnit;
 }
 
-// Quick log from dashboard — creates an entry with value "done"
+// Quick log from the dashboard — records "done" unless a value is given.
 export async function quickLog(formData: FormData): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  const metricId = formData.get("metricId") as string;
-  const value = (formData.get("value") as string) || "done";
-
+  const metricId = text(formData, "metricId");
   if (!metricId) return { success: false, error: "Metric is required" };
-  const metric = await ownedMetric(metricId, session.userId);
-  if (!metric) return { success: false, error: "Metric not found" };
 
-  await recordEntry(metric, session.userId, value, new Date());
-
+  const unit = await viewerUnit(session.userId);
+  const result = await asResult(() =>
+    metrics.createEntry(session.userId, metricId, { value: text(formData, "value") || "done", unit })
+  );
   revalidatePath("/dashboard");
-  return { success: true };
+  return result;
 }
 
-// Log entry with date/time/notes
+// The /entry form: value with date, time and notes, then back to the dashboard.
 export async function createEntry(formData: FormData): Promise<void> {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
 
-  const metricId = formData.get("metricId") as string;
-  const value = (formData.get("value") as string) || "done";
-  const notes = formData.get("notes") as string;
-  const dateStr = formData.get("date") as string;
-  const timeStr = formData.get("time") as string;
-
+  const metricId = text(formData, "metricId");
   if (!metricId) return;
-  const metric = await ownedMetric(metricId, session.userId);
-  if (!metric) return;
 
-  let date: Date;
-  if (dateStr && timeStr) {
-    date = new Date(`${dateStr}T${timeStr}`);
-  } else if (dateStr) {
-    date = new Date(dateStr);
-  } else {
-    date = new Date();
-  }
+  const dateStr = text(formData, "date");
+  const timeStr = text(formData, "time");
+  let date: Date | undefined;
+  if (dateStr && timeStr) date = new Date(`${dateStr}T${timeStr}`);
+  else if (dateStr) date = new Date(dateStr);
+  if (date && Number.isNaN(date.getTime())) date = undefined;
 
-  await recordEntry(metric, session.userId, value, date, notes || null);
+  const unit = await viewerUnit(session.userId);
+  const result = await asResult(() =>
+    metrics.createEntry(session.userId, metricId, {
+      value: text(formData, "value") || "done",
+      date,
+      notes: text(formData, "notes") || null,
+      unit,
+    })
+  );
+  if (!result.success) return;
 
   revalidatePath("/dashboard");
   revalidatePath("/metrics");
   redirect("/dashboard");
 }
 
-// Create a new metric
 export async function addMetric(formData: FormData): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  const name = formData.get("name") as string;
-  const valueType = formData.get("valueType") as string;
-  const unit = formData.get("unit") as string;
-  const dailyGoalStr = formData.get("dailyGoal") as string;
-  const fieldsJson = formData.get("fields") as string;
-  let categoryId = formData.get("categoryId") as string;
+  const name = text(formData, "name");
+  const valueType = text(formData, "valueType");
+  if (!name || !valueType) return { success: false, error: "Name and type are required" };
 
-  if (!name || !valueType) {
-    return { success: false, error: "Name and type are required" };
-  }
-
+  const dailyGoalStr = text(formData, "dailyGoal");
   const dailyGoal = dailyGoalStr ? parseInt(dailyGoalStr, 10) : 1;
-  if (dailyGoal < 1) {
+  if (!Number.isInteger(dailyGoal) || dailyGoal < 1) {
     return { success: false, error: "Daily goal must be at least 1" };
   }
 
-  let fields = null;
+  let fields: unknown = null;
+  const fieldsJson = text(formData, "fields");
   if (fieldsJson) {
     try {
       fields = JSON.parse(fieldsJson);
     } catch {
-      // ignore invalid JSON
+      fields = null;
     }
   }
 
-  // Category must belong to the user; fall back to their default category
-  if (categoryId) {
-    const [owned] = await db
-      .select({ id: trackerCategories.id })
-      .from(trackerCategories)
-      .where(
-        and(
-          eq(trackerCategories.id, categoryId),
-          eq(trackerCategories.userId, session.userId)
-        )
-      )
-      .limit(1);
-    if (!owned) return { success: false, error: "Category not found" };
-  } else {
-    const [defaultCat] = await db
-      .select()
-      .from(trackerCategories)
-      .where(
-        and(
-          eq(trackerCategories.slug, "default"),
-          eq(trackerCategories.userId, session.userId)
-        )
-      )
-      .limit(1);
-
-    if (defaultCat) {
-      categoryId = defaultCat.id;
-    } else {
-      categoryId = crypto.randomUUID();
-      await db.insert(trackerCategories).values({
-        id: categoryId,
-        userId: session.userId,
-        name: "Default",
-        slug: "default",
-        sortOrder: "0",
-      });
-    }
-  }
-
-  // Get next sort order
-  const [maxSort] = await db
-    .select({ max: sql<string>`COALESCE(MAX(${trackerMetrics.sortOrder}), '-1')` })
-    .from(trackerMetrics)
-    .where(eq(trackerMetrics.userId, session.userId));
-  const nextSort = String(parseInt(maxSort?.max ?? "-1", 10) + 1);
-
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-
-  await db.insert(trackerMetrics).values({
-    id: crypto.randomUUID(),
-    userId: session.userId,
-    categoryId,
-    name,
-    slug,
-    valueType,
-    unit: unit || null,
-    dailyGoal,
-    fields,
-    sortOrder: nextSort,
-  });
-
+  const result = await asResult(() =>
+    metrics.createMetric(session.userId, {
+      name,
+      valueType,
+      unit: text(formData, "unit") || null,
+      dailyGoal,
+      fields,
+      categoryId: text(formData, "categoryId") || null,
+    })
+  );
   revalidatePath("/metrics");
-  return { success: true };
+  return result;
 }
 
-// Update an existing metric
-export async function updateMetric(
-  metricId: string,
-  formData: FormData
-): Promise<ActionResult> {
+export async function updateMetric(metricId: string, formData: FormData): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  const name = formData.get("name") as string;
-  const valueType = formData.get("valueType") as string;
-  const unit = formData.get("unit") as string;
-  const dailyGoalStr = formData.get("dailyGoal") as string;
-  const counterStr = formData.get("counter") as string;
-  const singleValueStr = formData.get("singleValuePerDay") as string;
-  const fieldsJson = formData.get("fields") as string;
+  const name = text(formData, "name");
+  const valueType = text(formData, "valueType");
+  if (!name || !valueType) return { success: false, error: "Name and type are required" };
 
-  if (!name || !valueType) {
-    return { success: false, error: "Name and type are required" };
-  }
-
+  const dailyGoalStr = text(formData, "dailyGoal");
   const dailyGoal = dailyGoalStr ? parseInt(dailyGoalStr, 10) : 1;
 
-  let fields = null;
+  let fields: unknown = null;
+  const fieldsJson = text(formData, "fields");
   if (fieldsJson) {
     try {
       fields = JSON.parse(fieldsJson);
     } catch {
-      // ignore
+      fields = null;
     }
   }
 
-  const updated = await db
-    .update(trackerMetrics)
-    .set({
+  const result = await asResult(() =>
+    metrics.updateMetric(session.userId, metricId, {
       name,
       valueType,
-      unit: unit || null,
-      dailyGoal,
-      // A metric cannot both accumulate and hold a single daily reading.
-      counter: counterStr === "true" && singleValueStr !== "true",
-      singleValuePerDay: singleValueStr === "true",
+      unit: text(formData, "unit") || null,
+      dailyGoal: Number.isInteger(dailyGoal) && dailyGoal >= 1 ? dailyGoal : 1,
       fields,
-      updatedAt: new Date(),
+      counter: text(formData, "counter") === "true",
+      singleValuePerDay: text(formData, "singleValuePerDay") === "true",
     })
-    .where(
-      and(eq(trackerMetrics.id, metricId), eq(trackerMetrics.userId, session.userId))
-    )
-    .returning({ id: trackerMetrics.id });
-
-  if (!updated.length) return { success: false, error: "Metric not found" };
+  );
+  if (!result.success) return result;
 
   redirect(`/metrics/${metricId}`);
 }
 
-// Delete a metric
 export async function deleteMetric(formData: FormData): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  const metricId = formData.get("metricId") as string;
+  const metricId = text(formData, "metricId");
   if (!metricId) return { success: false, error: "Metric ID is required" };
 
-  const deleted = await db
-    .delete(trackerMetrics)
-    .where(
-      and(eq(trackerMetrics.id, metricId), eq(trackerMetrics.userId, session.userId))
-    )
-    .returning({ id: trackerMetrics.id });
-
-  if (!deleted.length) return { success: false, error: "Metric not found" };
-
+  const result = await asResult(() => metrics.deleteMetric(session.userId, metricId));
   revalidatePath("/metrics");
-  return { success: true };
+  return result;
 }
 
-// Toggle metric visibility
 export async function toggleHidden(formData: FormData): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  const metricId = formData.get("metricId") as string;
+  const metricId = text(formData, "metricId");
   if (!metricId) return { success: false, error: "Metric ID is required" };
 
-  const [metric] = await db
-    .select({ hidden: trackerMetrics.hidden })
-    .from(trackerMetrics)
-    .where(
-      and(eq(trackerMetrics.id, metricId), eq(trackerMetrics.userId, session.userId))
-    )
-    .limit(1);
-
-  if (!metric) return { success: false, error: "Metric not found" };
-
-  await db
-    .update(trackerMetrics)
-    .set({ hidden: !metric.hidden })
-    .where(
-      and(eq(trackerMetrics.id, metricId), eq(trackerMetrics.userId, session.userId))
-    );
-
+  const result = await asResult(async () => {
+    const { metric } = await metrics.getMetric(session.userId, metricId);
+    await metrics.updateMetric(session.userId, metricId, { hidden: !metric.hidden });
+  });
   revalidatePath("/metrics");
   revalidatePath("/dashboard");
-  return { success: true };
+  return result;
 }
 
-// Reorder metrics
 export async function reorderMetrics(formData: FormData): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  const idsJson = formData.get("ids") as string;
+  const idsJson = text(formData, "ids");
   if (!idsJson) return { success: false, error: "IDs are required" };
 
   let ids: string[];
@@ -364,82 +188,38 @@ export async function reorderMetrics(formData: FormData): Promise<ActionResult> 
     return { success: false, error: "Invalid IDs" };
   }
 
-  for (let i = 0; i < ids.length; i++) {
-    await db
-      .update(trackerMetrics)
-      .set({ sortOrder: String(i) })
-      .where(
-        and(
-          eq(trackerMetrics.id, ids[i]),
-          eq(trackerMetrics.userId, session.userId)
-        )
-      );
-  }
-
+  const result = await asResult(() => metrics.reorderMetrics(session.userId, ids));
   revalidatePath("/metrics");
-  return { success: true };
+  return result;
 }
 
 export async function deleteEntry(formData: FormData): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  const entryId = formData.get("entryId") as string;
+  const entryId = text(formData, "entryId");
   if (!entryId) return { success: false, error: "Entry ID is required" };
 
-  const deleted = await db
-    .delete(trackerEntries)
-    .where(
-      and(eq(trackerEntries.id, entryId), eq(trackerEntries.userId, session.userId))
-    )
-    .returning({ id: trackerEntries.id });
-
-  if (!deleted.length) return { success: false, error: "Entry not found" };
-
+  const result = await asResult(() => metrics.deleteEntry(session.userId, entryId));
   revalidatePath("/metrics");
-  return { success: true };
+  return result;
 }
 
 export async function updateEntry(formData: FormData): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
 
-  const entryId = formData.get("entryId") as string;
-  const rawValue = formData.get("value") as string;
-  const notes = formData.get("notes") as string | null;
-
+  const entryId = text(formData, "entryId");
   if (!entryId) return { success: false, error: "Entry ID is required" };
 
-  // The row being edited was rendered in the viewer's unit; convert it back.
-  const [owning] = await db
-    .select({
-      id: trackerMetrics.id,
-      singleValuePerDay: trackerMetrics.singleValuePerDay,
-      unit: trackerMetrics.unit,
+  const unit = await viewerUnit(session.userId);
+  const result = await asResult(() =>
+    metrics.updateEntry(session.userId, entryId, {
+      value: text(formData, "value") || "done",
+      notes: text(formData, "notes") || null,
+      unit,
     })
-    .from(trackerEntries)
-    .innerJoin(trackerMetrics, eq(trackerMetrics.id, trackerEntries.metricId))
-    .where(
-      and(eq(trackerEntries.id, entryId), eq(trackerEntries.userId, session.userId))
-    )
-    .limit(1);
-
-  const value = owning ? await toStored(rawValue, owning, session.userId) : rawValue;
-
-  const updated = await db
-    .update(trackerEntries)
-    .set({
-      value: value || "done",
-      notes: notes || null,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(eq(trackerEntries.id, entryId), eq(trackerEntries.userId, session.userId))
-    )
-    .returning({ id: trackerEntries.id });
-
-  if (!updated.length) return { success: false, error: "Entry not found" };
-
+  );
   revalidatePath("/metrics");
-  return { success: true };
+  return result;
 }
