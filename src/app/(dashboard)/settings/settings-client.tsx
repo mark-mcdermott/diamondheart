@@ -4,11 +4,16 @@ import { useState, useTransition } from "react";
 import { surfaceErrors } from "@/lib/action-result";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   toggleNavItemVisibility,
   reorderNavItems,
 } from "@/app/actions/nav";
-import { toggleNetflixUI, toggleSiteName, setWeightUnit } from "@/app/actions/preferences";
+import { toggleNetflixUI, toggleSiteName, setWeightUnit, setFoodTargets } from "@/app/actions/preferences";
+import { toast } from "sonner";
+import { MACRO_KEYS, type FoodTargets, type MacroKey } from "@/lib/targets";
 import { MASS_UNITS, type MassUnit } from "@/lib/units";
 import { toggleMeditationFeedVisibility } from "@/app/actions/feed";
 import { toggleShowNameWhenMeditating } from "@/app/actions/presence";
@@ -40,6 +45,7 @@ interface SettingsClientProps {
   showSiteName: boolean;
   showMeditationInFeed: boolean;
   weightUnit: MassUnit;
+  targets: FoodTargets;
   showNameWhenMeditating: boolean;
   dashboardSections: string[];
 }
@@ -118,9 +124,16 @@ function SortableNavItem({
   );
 }
 
-export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSiteName: initialShowSiteName, showMeditationInFeed: initialShowInFeed, showNameWhenMeditating: initialShowName, weightUnit: initialWeightUnit, dashboardSections }: SettingsClientProps) {
+export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSiteName: initialShowSiteName, showMeditationInFeed: initialShowInFeed, showNameWhenMeditating: initialShowName, weightUnit: initialWeightUnit, targets: initialTargets, dashboardSections }: SettingsClientProps) {
   const [netflixUI, setNetflixUI] = useState(useNetflixUI);
   const [massUnit, setMassUnit] = useState<MassUnit>(initialWeightUnit);
+  // Kept as strings: an empty field means "no target", which a number cannot express.
+  const [targetFields, setTargetFields] = useState<Record<MacroKey, string>>({
+    calories: initialTargets.calories?.toString() ?? "",
+    protein: initialTargets.protein?.toString() ?? "",
+    carbs: initialTargets.carbs?.toString() ?? "",
+    fat: initialTargets.fat?.toString() ?? "",
+  });
   const [siteName, setSiteName] = useState(initialShowSiteName);
   const [showInFeed, setShowInFeed] = useState(initialShowInFeed);
   const [showName, setShowName] = useState(initialShowName);
@@ -399,6 +412,65 @@ export function SettingsClient({ navItems: serverNavItems, useNetflixUI, showSit
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mb-8">
+        <h3
+          className="text-lg font-semibold mb-4"
+          style={{ color: "var(--app-heading-color)" }}
+        >
+          Daily targets
+        </h3>
+        <div className="bg-card border border-border rounded-lg px-4 py-4">
+          <p className="text-xs text-muted-foreground mb-4">
+            The Food page reads each day against these. Leave a field blank to
+            track that number without a target.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {(
+              [
+                { key: "calories", label: "Calories", unit: "kcal", placeholder: "e.g. 2000" },
+                { key: "protein", label: "Protein", unit: "g", placeholder: "e.g. 150" },
+                { key: "carbs", label: "Carbs", unit: "g", placeholder: "e.g. 200" },
+                { key: "fat", label: "Fat", unit: "g", placeholder: "e.g. 70" },
+              ] as { key: MacroKey; label: string; unit: string; placeholder: string }[]
+            ).map((f) => (
+              <div key={f.key}>
+                <Label htmlFor={`target-${f.key}`} className="text-xs">
+                  {f.label} <span className="text-muted-foreground">({f.unit})</span>
+                </Label>
+                <Input
+                  id={`target-${f.key}`}
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="1"
+                  placeholder={f.placeholder}
+                  value={targetFields[f.key]}
+                  onChange={(e) => setTargetFields((t) => ({ ...t, [f.key]: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button
+              size="sm"
+              disabled={isPending}
+              onClick={() => {
+                startTransition(async () => {
+                  const fd = new FormData();
+                  for (const key of MACRO_KEYS) fd.set(key, targetFields[key]);
+                  const result = await surfaceErrors(setFoodTargets(fd));
+                  // A Save button needs an acknowledgement; silence reads as failure.
+                  if (result.success) toast.success("Daily targets saved");
+                });
+              }}
+            >
+              {isPending ? "Saving..." : "Save targets"}
+            </Button>
           </div>
         </div>
       </section>
