@@ -398,3 +398,171 @@ export type AddSet = z.infer<typeof addSetSchema>;
 export type CreateEntertainment = z.infer<typeof createEntertainmentSchema>;
 export type UpdateEntertainment = z.infer<typeof updateEntertainmentSchema>;
 export type EpisodeWatched = z.infer<typeof episodeWatchedSchema>;
+
+// --- finances: every amount is integer cents ------------------------------------
+const cents = z.number().int();
+const nonNegativeCents = z.number().int().min(0);
+const decimalText = optionalShort(32);
+
+const accountFields = {
+  name: shortText(200),
+  accountType: shortText(32),
+  institution: optionalShort(200),
+  balanceCents: cents,
+  currency: shortText(8),
+  notes: optionalText,
+  archived: z.boolean(),
+};
+export const createFinanceAccountSchema = z
+  .object({ ...accountFields, institution: accountFields.institution.optional(), balanceCents: cents.optional(), currency: accountFields.currency.optional(), notes: accountFields.notes.optional() })
+  .omit({ archived: true })
+  .strict();
+export const updateFinanceAccountSchema = z.object(accountFields).partial().strict();
+
+export const createFinanceCategorySchema = z
+  .object({ name: shortText(100), type: z.enum(["income", "expense", "transfer"]).optional(), icon: optionalShort(64).optional() })
+  .strict();
+
+export const createTransactionSchema = z
+  .object({
+    accountId: z.string().min(1),
+    categoryId: z.string().min(1).nullable().optional(),
+    type: z.enum(["income", "expense", "transfer"]),
+    /** The magnitude; the server signs it by type. */
+    amountCents: z.number().int().positive(),
+    description: shortText(300),
+    merchant: optionalShort(200).optional(),
+    date: isoDate.optional(),
+    notes: optionalText.optional(),
+    isRecurring: z.boolean().optional(),
+  })
+  .strict();
+export const updateTransactionSchema = z
+  .object({ categoryId: z.string().min(1).nullable(), description: shortText(300), merchant: optionalShort(200), notes: optionalText })
+  .partial()
+  .strict();
+export const importTransactionsSchema = z
+  .object({
+    accountId: z.string().min(1),
+    transactions: z
+      .array(
+        z.object({
+          date: z.string().min(1).max(64),
+          description: shortText(300),
+          /** Dollars, as the CSV carries them. */
+          amount: z.number().finite(),
+          type: z.enum(["income", "expense"]),
+          merchant: optionalShort(200).optional(),
+          categoryId: z.string().min(1).nullable().optional(),
+        })
+      )
+      .max(5000),
+  })
+  .strict();
+
+export const setBudgetSchema = z.object({ categoryId: z.string().min(1), amountCents: nonNegativeCents, period: z.enum(["monthly", "weekly", "yearly"]).optional() }).strict();
+
+const investmentFields = {
+  accountId: z.string().min(1).nullable(),
+  symbol: shortText(32),
+  name: shortText(200),
+  investmentType: shortText(32),
+  /** Text so fractional shares keep their precision. */
+  shares: z.string().trim().max(32),
+  costBasisCents: nonNegativeCents,
+  currentPriceCents: nonNegativeCents,
+  vestingDate: isoDate.nullable(),
+  expirationDate: isoDate.nullable(),
+  strikePriceCents: nonNegativeCents.nullable(),
+  grantDate: isoDate.nullable(),
+  notes: optionalText,
+};
+export const createInvestmentSchema = z
+  .object({
+    symbol: investmentFields.symbol,
+    name: investmentFields.name,
+    investmentType: investmentFields.investmentType,
+    accountId: investmentFields.accountId.optional(),
+    shares: investmentFields.shares.optional(),
+    costBasisCents: investmentFields.costBasisCents.optional(),
+    currentPriceCents: investmentFields.currentPriceCents.optional(),
+    vestingDate: investmentFields.vestingDate.optional(),
+    expirationDate: investmentFields.expirationDate.optional(),
+    strikePriceCents: investmentFields.strikePriceCents.optional(),
+    grantDate: investmentFields.grantDate.optional(),
+    notes: investmentFields.notes.optional(),
+  })
+  .strict();
+export const updateInvestmentSchema = z.object(investmentFields).partial().strict();
+
+const propertyFields = {
+  name: shortText(200),
+  address: optionalShort(300),
+  purchasePriceCents: nonNegativeCents,
+  currentValueCents: nonNegativeCents,
+  purchaseDate: isoDate.nullable(),
+  mortgageBalanceCents: nonNegativeCents,
+  mortgageRatePercent: decimalText,
+  mortgageMonthlyPaymentCents: nonNegativeCents.nullable(),
+  propertyType: shortText(32),
+  notes: optionalText,
+};
+export const createPropertySchema = z
+  .object({
+    name: propertyFields.name,
+    address: propertyFields.address.optional(),
+    purchasePriceCents: propertyFields.purchasePriceCents.optional(),
+    currentValueCents: propertyFields.currentValueCents.optional(),
+    purchaseDate: propertyFields.purchaseDate.optional(),
+    mortgageBalanceCents: propertyFields.mortgageBalanceCents.optional(),
+    mortgageRatePercent: propertyFields.mortgageRatePercent.optional(),
+    mortgageMonthlyPaymentCents: propertyFields.mortgageMonthlyPaymentCents.optional(),
+    propertyType: propertyFields.propertyType.optional(),
+    notes: propertyFields.notes.optional(),
+  })
+  .strict();
+export const updatePropertySchema = z.object(propertyFields).partial().strict();
+
+const retirementFields = {
+  name: shortText(200),
+  planType: shortText(32),
+  institution: optionalShort(200),
+  balanceCents: nonNegativeCents,
+  employerMatch: optionalShort(100),
+  contributionYtdCents: nonNegativeCents,
+  contributionLimitCents: nonNegativeCents.nullable(),
+  targetRetirementAge: z.number().int().min(1).max(120).nullable(),
+  monthlyContributionCents: nonNegativeCents.nullable(),
+  expectedReturnPercent: decimalText,
+  notes: optionalText,
+};
+export const createRetirementPlanSchema = z
+  .object({
+    name: retirementFields.name,
+    planType: retirementFields.planType,
+    institution: retirementFields.institution.optional(),
+    balanceCents: retirementFields.balanceCents.optional(),
+    employerMatch: retirementFields.employerMatch.optional(),
+    contributionYtdCents: retirementFields.contributionYtdCents.optional(),
+    contributionLimitCents: retirementFields.contributionLimitCents.optional(),
+    targetRetirementAge: retirementFields.targetRetirementAge.optional(),
+    monthlyContributionCents: retirementFields.monthlyContributionCents.optional(),
+    expectedReturnPercent: retirementFields.expectedReturnPercent.optional(),
+    notes: retirementFields.notes.optional(),
+  })
+  .strict();
+export const updateRetirementPlanSchema = z.object(retirementFields).partial().strict();
+
+export type CreateFinanceAccount = z.infer<typeof createFinanceAccountSchema>;
+export type UpdateFinanceAccount = z.infer<typeof updateFinanceAccountSchema>;
+export type CreateFinanceCategory = z.infer<typeof createFinanceCategorySchema>;
+export type CreateTransaction = z.infer<typeof createTransactionSchema>;
+export type UpdateTransaction = z.infer<typeof updateTransactionSchema>;
+export type ImportTransactions = z.infer<typeof importTransactionsSchema>;
+export type SetBudget = z.infer<typeof setBudgetSchema>;
+export type CreateInvestment = z.infer<typeof createInvestmentSchema>;
+export type UpdateInvestment = z.infer<typeof updateInvestmentSchema>;
+export type CreateProperty = z.infer<typeof createPropertySchema>;
+export type UpdateProperty = z.infer<typeof updatePropertySchema>;
+export type CreateRetirementPlan = z.infer<typeof createRetirementPlanSchema>;
+export type UpdateRetirementPlan = z.infer<typeof updateRetirementPlanSchema>;
