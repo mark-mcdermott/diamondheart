@@ -164,6 +164,12 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
   // Close search when clicking outside
   useEffect(() => {
     function handleClick(e: MouseEvent) {
+      // The custom-food dialog is a portal, so it lives outside searchRef and
+      // every click inside it reads as an outside click. Clearing activeMeal
+      // here is why "Add Food" silently did nothing: handleCreateCustom needs
+      // a selected meal and the first mousedown in the dialog removed it.
+      if (showCustom) return;
+
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setActiveMeal(null);
         setSearchQuery("");
@@ -172,7 +178,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
+  }, [showCustom]);
 
   const doSearch = useCallback(async (q: string) => {
     if (q.length < 2) {
@@ -409,7 +415,13 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
         ].map((item) => (
           <div key={item.label} className="bg-card rounded-[28px] border border-border/80 px-4 py-7 text-center card-texture">
             <item.icon className="mx-auto mb-5 h-4 w-4" strokeWidth={1.8} style={{ color: item.color }} />
-            <p className="font-mono text-[2rem] font-semibold leading-none" style={{ color: item.color }}>{item.value}</p>
+            <p
+              data-testid={`total-${item.label.toLowerCase()}`}
+              className="font-mono text-[2rem] font-semibold leading-none"
+              style={{ color: item.color }}
+            >
+              {item.value}
+            </p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
           </div>
         ))}
@@ -532,7 +544,7 @@ export function FoodClient({ meals, totals, favoriteFoods, favoriteMeals, select
                     <span className="text-sm text-muted-foreground">{stagedFood.servingUnit}</span>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={confirmStagedFood} disabled={isPending}>Add</Button>
+                    <Button size="sm" data-testid="confirm-staged-food" onClick={confirmStagedFood} disabled={isPending}>Add</Button>
                     <Button size="sm" variant="secondary" onClick={() => setStagedFood(null)}>Back</Button>
                   </div>
                 </div>

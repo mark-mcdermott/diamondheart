@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { neon } from "@neondatabase/serverless";
 
 export const PASSWORD = "correct-horse-battery-staple";
 
@@ -51,4 +52,39 @@ export async function logEntry(page: Page, metricId: string, value: string): Pro
   await page.fill('input[name="value"]', value);
   await page.getByRole("button", { name: /save entry/i }).click();
   await page.waitForURL("**/dashboard", { timeout: 30_000 });
+}
+
+/**
+ * Seeds a favourite food straight into the database.
+ *
+ * The UI can only create favourites by starring a USDA search result, which
+ * needs an API key CI does not have. Staging a favourite is the only path to
+ * the quantity picker, so the fixture is set up out of band and the UI is then
+ * driven normally.
+ */
+export async function seedFavoriteFood(
+  email: string,
+  food: { name: string; calories: number; protein: number; carbs: number; fat: number }
+): Promise<void> {
+  // The wrapper exports DATABASE_URL to the child; running playwright directly
+  // only has TEST_DATABASE_URL.
+  const url = process.env.DATABASE_URL ?? process.env.TEST_DATABASE_URL;
+  if (!url) throw new Error("no database url for seeding");
+  const sql = neon(url);
+  const [user] = (await sql.query("select id from users where email = $1", [email])) as {
+    id: string;
+  }[];
+  if (!user) throw new Error(`no user ${email}`);
+
+  await sql.query(
+    `insert into favorite_foods
+       (id, user_id, name, serving_size, serving_unit, calories, protein, carbs, fat)
+     values ($1, $2, $3, 1, 'serving', $4, $5, $6, $7)`,
+    [crypto.randomUUID(), user.id, food.name, food.calories, food.protein, food.carbs, food.fat]
+  );
+}
+
+export async function dailyTotal(page: Page, macro: string): Promise<number> {
+  const text = await page.getByTestId(`total-${macro}`).innerText();
+  return Number(text);
 }
