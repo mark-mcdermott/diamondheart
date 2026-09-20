@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { surfaceErrors } from "@/lib/action-result";
+import { toast } from "sonner";
+import { api, errorMessage, type Metric } from "@/app/api";
+import type { MassUnit } from "@/lib/units";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -11,13 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { EmptyState } from "@/components/ui/empty-state";
-import { quickLog } from "@/app/actions/tracker";
 import { hapticTap, hapticSuccess } from "@/lib/haptics";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { WeeklyChart } from "./weekly-chart";
 import { toISODate } from "@/lib/dates";
 import { buildWeekBars, type WeekBar } from "@/lib/week-bars";
-import type { TrackerMetric } from "@/db/schema";
 import {
   Plus,
   Settings,
@@ -63,7 +63,11 @@ interface MealSummary {
 }
 
 interface DashboardClientProps {
-  metrics: TrackerMetric[];
+  /** Refetches after a log lands. */
+  onChanged: () => Promise<unknown>;
+  /** The unit typed values are in, so the server converts mass metrics on write. */
+  weightUnit: MassUnit;
+  metrics: Metric[];
   todayEntries: Entry[];
   recentEntries: Entry[];
   foodTotals: { calories: number; protein: number; carbs: number; fat: number };
@@ -92,7 +96,7 @@ const fallbackIcons: LucideIcon[] = [
   Heart, Flame, BookOpen, Moon, Sun, Apple, Footprints, Brain, Droplets, Dumbbell,
 ];
 
-function getMetricIcon(metric: TrackerMetric, index: number): LucideIcon {
+function getMetricIcon(metric: Metric, index: number): LucideIcon {
   return iconMap[metric.slug] ?? fallbackIcons[index % fallbackIcons.length];
 }
 
@@ -111,7 +115,7 @@ function getTodayValue(metricId: string, todayEntries: Entry[]): { count: number
   return { count: entries.length, sum };
 }
 
-function getProgress(metric: TrackerMetric, todayEntries: Entry[]): number {
+function getProgress(metric: Metric, todayEntries: Entry[]): number {
   const { count, sum } = getTodayValue(metric.id, todayEntries);
   const goal = metric.dailyGoal ?? 1;
   if (goal <= 0) return 100;
@@ -122,7 +126,7 @@ function getProgress(metric: TrackerMetric, todayEntries: Entry[]): number {
   return Math.max(0, Math.min(100, (sum / goal) * 100));
 }
 
-function isGoalMet(metric: TrackerMetric, todayEntries: Entry[]): boolean {
+function isGoalMet(metric: Metric, todayEntries: Entry[]): boolean {
   return getProgress(metric, todayEntries) >= 100;
 }
 
@@ -218,12 +222,22 @@ function WeekBars({ bars, completed }: { bars: WeekBar[]; completed: boolean }) 
   );
 }
 
-export function DashboardClient({ metrics, todayEntries, recentEntries, foodTotals, mealSummaries, sparklines, dashboardSections, selectedDate }: DashboardClientProps) {
+export function DashboardClient({ onChanged, weightUnit, metrics, todayEntries, recentEntries, foodTotals, mealSummaries, sparklines, dashboardSections, selectedDate }: DashboardClientProps) {
   const router = useRouter();
-  usePullToRefresh();
+  usePullToRefresh(onChanged);
+
+  /** One quick-log path for every button: write, surface a failure, refetch. */
+  async function log(metricId: string, value: string) {
+    try {
+      await api.entries.create(metricId, { value, unit: weightUnit });
+    } catch (error) {
+      toast.error(errorMessage(error));
+    }
+    await onChanged();
+  }
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
-  const [entryMetric, setEntryMetric] = useState<TrackerMetric | null>(null);
+  const [entryMetric, setEntryMetric] = useState<Metric | null>(null);
   const [entryValue, setEntryValue] = useState("");
   const [, startTransition] = useTransition();
   const [settledIds, setSettledIds] = useState<Set<string>>(new Set());
@@ -270,10 +284,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
     setPendingId(metricId);
     hapticTap();
     startTransition(async () => {
-      const fd = new FormData();
-      fd.set("metricId", metricId);
-      fd.set("value", "done");
-      await surfaceErrors(quickLog(fd));
+      await log(metricId, "done");
       hapticSuccess();
       setSettledIds((prev) => new Set(prev).add(metricId));
       setTimeout(() => setSettledIds((prev) => {
@@ -458,10 +469,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                             if (metric.counter) {
                               setPendingId(metric.id + "-add");
                               startTransition(async () => {
-                                const fd = new FormData();
-                                fd.set("metricId", metric.id);
-                                fd.set("value", "1");
-                                await surfaceErrors(quickLog(fd));
+                                await log(metric.id, "1");
                                 setPendingId(null);
                               });
                             } else {
@@ -522,10 +530,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                           onClick={() => {
                             setPendingId(metric.id + "-counter");
                             startTransition(async () => {
-                              const fd = new FormData();
-                              fd.set("metricId", metric.id);
-                              fd.set("value", "1");
-                              await surfaceErrors(quickLog(fd));
+                              await log(metric.id, "1");
                               setPendingId(null);
                             });
                           }}
@@ -660,10 +665,7 @@ export function DashboardClient({ metrics, todayEntries, recentEntries, foodTota
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
                 startTransition(async () => {
-                  const fd = new FormData();
-                  fd.set("metricId", formData.get("metricId") as string);
-                  fd.set("value", formData.get("value") as string || "done");
-                  await surfaceErrors(quickLog(fd));
+                  await log(String(formData.get("metricId")), String(formData.get("value") || "done"));
                   setEntryMetric(null);
                   setEntryValue("");
                 });
