@@ -1,5 +1,6 @@
 import type { TrackerCategory, TrackerEntry, TrackerMetric } from "@/db/schema";
-import type { CreateEntry, CreateMetric, UpdateEntry, UpdateMetric, UpdatePreferences } from "@/server/api/_lib/schemas";
+import type { CreateCustomFood, CreateEntry, CreateFavoriteFood, CreateMetric, LogFood, LogMeal, SaveMeal, UpdateEntry, UpdateMetric, UpdatePreferences } from "@/server/api/_lib/schemas";
+import type { CustomFood, FavoriteFood, FavoriteMeal, FoodDay, FoodLogItem, MacroTotals } from "@/server/api/food";
 import type { MetricsOverview } from "@/server/api/metrics";
 import type { Preferences } from "@/server/api/preferences";
 
@@ -70,6 +71,11 @@ export type Serialized<T> = { [K in keyof T]: T[K] extends Date ? string : T[K] 
 export type Metric = Serialized<TrackerMetric>;
 export type Category = Serialized<TrackerCategory>;
 export type Entry = Serialized<TrackerEntry>;
+export type FoodItem = Serialized<FoodLogItem>;
+export type FoodDayView = Omit<FoodDay, "meals"> & { meals: Record<keyof FoodDay["meals"], FoodItem[]> };
+export type Favorite = Serialized<FavoriteFood>;
+export type SavedMeal = Omit<Serialized<FavoriteMeal>, "items"> & { items: FavoriteMeal["items"] };
+export type DailyTotal = MacroTotals & { date: string };
 export interface MetricDetail {
   metric: Metric;
   /** Newest first, values as stored in the metric's own unit. */
@@ -83,6 +89,10 @@ export const keys = {
   metricsOverview: ["metrics", "overview"] as const,
   metrics: ["metrics", "list"] as const,
   metric: (id: string) => ["metrics", id] as const,
+  foodDay: (date: string) => ["food", "day", date] as const,
+  foodFavorites: ["food", "favorites"] as const,
+  foodMeals: ["food", "meals"] as const,
+  foodTotals: (from: string, to: string) => ["food", "totals", from, to] as const,
 };
 
 export const api = {
@@ -120,6 +130,23 @@ export const api = {
     update: (id: string, patch: UpdateEntry) =>
       request<{ entry: Entry }>(`/api/entries/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.entry),
     remove: (id: string) => request<void>(`/api/entries/${id}`, { method: "DELETE" }),
+  },
+  food: {
+    day: (date: string) => request<FoodDayView>(`/api/food/log?date=${date}`),
+    log: (input: LogFood) => request<{ item: FoodItem }>("/api/food/log", { method: "POST", ...json(input) }).then((r) => r.item),
+    removeItem: (id: string) => request<void>(`/api/food/log/items/${id}`, { method: "DELETE" }),
+    totals: (from: string, to: string) => request<{ days: DailyTotal[] }>(`/api/food/totals?from=${from}&to=${to}`).then((r) => r.days),
+    favorites: () => request<{ favorites: Favorite[] }>("/api/food/favorites").then((r) => r.favorites),
+    favorite: (input: CreateFavoriteFood) =>
+      request<{ favorite: Favorite }>("/api/food/favorites", { method: "POST", ...json(input) }).then((r) => r.favorite),
+    unfavorite: (id: string) => request<void>(`/api/food/favorites/${id}`, { method: "DELETE" }),
+    createCustom: (input: CreateCustomFood) =>
+      request<{ customFood: Serialized<CustomFood> }>("/api/food/custom", { method: "POST", ...json(input) }).then((r) => r.customFood),
+    meals: () => request<{ meals: SavedMeal[] }>("/api/food/meals").then((r) => r.meals),
+    saveMeal: (input: SaveMeal) => request<{ meal: SavedMeal }>("/api/food/meals", { method: "POST", ...json(input) }).then((r) => r.meal),
+    deleteMeal: (id: string) => request<void>(`/api/food/meals/${id}`, { method: "DELETE" }),
+    logMeal: (id: string, input: LogMeal) =>
+      request<{ items: FoodItem[] }>(`/api/food/meals/${id}/log`, { method: "POST", ...json(input) }).then((r) => r.items),
   },
   categories: {
     create: (name: string) => request<{ category: Category }>("/api/categories", { method: "POST", ...json({ name }) }).then((r) => r.category),

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -15,8 +16,9 @@ import {
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart-container";
 import { TimeRangePicker } from "@/components/ui/time-range-picker";
-import { type TimeRange, MACRO_COLORS, formatDateLabel, generateDateKeys } from "@/lib/chart-utils";
-import { getFoodChartData } from "@/app/actions/chart-data";
+import { type TimeRange, MACRO_COLORS, formatDateLabel, generateDateKeys, getDateRange } from "@/lib/chart-utils";
+import { toISODate } from "@/lib/dates";
+import { api, keys } from "@/app/api";
 
 interface FoodChartProps {
   totals: { calories: number; protein: number; carbs: number; fat: number };
@@ -24,15 +26,11 @@ interface FoodChartProps {
 
 export function FoodChart({ totals }: FoodChartProps) {
   const [range, setRange] = useState<TimeRange>("week");
-  const [, startTransition] = useTransition();
-  const [rawData, setRawData] = useState<{ date: string; calories: number; protein: number; carbs: number; fat: number }[]>([]);
-
-  useEffect(() => {
-    startTransition(async () => {
-      const data = await getFoodChartData(range);
-      setRawData(data);
-    });
-  }, [range]);
+  const bounds = getDateRange(range);
+  const from = toISODate(bounds.start);
+  const to = toISODate(bounds.end);
+  const totalsQuery = useQuery({ queryKey: keys.foodTotals(from, to), queryFn: () => api.food.totals(from, to) });
+  const rawData = totalsQuery.data ?? [];
 
   // Fill gaps with zeros
   const data = generateDateKeys(range).map((key) => {
