@@ -1,134 +1,77 @@
 "use server";
 
-import { db } from "@/db";
-import { entertainmentItems } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
-import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "@/lib/auth";
+import * as entertainment from "@/server/api/entertainment";
+import { asResult, type ActionResult } from "./api-result";
 
-type Result = { success: boolean; error?: string };
+/** Thin wrappers over `src/server/api/entertainment.ts`, kept until Phase 3. */
 
-function parseIntOrNull(value: FormDataEntryValue | null): number | null {
-  if (typeof value !== "string" || value.length === 0) return null;
-  const n = parseInt(value, 10);
+function text(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function intOrNull(formData: FormData, key: string): number | null {
+  const raw = text(formData, key);
+  if (!raw) return null;
+  const n = Number.parseInt(raw, 10);
   return Number.isFinite(n) ? n : null;
 }
 
-function stringOrNull(value: FormDataEntryValue | null): string | null {
-  return typeof value === "string" && value.length > 0 ? value : null;
+function dateOrNull(formData: FormData, key: string): Date | null {
+  const raw = text(formData, key);
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export async function addEntertainment(formData: FormData): Promise<Result> {
+async function run(work: (userId: string) => Promise<unknown>): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
+  const result = await asResult(() => work(session.userId));
+  revalidatePath("/entertainment");
+  return result;
+}
 
-  const title = formData.get("title") as string;
-  const type = formData.get("type") as string;
+const META = ["imdbId", "posterUrl", "overview", "releaseDate", "genres", "voteAverage"] as const;
+const COUNTS = ["seasonCount", "episodeCount", "runtime"] as const;
+
+export async function addEntertainment(formData: FormData): Promise<ActionResult> {
+  const title = text(formData, "title");
+  const type = text(formData, "type");
   if (!title || !type) return { success: false, error: "Title and type are required" };
-
-  await db.insert(entertainmentItems).values({
-    id: crypto.randomUUID(),
-    userId: session.userId,
-    type,
-    title,
-    creator: stringOrNull(formData.get("creator")),
-    status: (formData.get("status") as string) || "completed",
-    rating: parseIntOrNull(formData.get("rating")),
-    notes: stringOrNull(formData.get("notes")),
-    startDate: formData.get("startDate") ? new Date(formData.get("startDate") as string) : null,
-    endDate: formData.get("endDate") ? new Date(formData.get("endDate") as string) : null,
-    imdbId: stringOrNull(formData.get("imdbId")),
-    posterUrl: stringOrNull(formData.get("posterUrl")),
-    overview: stringOrNull(formData.get("overview")),
-    releaseDate: stringOrNull(formData.get("releaseDate")),
-    genres: stringOrNull(formData.get("genres")),
-    seasonCount: parseIntOrNull(formData.get("seasonCount")),
-    episodeCount: parseIntOrNull(formData.get("episodeCount")),
-    runtime: parseIntOrNull(formData.get("runtime")),
-    voteAverage: stringOrNull(formData.get("voteAverage")),
-  });
-
-  revalidatePath("/entertainment");
-  return { success: true };
+  return run((userId) =>
+    entertainment.createItem(userId, {
+      type,
+      title,
+      creator: text(formData, "creator") || null,
+      status: text(formData, "status") || "completed",
+      rating: intOrNull(formData, "rating"),
+      notes: text(formData, "notes") || null,
+      startDate: dateOrNull(formData, "startDate"),
+      endDate: dateOrNull(formData, "endDate"),
+      ...Object.fromEntries(META.map((k) => [k, text(formData, k) || null])),
+      ...Object.fromEntries(COUNTS.map((k) => [k, intOrNull(formData, k)])),
+    })
+  );
 }
 
-export async function updateEntertainment(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const itemId = formData.get("itemId") as string;
+export async function updateEntertainment(formData: FormData): Promise<ActionResult> {
+  const itemId = text(formData, "itemId");
   if (!itemId) return { success: false, error: "Item ID required" };
-
-  const updates: Record<string, unknown> = { updatedAt: new Date() };
-
-  const title = formData.get("title") as string;
-  if (title) updates.title = title;
-
-  const status = formData.get("status") as string;
-  if (status) updates.status = status;
-
-  updates.rating = parseIntOrNull(formData.get("rating"));
-  updates.notes = stringOrNull(formData.get("notes"));
-
-  const imdbId = stringOrNull(formData.get("imdbId"));
-  if (imdbId) updates.imdbId = imdbId;
-
-  const posterUrl = stringOrNull(formData.get("posterUrl"));
-  if (posterUrl) updates.posterUrl = posterUrl;
-
-  const overview = stringOrNull(formData.get("overview"));
-  if (overview) updates.overview = overview;
-
-  const releaseDate = stringOrNull(formData.get("releaseDate"));
-  if (releaseDate) updates.releaseDate = releaseDate;
-
-  const genres = stringOrNull(formData.get("genres"));
-  if (genres) updates.genres = genres;
-
-  const seasonCount = parseIntOrNull(formData.get("seasonCount"));
-  if (seasonCount !== null) updates.seasonCount = seasonCount;
-
-  const episodeCount = parseIntOrNull(formData.get("episodeCount"));
-  if (episodeCount !== null) updates.episodeCount = episodeCount;
-
-  const runtime = parseIntOrNull(formData.get("runtime"));
-  if (runtime !== null) updates.runtime = runtime;
-
-  const voteAverage = stringOrNull(formData.get("voteAverage"));
-  if (voteAverage) updates.voteAverage = voteAverage;
-
-  await db.update(entertainmentItems)
-    .set(updates)
-    .where(and(eq(entertainmentItems.id, itemId), eq(entertainmentItems.userId, session.userId)));
-
-  revalidatePath("/entertainment");
-  return { success: true };
+  // Only what the form carries a value for changes; rating and notes are always sent, so they may clear.
+  const patch: Record<string, unknown> = { rating: intOrNull(formData, "rating"), notes: text(formData, "notes") || null };
+  if (text(formData, "title")) patch.title = text(formData, "title");
+  if (text(formData, "status")) patch.status = text(formData, "status");
+  for (const key of META) if (text(formData, key)) patch[key] = text(formData, key);
+  for (const key of COUNTS) {
+    const n = intOrNull(formData, key);
+    if (n !== null) patch[key] = n;
+  }
+  return run((userId) => entertainment.updateItem(userId, itemId, patch));
 }
 
-export async function deleteEntertainment(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const itemId = formData.get("itemId") as string;
-  await db.delete(entertainmentItems)
-    .where(and(eq(entertainmentItems.id, itemId), eq(entertainmentItems.userId, session.userId)));
-
-  revalidatePath("/entertainment");
-  return { success: true };
-}
-
-export async function getEntertainmentByStatus(
-  userId: string,
-  type?: string,
-  status?: string,
-) {
-  const conditions = [eq(entertainmentItems.userId, userId)];
-  if (type) conditions.push(eq(entertainmentItems.type, type));
-  if (status) conditions.push(eq(entertainmentItems.status, status));
-
-  return db
-    .select()
-    .from(entertainmentItems)
-    .where(and(...conditions))
-    .orderBy(entertainmentItems.updatedAt);
+export async function deleteEntertainment(formData: FormData): Promise<ActionResult> {
+  return run((userId) => entertainment.deleteItem(userId, text(formData, "itemId")));
 }

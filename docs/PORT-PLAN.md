@@ -274,6 +274,11 @@ seventeen endpoints covering sessions, the chart totals, styles, presets, the de
 and presence. The meditation and presence action files are wrappers; the chart reader
 delegates.
 
+**Landed 2026-09-20 — workout, entertainment, episodes and feed** (`feat/api-sections-2`):
+nineteen endpoints. Reactions became an explicit set instead of a toggle. With this,
+`chart-data.ts` is nothing but delegates, and finances is the last section without
+endpoints.
+
 - `src/server/api/_lib/`: `http.ts` (`json`, `fail`, `HttpError`, `handler`, `readJson`),
   `guard.ts` (`requireSession` → `{ userId }`; ownership helpers that put the owner in the
   `WHERE` clause so a foreign row is a 404, never an oracle), `schemas.ts` (Zod shapes;
