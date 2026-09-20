@@ -61,3 +61,28 @@ test("half a serving counts as half", async ({ page }) => {
     expect(await dailyTotal(page, "protein")).toBeCloseTo(5, 1);
   }).toPass({ timeout: 30_000 });
 });
+
+test("an unavailable food search explains itself instead of showing nothing", async ({ page }) => {
+  await signUp(page);
+
+  // Stand in for a deployment with no USDA_API_KEY.
+  await page.route("**/api/food/search**", (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: "Food search isn't set up on this deployment. Add a food manually with Custom.",
+        reason: "not_configured",
+      }),
+    })
+  );
+
+  await openMealPanel(page);
+  await page.getByPlaceholder("Search USDA foods...").fill("egg");
+
+  // Previously this rendered as an empty list — indistinguishable from "no
+  // matches" — and left people retyping a search that could never work.
+  const error = page.getByTestId("search-error");
+  await expect(error).toBeVisible({ timeout: 15_000 });
+  await expect(error).toContainText(/Custom/i);
+});
