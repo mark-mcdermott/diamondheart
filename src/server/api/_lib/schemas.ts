@@ -222,3 +222,67 @@ export const changePasswordSchema = z
   .strict();
 
 export const notificationReadSchema = z.object({ read: z.boolean() }).strict();
+
+const shortText = (max = 100) => z.string().trim().min(1).max(max);
+const optionalShort = (max = 100) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .transform((v) => v || null)
+    .nullable();
+
+const trackingFields = {
+  name: shortText(100),
+  category: optionalShort(100),
+  count: z.number().int(),
+  unit: optionalShort(32),
+  icon: optionalShort(64),
+  notes: optionalText,
+};
+export const createTrackingItemSchema = z
+  .object({ ...trackingFields, category: trackingFields.category.optional(), count: trackingFields.count.optional(), unit: trackingFields.unit.optional(), icon: trackingFields.icon.optional(), notes: trackingFields.notes.optional() })
+  .strict();
+export const updateTrackingItemSchema = z.object(trackingFields).partial().strict();
+export const trackingDeltaSchema = z.object({ delta: z.number().int().refine((d) => d !== 0, "Delta must not be zero") }).strict();
+
+export const createMedicalLogSchema = z
+  .object({
+    type: shortText(64),
+    subtype: optionalShort(64).optional(),
+    severity: z.number().int().min(1).max(5).nullable().optional(),
+    notes: optionalText.optional(),
+    date: isoDate.optional(),
+  })
+  .strict();
+
+const appointmentFields = {
+  title: shortText(200),
+  appointmentType: shortText(32),
+  provider: optionalShort(200),
+  location: optionalShort(200),
+  date: isoDate,
+  durationMinutes: z.number().int().positive().nullable(),
+  status: shortText(32),
+  notes: optionalText,
+  followUp: optionalText,
+};
+export const createAppointmentSchema = z
+  .object({
+    ...appointmentFields,
+    appointmentType: appointmentFields.appointmentType.optional(),
+    provider: appointmentFields.provider.optional(),
+    location: appointmentFields.location.optional(),
+    durationMinutes: appointmentFields.durationMinutes.optional(),
+    status: appointmentFields.status.optional(),
+    notes: appointmentFields.notes.optional(),
+    followUp: appointmentFields.followUp.optional(),
+  })
+  .strict();
+export const updateAppointmentSchema = z.object(appointmentFields).partial().strict();
+
+export type CreateTrackingItem = z.infer<typeof createTrackingItemSchema>;
+export type UpdateTrackingItem = z.infer<typeof updateTrackingItemSchema>;
+export type CreateMedicalLog = z.infer<typeof createMedicalLogSchema>;
+export type CreateAppointment = z.infer<typeof createAppointmentSchema>;
+export type UpdateAppointment = z.infer<typeof updateAppointmentSchema>;

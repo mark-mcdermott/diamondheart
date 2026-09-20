@@ -1,87 +1,60 @@
 "use server";
 
-import { db } from "@/db";
-import { trackingItems } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
-import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "@/lib/auth";
+import * as tracking from "@/server/api/tracking";
+import { asResult, type ActionResult } from "./api-result";
 
-type Result = { success: boolean; error?: string };
+/** Thin wrappers over `src/server/api/tracking.ts`, kept until Phase 3. */
 
-export async function addTrackingItem(formData: FormData): Promise<Result> {
+function text(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+async function run(work: (userId: string) => Promise<unknown>): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
+  const result = await asResult(() => work(session.userId));
+  revalidatePath("/tracking");
+  return result;
+}
 
-  const name = formData.get("name") as string;
+export async function addTrackingItem(formData: FormData): Promise<ActionResult> {
+  const name = text(formData, "name");
   if (!name) return { success: false, error: "Name is required" };
-
-  await db.insert(trackingItems).values({
-    id: crypto.randomUUID(),
-    userId: session.userId,
-    name,
-    category: (formData.get("category") as string) || null,
-    count: parseInt(formData.get("count") as string) || 0,
-    unit: (formData.get("unit") as string) || null,
-    icon: (formData.get("icon") as string) || null,
-    notes: (formData.get("notes") as string) || null,
-  });
-
-  revalidatePath("/tracking");
-  return { success: true };
-}
-
-export async function updateTrackingCount(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const itemId = formData.get("itemId") as string;
-  const delta = parseInt(formData.get("delta") as string) || 1;
-
-  const [item] = await db.select().from(trackingItems)
-    .where(and(eq(trackingItems.id, itemId), eq(trackingItems.userId, session.userId)))
-    .limit(1);
-
-  if (!item) return { success: false, error: "Not found" };
-
-  await db.update(trackingItems)
-    .set({ count: item.count + delta, updatedAt: new Date() })
-    .where(eq(trackingItems.id, itemId));
-
-  revalidatePath("/tracking");
-  return { success: true };
-}
-
-export async function updateTrackingItem(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const itemId = formData.get("itemId") as string;
-  const name = formData.get("name") as string;
-  if (!itemId || !name) return { success: false, error: "Required fields missing" };
-
-  await db.update(trackingItems)
-    .set({
+  return run((userId) =>
+    tracking.createItem(userId, {
       name,
-      category: (formData.get("category") as string) || null,
-      count: parseInt(formData.get("count") as string) || 0,
-      unit: (formData.get("unit") as string) || null,
-      notes: (formData.get("notes") as string) || null,
-      updatedAt: new Date(),
+      category: text(formData, "category") || null,
+      count: Number.parseInt(text(formData, "count"), 10) || 0,
+      unit: text(formData, "unit") || null,
+      icon: text(formData, "icon") || null,
+      notes: text(formData, "notes") || null,
     })
-    .where(and(eq(trackingItems.id, itemId), eq(trackingItems.userId, session.userId)));
-
-  revalidatePath("/tracking");
-  return { success: true };
+  );
 }
 
-export async function deleteTrackingItem(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
+export async function updateTrackingCount(formData: FormData): Promise<ActionResult> {
+  const delta = Number.parseInt(text(formData, "delta"), 10) || 1;
+  return run((userId) => tracking.adjustCount(userId, text(formData, "itemId"), delta));
+}
 
-  const itemId = formData.get("itemId") as string;
-  await db.delete(trackingItems)
-    .where(and(eq(trackingItems.id, itemId), eq(trackingItems.userId, session.userId)));
+export async function updateTrackingItem(formData: FormData): Promise<ActionResult> {
+  const itemId = text(formData, "itemId");
+  const name = text(formData, "name");
+  if (!itemId || !name) return { success: false, error: "Required fields missing" };
+  return run((userId) =>
+    tracking.updateItem(userId, itemId, {
+      name,
+      category: text(formData, "category") || null,
+      count: Number.parseInt(text(formData, "count"), 10) || 0,
+      unit: text(formData, "unit") || null,
+      notes: text(formData, "notes") || null,
+    })
+  );
+}
 
-  revalidatePath("/tracking");
-  return { success: true };
+export async function deleteTrackingItem(formData: FormData): Promise<ActionResult> {
+  return run((userId) => tracking.deleteItem(userId, text(formData, "itemId")));
 }

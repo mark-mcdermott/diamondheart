@@ -265,6 +265,11 @@ account module does not import `next/headers`. `createNotification` was an expor
 action any client could call for any user; it is server-side only now. **Every plan
 section has endpoints.** What remains in Phase 1 is the shelved sections.
 
+**Landed 2026-09-20 — tracking, medical and appointments** (`feat/api-sections-1`): three
+small shelved sections in one PR, fourteen endpoints. The count increment is one
+`UPDATE … SET count = count + delta`, where the action read the row and wrote back a
+number it might have computed from a stale copy.
+
 - `src/server/api/_lib/`: `http.ts` (`json`, `fail`, `HttpError`, `handler`, `readJson`),
   `guard.ts` (`requireSession` → `{ userId }`; ownership helpers that put the owner in the
   `WHERE` clause so a foreign row is a 404, never an oracle), `schemas.ts` (Zod shapes;

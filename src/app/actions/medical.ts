@@ -1,43 +1,39 @@
 "use server";
 
-import { db } from "@/db";
-import { medicalLogs } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
-import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "@/lib/auth";
+import * as medical from "@/server/api/medical";
+import { asResult, type ActionResult } from "./api-result";
 
-type Result = { success: boolean; error?: string };
+/** Thin wrappers over `src/server/api/medical.ts`, kept until Phase 3. */
 
-export async function addMedicalLog(formData: FormData): Promise<Result> {
-  const session = await getCurrentUser();
-  if (!session) return { success: false, error: "Unauthorized" };
-
-  const type = formData.get("type") as string;
-  if (!type) return { success: false, error: "Type is required" };
-
-  await db.insert(medicalLogs).values({
-    id: crypto.randomUUID(),
-    userId: session.userId,
-    type,
-    subtype: (formData.get("subtype") as string) || null,
-    severity: formData.get("severity") ? parseInt(formData.get("severity") as string) : null,
-    notes: (formData.get("notes") as string) || null,
-    date: new Date(),
-    endDate: null,
-  });
-
-  revalidatePath("/medical");
-  return { success: true };
+function text(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
 }
 
-export async function deleteMedicalLog(formData: FormData): Promise<Result> {
+async function run(work: (userId: string) => Promise<unknown>): Promise<ActionResult> {
   const session = await getCurrentUser();
   if (!session) return { success: false, error: "Unauthorized" };
-
-  const logId = formData.get("logId") as string;
-  await db.delete(medicalLogs)
-    .where(and(eq(medicalLogs.id, logId), eq(medicalLogs.userId, session.userId)));
-
+  const result = await asResult(() => work(session.userId));
   revalidatePath("/medical");
-  return { success: true };
+  return result;
+}
+
+export async function addMedicalLog(formData: FormData): Promise<ActionResult> {
+  const type = text(formData, "type");
+  if (!type) return { success: false, error: "Type is required" };
+  const severity = text(formData, "severity");
+  return run((userId) =>
+    medical.createLog(userId, {
+      type,
+      subtype: text(formData, "subtype") || null,
+      severity: severity ? Number.parseInt(severity, 10) : null,
+      notes: text(formData, "notes") || null,
+    })
+  );
+}
+
+export async function deleteMedicalLog(formData: FormData): Promise<ActionResult> {
+  return run((userId) => medical.deleteLog(userId, text(formData, "logId")));
 }

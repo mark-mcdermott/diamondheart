@@ -5,12 +5,12 @@ import {
   meditationSessions,
   workouts,
   workoutSets,
-  medicalLogs,
   entertainmentItems,
 } from "@/db/schema";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth";
 import { type TimeRange, getDateRange } from "@/lib/chart-utils";
+import { totalsBetween as medicalTotals } from "@/server/api/medical";
 
 export async function getMeditationChartData(range: TimeRange) {
   const session = await getCurrentUser();
@@ -68,41 +68,7 @@ export async function getMedicalChartData(range: TimeRange) {
   if (!session) return { byType: [], bySeverity: [] };
 
   const { start, end } = getDateRange(range);
-
-  const byType = await db
-    .select({
-      type: medicalLogs.type,
-      count: sql<number>`COUNT(*)`,
-    })
-    .from(medicalLogs)
-    .where(and(eq(medicalLogs.userId, session.userId), gte(medicalLogs.date, start), lte(medicalLogs.date, end)))
-    .groupBy(medicalLogs.type)
-    .orderBy(sql`COUNT(*) DESC`);
-
-  const bySeverity = await db
-    .select({
-      date: sql<string>`DATE(${medicalLogs.date})`,
-      avgSeverity: sql<number>`COALESCE(AVG(${medicalLogs.severity}), 0)`,
-      count: sql<number>`COUNT(*)`,
-    })
-    .from(medicalLogs)
-    .where(and(
-      eq(medicalLogs.userId, session.userId),
-      gte(medicalLogs.date, start),
-      lte(medicalLogs.date, end),
-      sql`${medicalLogs.severity} IS NOT NULL`
-    ))
-    .groupBy(sql`DATE(${medicalLogs.date})`)
-    .orderBy(sql`DATE(${medicalLogs.date})`);
-
-  return {
-    byType: byType.map((r) => ({ type: r.type, count: Number(r.count) })),
-    bySeverity: bySeverity.map((r) => ({
-      date: String(r.date),
-      avgSeverity: Math.round(Number(r.avgSeverity) * 10) / 10,
-      count: Number(r.count),
-    })),
-  };
+  return medicalTotals(session.userId, start, end);
 }
 
 export async function getEntertainmentChartData() {
