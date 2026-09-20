@@ -31,6 +31,16 @@ describe("the API client", () => {
     expect(new Headers(init.headers).get("content-type")).toBe("application/json");
   });
 
+  it("posts a count delta to the item's count route", async () => {
+    respond(200, { item: { id: "abc", count: 3 } });
+    const item = await api.tracking.adjust("abc", 1);
+    const [url, init] = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/tracking/abc/count");
+    expect(init.method).toBe("POST");
+    expect(init.body).toBe(JSON.stringify({ delta: 1 }));
+    expect(item.count).toBe(3);
+  });
+
   it("turns an error body into an ApiError with its fields", async () => {
     respond(422, { error: "Validation failed", fields: { weightUnit: ["Invalid"] } });
     const failure = await api.preferences.update({ weightUnit: "kg" }).catch((e: unknown) => e);

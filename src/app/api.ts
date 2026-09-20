@@ -1,9 +1,28 @@
 import type { TrackerCategory, TrackerEntry, TrackerMetric } from "@/db/schema";
-import type { CreateCustomFood, CreateEntry, CreateFavoriteFood, CreateMetric, LogFood, LogMeal, SaveMeal, UpdateEntry, UpdateMetric, UpdatePreferences } from "@/server/api/_lib/schemas";
+import type {
+  CreateAppointment,
+  CreateCustomFood,
+  CreateEntry,
+  CreateFavoriteFood,
+  CreateMedicalLog,
+  CreateMetric,
+  CreateTrackingItem,
+  LogFood,
+  LogMeal,
+  SaveMeal,
+  UpdateAppointment,
+  UpdateEntry,
+  UpdateMetric,
+  UpdatePreferences,
+  UpdateTrackingItem,
+} from "@/server/api/_lib/schemas";
+import type { Appointment } from "@/server/api/appointments";
 import type { CustomFood, FavoriteFood, FavoriteMeal, FoodDay, FoodLogItem, MacroTotals } from "@/server/api/food";
 import type { Dashboard } from "@/server/api/dashboard";
+import type { MedicalLog, MedicalTotals } from "@/server/api/medical";
 import type { MetricsOverview } from "@/server/api/metrics";
 import type { Preferences } from "@/server/api/preferences";
+import type { TrackingItem } from "@/server/api/tracking";
 
 /**
  * The applet's whole view of the API (docs/PORT-PLAN.md, Phase 3).
@@ -89,6 +108,13 @@ export interface MetricDetail {
   entries: Entry[];
 }
 export type Overview = Omit<MetricsOverview, "categories" | "metrics"> & { categories: Category[]; metrics: Metric[] };
+export type TrackingItemView = Serialized<TrackingItem>;
+export type MedicalLogView = Serialized<MedicalLog>;
+export type AppointmentView = Serialized<Appointment>;
+/** A timestamp crosses the wire as an ISO string; the server's schema turns it into a `Date`. */
+export type CreateMedicalLogInput = Omit<CreateMedicalLog, "date"> & { date?: string };
+export type CreateAppointmentInput = Omit<CreateAppointment, "date"> & { date: string };
+export type UpdateAppointmentInput = Omit<UpdateAppointment, "date"> & { date?: string };
 
 export const keys = {
   preferences: ["preferences"] as const,
@@ -101,6 +127,10 @@ export const keys = {
   foodMeals: ["food", "meals"] as const,
   foodTotals: (from: string, to: string) => ["food", "totals", from, to] as const,
   dashboard: (date: string) => ["dashboard", date] as const,
+  tracking: ["tracking"] as const,
+  medical: ["medical", "logs"] as const,
+  medicalTotals: (from: string, to: string) => ["medical", "totals", from, to] as const,
+  appointments: ["appointments"] as const,
 };
 
 export const api = {
@@ -165,9 +195,35 @@ export const api = {
       request<{ category: Category }>(`/api/categories/${id}`, { method: "PATCH", ...json({ name }) }).then((r) => r.category),
     remove: (id: string) => request<void>(`/api/categories/${id}`, { method: "DELETE" }),
   },
+  tracking: {
+    list: () => request<{ items: TrackingItemView[] }>("/api/tracking").then((r) => r.items),
+    create: (input: CreateTrackingItem) =>
+      request<{ item: TrackingItemView }>("/api/tracking", { method: "POST", ...json(input) }).then((r) => r.item),
+    update: (id: string, patch: UpdateTrackingItem) =>
+      request<{ item: TrackingItemView }>(`/api/tracking/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.item),
+    remove: (id: string) => request<void>(`/api/tracking/${id}`, { method: "DELETE" }),
+    /** Adds `delta` (never zero) to the count on the server, so two quick taps both land. */
+    adjust: (id: string, delta: number) =>
+      request<{ item: TrackingItemView }>(`/api/tracking/${id}/count`, { method: "POST", ...json({ delta }) }).then((r) => r.item),
+  },
+  medical: {
+    list: () => request<{ logs: MedicalLogView[] }>("/api/medical").then((r) => r.logs),
+    create: (input: CreateMedicalLogInput) =>
+      request<{ log: MedicalLogView }>("/api/medical", { method: "POST", ...json(input) }).then((r) => r.log),
+    remove: (id: string) => request<void>(`/api/medical/${id}`, { method: "DELETE" }),
+    totals: (from: string, to: string) => request<MedicalTotals>(`/api/medical/totals?from=${from}&to=${to}`),
+  },
+  appointments: {
+    list: () => request<{ appointments: AppointmentView[] }>("/api/appointments").then((r) => r.appointments),
+    create: (input: CreateAppointmentInput) =>
+      request<{ appointment: AppointmentView }>("/api/appointments", { method: "POST", ...json(input) }).then((r) => r.appointment),
+    update: (id: string, patch: UpdateAppointmentInput) =>
+      request<{ appointment: AppointmentView }>(`/api/appointments/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.appointment),
+    remove: (id: string) => request<void>(`/api/appointments/${id}`, { method: "DELETE" }),
+  },
 };
 
-export type { Preferences, UpdatePreferences, CreateMetric, UpdateMetric, CreateEntry, UpdateEntry };
+export type { Preferences, UpdatePreferences, CreateMetric, UpdateMetric, CreateEntry, UpdateEntry, CreateTrackingItem, UpdateTrackingItem, MedicalTotals };
 
 /** What to show a person when a call fails: the first field message, else the error, else a generic line. */
 export function errorMessage(error: unknown): string {
