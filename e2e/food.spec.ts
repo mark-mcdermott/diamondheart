@@ -25,6 +25,9 @@ test("decimal macros survive the round trip to the totals", async ({ page }) => 
   await page.locator("#custom-cal").fill("99.6");
   await page.locator("#custom-protein").fill("12.5");
   await page.getByRole("button", { name: "Add Food" }).click();
+  // The custom path is two writes in a row; navigating before the second one
+  // has landed cancels it, so wait for the day view to list the item first.
+  await expect(page.getByText("Probe Yoghurt", { exact: true })).toBeVisible({ timeout: 15_000 });
 
   await expect(async () => {
     await gotoReady(page, "/food");
@@ -114,6 +117,7 @@ test("a saved target reads the day against it", async ({ page }) => {
   await page.locator("#custom-name").fill("Target Probe");
   await page.locator("#custom-cal").fill("500");
   await page.getByRole("button", { name: "Add Food" }).click();
+  await expect(page.getByText("Target Probe", { exact: true })).toBeVisible({ timeout: 15_000 });
 
   await expect(async () => {
     await gotoReady(page, "/food");
