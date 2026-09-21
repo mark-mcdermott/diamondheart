@@ -1,4 +1,11 @@
-@import 'tailwindcss';
+/*
+ * Sources are found from `src/` and `native/`, not from whichever directory is
+ * the build's root: the native bundle (`vite.native.config.ts`) is rooted at
+ * `native/`, and left to itself Tailwind would scan only that and drop every
+ * utility the applet uses.
+ */
+@import 'tailwindcss' source('..');
+@source '../../native';
 
 /* Exclude markdown files from Tailwind content scanning */
 @source not "../**/*.md";

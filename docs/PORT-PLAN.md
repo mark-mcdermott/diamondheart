@@ -521,15 +521,33 @@ reports its own hostname in `request.url`, so Better Auth's inferred base URL is
 
 ## Phase 5 — Bundled native
 
-- `NATIVE=1 astro build` → `dist-native/` with the applet shell and `PUBLIC_API_BASE`
-  stamped (Decision 9). Capacitor `webDir` and Tauri `frontendDist` point at it;
-  `server.url` and the remote `frontendDist` URL are removed.
-- Bearer storage in `@capacitor/preferences`; `Authorization` header from the API client
-  when a token exists; the CSRF middleware from Decision 9.
-- Deep links (`app.diamondheart.mobile`) route into react-router's memory history.
-- Push, HealthKit and biometric plugins re-verified against the bundle.
-- **Checkpoint:** iOS Simulator build signs in with the existing account, logs an entry,
-  and the row is on production; Android and Tauri builds do the same.
+**Landed 2026-09-21** (`feat/native-bundle`). What it turned out to be:
+
+- Not an Astro build: `pnpm build:native` is a second Vite config (`vite.native.config.ts`,
+  rooted at `native/`) that bundles the same applet with `--mode native`, so `.env.native`
+  stamps `NEXT_PUBLIC_NATIVE=1` and the production `NEXT_PUBLIC_API_BASE`. Output is
+  `dist-native/`; Capacitor's `webDir` and Tauri's `frontendDist` point at it and
+  `server.url` is gone. `native/NativeRoot.tsx` is the shell: no public pages, the sign-in
+  and sign-up cards swapping in place, and `AppRoot` on memory history once a token exists.
+- Bearer as planned: `src/lib/session-token.ts` keeps the token in `@capacitor/preferences`,
+  `apiFetch` sends `Authorization: Bearer`, the auth client stores `set-auth-token` from the
+  sign-in response, and a 401 clears the token and drops back to the sign-in screen.
+- The CSRF middleware became a CORS one. Astro's own origin check only covers form-encoded
+  mutations and every handler takes JSON, so it stays on; what the bundle needed was
+  `src/middleware.ts` answering preflights for the origins in `src/lib/server/origins.ts`,
+  with credentials allowed (the auth client fetches with `credentials: "include"` and
+  WebKit fails the preflight otherwise) and `set-auth-token` exposed.
+- Tailwind had to be told where its sources are (`source('..')` in `global.css`): rooted at
+  `native/`, it scanned only that directory and the bundle lost every utility.
+- The dev server needs two things to serve a bundle pointed at it: Vite's own CORS layer
+  off (it answered the preflight itself, without the origin) and the native origins in
+  `security.allowedDomains`, which `astro dev` also uses for its cross-site request block.
+  Both are in `astro.config.mjs`, the second for `astro dev` only.
+- Deep links route into memory history through `@capacitor/app`'s `appUrlOpen`.
+- **Checkpoint met:** the iOS Simulator build, aimed at `astro dev` on the development
+  branch, signed up a new account, created a metric and logged an entry, and each row was
+  in the database. The Android debug APK and the Tauri `.app` build from the same output.
+  Push, HealthKit and biometrics are not re-verified — that is a device job.
 
 ## Phase 6 — Cleanup
 

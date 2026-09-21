@@ -40,6 +40,8 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           AUTH_SECRET: ci-test-secret
 
+      - run: pnpm build:native
+
   # Isolation tests need a disposable Neon branch. Skipped without the secret
   # rather than silently passing, so a missing key is visible in the run.
   e2e:

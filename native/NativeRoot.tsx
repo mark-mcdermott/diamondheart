@@ -36,24 +36,7 @@ export function NativeRoot() {
       )}
       {state === "signed-out" && (
         <div className="flex min-h-screen flex-col">
-          {screen === "login" ? <Login /> : <Signup />}
-          <p className="pb-8 text-center text-sm text-muted-foreground">
-            {screen === "login" ? (
-              <>
-                New here?{" "}
-                <button type="button" className="text-primary font-medium" onClick={() => setScreen("signup")}>
-                  Create an account
-                </button>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <button type="button" className="text-primary font-medium" onClick={() => setScreen("login")}>
-                  Sign in
-                </button>
-              </>
-            )}
-          </p>
+          {screen === "login" ? <Login onSignup={() => setScreen("signup")} /> : <Signup onLogin={() => setScreen("login")} />}
         </div>
       )}
       {state === "signed-in" && (

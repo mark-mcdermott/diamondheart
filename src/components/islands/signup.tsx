@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { NATIVE } from "@/app/platform";
-import { authClient } from "@/lib/auth-client";
+import { attempt, authClient } from "@/lib/auth-client";
 import { SignupForm } from "@/components/blocks/signup-form";
 
 const MIN_PASSWORD_LENGTH = 8;
 
 /** The sign-up card, an island on an Astro page. */
-export function Signup() {
+export function Signup({ onLogin }: { onLogin?: () => void } = {}) {
   const [error, setError] = useState<string | undefined>();
   const [pending, setPending] = useState(false);
 
@@ -27,15 +27,19 @@ export function Signup() {
     }
 
     setPending(true);
-    const { error: failure } = await authClient.signUp.email({
-      // Better Auth requires a name; the form does not. The address's local part is the honest default.
-      name: name || email.split("@")[0],
-      email,
-      password,
-    });
+    const failure = await attempt(
+      () =>
+        authClient.signUp.email({
+          // Better Auth requires a name; the form does not. The address's local part is the honest default.
+          name: name || email.split("@")[0],
+          email,
+          password,
+        }),
+      "Could not create the account",
+    );
     if (failure) {
       setPending(false);
-      setError(failure.message || "Could not create the account");
+      setError(failure);
       return;
     }
     if (NATIVE) {
@@ -48,7 +52,7 @@ export function Signup() {
 
   return (
     <div className="flex-1 flex items-center justify-center px-4 py-16">
-      <SignupForm action={signUp} error={error} pending={pending} />
+      <SignupForm action={signUp} error={error} pending={pending} onLogin={onLogin} />
     </div>
   );
 }

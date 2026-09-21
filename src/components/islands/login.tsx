@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { NATIVE } from "@/app/platform";
-import { authClient, safeRedirect } from "@/lib/auth-client";
+import { attempt, authClient, safeRedirect } from "@/lib/auth-client";
 import { LoginForm } from "@/components/blocks/login-form";
 
 /** The sign-in card, an island on an Astro page: a successful sign-in is a full load into the applet. */
-export function Login() {
+export function Login({ onSignup }: { onSignup?: () => void } = {}) {
   const [error, setError] = useState<string | undefined>();
   const [pending, setPending] = useState(false);
 
@@ -13,10 +13,10 @@ export function Login() {
     const password = String(formData.get("password") ?? "");
     setError(undefined);
     setPending(true);
-    const { error: failure } = await authClient.signIn.email({ email, password });
+    const failure = await attempt(() => authClient.signIn.email({ email, password }), "Invalid email or password");
     if (failure) {
       setPending(false);
-      setError(failure.message || "Invalid email or password");
+      setError(failure);
       return;
     }
     if (NATIVE) {
@@ -29,7 +29,7 @@ export function Login() {
 
   return (
     <div className="flex-1 flex items-center justify-center px-4 py-16">
-      <LoginForm action={signIn} error={error} pending={pending} />
+      <LoginForm action={signIn} error={error} pending={pending} onSignup={onSignup} />
     </div>
   );
 }

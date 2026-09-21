@@ -22,6 +22,21 @@ export const authClient = createAuthClient({
 });
 
 /** Only a path on this site may follow a sign-in, so a crafted link cannot bounce someone elsewhere. */
+/**
+ * One shape for the auth forms: better-fetch reports a refused sign-in as
+ * `error` but throws when the request never got an answer, and a thrown
+ * promise from a form action unmounts the React tree. Returns the message to
+ * show, or nothing on success.
+ */
+export async function attempt(call: () => Promise<{ error: { message?: string } | null }>, fallback: string): Promise<string | undefined> {
+  try {
+    const { error } = await call();
+    return error ? error.message || fallback : undefined;
+  } catch {
+    return "Could not reach the server. Check your connection and try again.";
+  }
+}
+
 export function safeRedirect(target: string | null | undefined, fallback = "/dashboard"): string {
   return target && target.startsWith("/") && !target.startsWith("//") ? target : fallback;
 }

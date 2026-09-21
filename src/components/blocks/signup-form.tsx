@@ -11,6 +11,8 @@ interface SignupFormProps {
   description?: string;
   loginHref?: string;
   loginText?: string;
+  /** Swaps the card for sign-in in place, where there is no page to link to (the native bundle). */
+  onLogin?: () => void;
   error?: string;
   /** Receives the form's data; a client function is fine, React 19 awaits it. */
   action?: (formData: FormData) => void | Promise<void>;
@@ -24,6 +26,7 @@ export function SignupForm({
   description,
   loginHref = "/login",
   loginText,
+  onLogin,
   error,
   action,
   pending = false,
@@ -102,9 +105,15 @@ export function SignupForm({
               {loginText || (
                 <>
                   Already have an account?{" "}
-                  <Link href={loginHref} className="text-primary font-medium">
-                    Sign in
-                  </Link>
+                  {onLogin ? (
+                    <button type="button" onClick={onLogin} className="text-primary font-medium">
+                      Sign in
+                    </button>
+                  ) : (
+                    <Link href={loginHref} className="text-primary font-medium">
+                      Sign in
+                    </Link>
+                  )}
                 </>
               )}
             </p>

@@ -4,6 +4,7 @@ import { bearer } from "better-auth/plugins";
 import { db } from "@/db";
 import { account, session, users, verification } from "@/db/schema";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { NATIVE_ORIGINS } from "@/lib/server/origins";
 
 /**
  * Better Auth (Phase 2 of docs/PORT-PLAN.md, Decision 2).
@@ -39,8 +40,6 @@ function baseURL(): string | undefined {
  * cross-site form could not forge them; what the origin check protects is the
  * cookie session, and it still does.
  */
-const NATIVE_ORIGINS = ["capacitor://localhost", "http://localhost", "tauri://localhost", "http://tauri.localhost"];
-
 function trustedOrigins(): string[] {
   const origins = [LOCAL_URL, ...NATIVE_ORIGINS];
   for (const host of [process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL]) {
