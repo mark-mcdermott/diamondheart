@@ -74,6 +74,14 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24,
   },
 
+  // On in production, as Better Auth defaults it. The e2e server runs the
+  // production build and signs up once per spec from one address, which the
+  // sign-up rule (a few per ten seconds) refuses, so Playwright sets
+  // AUTH_RATE_LIMIT=off for that server and nothing else does.
+  rateLimit: {
+    enabled: process.env.NODE_ENV === "production" && process.env.AUTH_RATE_LIMIT !== "off",
+  },
+
   advanced: {
     database: { generateId: () => crypto.randomUUID() },
   },
