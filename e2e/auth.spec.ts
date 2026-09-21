@@ -14,14 +14,14 @@ test("signing out and back in returns to the dashboard", async ({ page }) => {
   await page.getByRole("menuitem", { name: "Sign out" }).click();
   await page.waitForURL("**/login", { timeout: 30_000 });
 
-  // The session is gone: an app path bounces to sign-in. (The page does this
-  // itself; the root middleware.ts has never been registered, see CLAUDE.md.)
+  // The session is gone: the applet's shell bounces an app path to sign-in with
+  // the path remembered, and sign-in returns there.
   await page.goto("/settings");
-  await page.waitForURL("**/login**", { timeout: 30_000 });
+  await page.waitForURL(/\/login\?redirect=%2Fsettings/, { timeout: 30_000 });
 
   await page.fill('input[name="email"]', email);
   await page.fill('input[name="password"]', PASSWORD);
   await page.click('button[type="submit"]');
-  await page.waitForURL("**/dashboard", { timeout: 30_000 });
-  await expect(page.getByRole("link", { name: "Food", exact: true }).first()).toBeVisible({ timeout: 15_000 });
+  await page.waitForURL("**/settings", { timeout: 30_000 });
+  await expect(page.getByRole("checkbox", { name: /toggle food/i })).toBeVisible({ timeout: 15_000 });
 });
