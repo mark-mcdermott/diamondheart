@@ -1,5 +1,3 @@
-"use client";
-
 import { Link } from "@/app/link";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";

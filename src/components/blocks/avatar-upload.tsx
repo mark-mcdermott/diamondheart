@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Camera, Loader2, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

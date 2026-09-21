@@ -1,5 +1,3 @@
-"use client";
-
 import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/data/products";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";

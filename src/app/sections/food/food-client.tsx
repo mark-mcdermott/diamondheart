@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useTransition, useCallback, useRef, useEffect, lazy, Suspense } from "react";
 import { toast } from "sonner";
 import { api, errorMessage, apiFetch } from "@/app/api";

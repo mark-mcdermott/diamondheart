@@ -1,5 +1,3 @@
-"use client";
-
 import { Link } from "@/app/link";
 import { useQuery } from "@tanstack/react-query";
 import { Flower } from "lucide-react";

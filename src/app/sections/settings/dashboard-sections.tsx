@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DASHBOARD_SECTIONS } from "@/lib/config/dashboard-sections";

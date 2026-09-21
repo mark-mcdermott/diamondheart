@@ -7,10 +7,6 @@ node_modules/
 .pnp.js
 .pnp.cjs
 
-# next.js
-.next/
-out/
-
 # production
 build/
 dist/
@@ -37,7 +33,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # testing
 test-results/

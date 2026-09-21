@@ -56,9 +56,9 @@ Caffeine math — mg per drink type, half-life decay, "last cup was 3h ago", "th
 
 Live at **https://diamondheart-zeta.vercel.app** — the bare `diamondheart.vercel.app` belongs to someone else.
 
-Behind **Vercel Authentication**, so only the account owner can open it. Signup is open and this is personal health data, so it stays locked until there is a reason not to.
+**Public since 2026-09-21.** It sat behind Vercel Authentication from deployment day until the Astro shell landed; previews still are. Signup is open.
 
-Also reachable at **https://www.diamondheart.app** (canonical) and `diamondheart.app`, both behind the same protection. The Capacitor and Tauri shells now point at the canonical host rather than a domain that used to not resolve.
+Canonical at **https://www.diamondheart.app**, with `diamondheart.app` answering 308 to it. The Capacitor and Tauri shells bundle the applet and call that host's API (`docs/PORT-PLAN.md`, Phase 5).
 
 Production runs on the Neon `production` branch, which holds one real account — the 27 seeded demo users were deleted on deployment day. Local development runs on `development`. See `CLAUDE.md`.
 
@@ -66,9 +66,10 @@ Production runs on the Neon `production` branch, which holds one real account �
 
 ## Phase 3 — The Astro port
 
-**Decided: diamondheart moves to Astro + React islands.** Started 2026-09-20, after
-Phase 2 closed. **The plan is `docs/PORT-PLAN.md`** — decisions, six phases, and the
-checkpoint for each. This section keeps the reasoning that led there.
+**Landed.** Started 2026-09-20 after Phase 2 closed; the shell swap merged 2026-09-21 and
+the bundled native applet and the cleanup followed the same day. **`docs/PORT-PLAN.md`**
+holds the decisions, the six phases and what each turned out to be. This section keeps
+the reasoning that led there.
 
 The trigger was committing to real bundled App Store apps. Capacitor bundles a static build into the webview, and Next cannot produce one here: `output: 'export'` disables server actions (20 files, ~3,900 lines), `middleware.ts`, cookie sessions, and dynamic routes like `/metrics/[id]`. Diamondheart is built on all four.
 
@@ -79,11 +80,11 @@ What is *not* a reason to port:
 - **Speed.** Diamondheart is already fully SSR — every route renders on the server. There is no rendering gain on the web, and the reference pattern would make the dashboard client-rendered.
 - **Svelte.** It was SvelteKit as Ortholinear and moved to Next in April 2026. No Svelte remains; the Svelte projects are `themeforseen.com` and `sidvid`.
 
-**Sequence: deploy (done) → finish weight (done) → finish food (done) → port.** It is a
-rewrite of the data layer, not a tidy-up, and is not folded into feature work. Unlike
-frunk's port it runs as a strangler inside the live Next app first — REST endpoints and
-Better Auth land section by section while every merge still ships — and the shell swap
-to Astro is one PR at the end, verified on a preview deploy. `docs/PORT-PLAN.md`
+**Sequence: deploy (done) → finish weight (done) → finish food (done) → port (done).** It
+was a rewrite of the data layer, not a tidy-up, and was not folded into feature work.
+Unlike frunk's port it ran as a strangler inside the live Next app first — REST endpoints
+and Better Auth landed section by section while every merge still shipped — and the shell
+swap to Astro was one PR at the end, verified on a preview deploy. `docs/PORT-PLAN.md`
 Decision 1 records why.
 
 ---

@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Bell } from "lucide-react";

@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 import { errorMessage } from "@/app/api";
 import { RetryCard } from "./retry-card";

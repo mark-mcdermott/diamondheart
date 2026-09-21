@@ -1,5 +1,3 @@
-"use client";
-
 import { useQuery } from "@tanstack/react-query";
 import { api, errorMessage, keys } from "@/app/api";
 import { RetryCard } from "@/components/ui/retry-card";

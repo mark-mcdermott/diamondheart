@@ -244,6 +244,12 @@ archived, never deleted. Categories are seeded with twenty-four defaults on firs
 The old actions moved an account balance without checking the account was the caller's,
 and the CSV import took any account id. Both are 404 now.
 
+### Contact
+
+| Method | Path | Notes |
+|---|---|---|
+| `POST` | `/api/contact` | Unauthenticated. `{ name, email, message }` → `202 { sent: true }`; `422` with field errors; `429` after five messages in ten minutes from one address (per function instance, see `src/server/api/_lib/rate-limit.ts`). |
+
 ## Verifying against a deploy
 
 ```bash

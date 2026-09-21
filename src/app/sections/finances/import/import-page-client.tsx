@@ -1,5 +1,3 @@
-"use client";
-
 import { useQuery } from "@tanstack/react-query";
 import { api, keys } from "@/app/api";
 import { QueryGate, combineQueries } from "@/components/ui/query-gate";

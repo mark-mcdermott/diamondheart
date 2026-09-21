@@ -13,5 +13,5 @@ if (url.includes("ep-patient-fire")) {
   throw new Error("Refusing to run API tests against the production database.");
 }
 
-process.env.AUTH_SECRET ??= "api-test-secret";
+process.env.BETTER_AUTH_SECRET ??= "api-test-secret";
 process.env.BETTER_AUTH_URL ??= "http://localhost:3000";

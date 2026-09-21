@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, lazy, Suspense } from "react";
 import { Link } from "@/app/link";
 import { useRouter } from "@/app/navigation";

@@ -22,8 +22,7 @@ export const users = pgTable('users', {
 // ============================================
 //
 // `users` above is Better Auth's `user` model, mapped by name. These three are
-// its own tables with its default names and columns. The legacy `sessions`
-// table below is untouched until Phase 6 drops it.
+// its own tables with its default names and columns.
 
 export const session = pgTable('session', {
 	id: text('id').primaryKey(),
@@ -67,19 +66,9 @@ export const verification = pgTable('verification', {
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
 });
 
-// Sessions table (kept for backward compatibility with SvelteKit version)
-export const sessions = pgTable('sessions', {
-	id: text('id').primaryKey(),
-	userId: text('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
-	expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull()
-});
-
 // Type exports
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
-export type Session = typeof sessions.$inferSelect;
 
 
 // Tracker categories

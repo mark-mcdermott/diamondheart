@@ -1,5 +1,3 @@
-"use client";
-
 import { Link } from "@/app/link";
 import { ArrowLeft, Wallet, TrendingUp, Home, PiggyBank, ArrowUpDown, Receipt, Target, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";

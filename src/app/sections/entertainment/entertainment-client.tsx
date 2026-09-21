@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, lazy, Suspense } from "react";
 import { api, type CreateEntertainmentInput, type EntertainmentItemView, type UpdateEntertainmentInput } from "@/app/api";
 import { useApiMutation } from "@/hooks/use-api-mutation";

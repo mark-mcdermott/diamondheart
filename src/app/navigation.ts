@@ -6,7 +6,7 @@ import { isAppletPath } from "./paths";
 import { NATIVE } from "./platform";
 
 /**
- * `next/navigation`'s hooks, for the applet only: every caller lives under the
+ * Router, pathname and search-param hooks for the applet only: every caller lives under the
  * router and the QueryClient. Components rendered on public pages navigate
  * with `window.location` instead.
  */

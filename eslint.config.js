@@ -31,6 +31,6 @@ export default tseslint.config(
 		}
 	},
 	{
-		ignores: ['build/', '.next/', 'dist/', 'dist-native/', '.astro/', '.vercel/', 'android/', 'ios/', 'src-tauri/', 'public/', 'playwright-report/', 'test-results/']
+		ignores: ['dist/', 'dist-native/', '.astro/', '.vercel/', 'android/', 'ios/', 'src-tauri/', 'public/', 'playwright-report/', 'test-results/']
 	}
 );

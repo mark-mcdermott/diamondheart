@@ -1,9 +1,9 @@
 import { atom } from "nanostores";
 
 /**
- * The colour scheme, without a framework. `next-themes` stored the choice under
- * `theme` as light, dark or system and applied it as a class on `<html>`; the
- * same key and the same class are kept so nobody's preference resets.
+ * The colour scheme, without a framework. The choice lives in localStorage under
+ * `theme` as light, dark or system and is applied as a class on `<html>`; both
+ * predate the port and are kept so nobody's preference resets.
  */
 
 export type Theme = "light" | "dark" | "system";

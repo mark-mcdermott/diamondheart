@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@/lib/utils";
 import { VIEW_RANGES, type ViewRange } from "@/lib/view-range";
 import { useViewRange } from "@/lib/use-view-range";

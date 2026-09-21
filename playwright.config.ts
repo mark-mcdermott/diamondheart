@@ -39,7 +39,7 @@ export default defineConfig({
     command: `pnpm exec astro dev --port ${PORT} --host 127.0.0.1 --ignore-lock`,
     url: baseURL,
     // Better Auth checks every browser call's Origin against its base URL, and
-    // Next reports the server's own host, not the one Playwright connects to.
+    // the server would otherwise report its own host, not the one Playwright connects to.
     // Its rate limiter would refuse the suite's one-sign-up-per-spec pace.
     env: { ...process.env, BETTER_AUTH_URL: baseURL, AUTH_RATE_LIMIT: "off" },
     reuseExistingServer: false,

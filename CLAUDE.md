@@ -99,9 +99,9 @@ src/pages/api/         three-line APIRoute adapters over src/server/api/*
 src/layouts/           Base (document, theme boot, root islands) and Public (nav + footer)
 src/app/AppRoot.tsx    the applet: QueryClient → BrowserRouter → AppShell → lazy routes
 src/app/routes/        one module per section, the route components
-src/app/sections/      the section clients (formerly the Next route group)
+src/app/sections/      the section clients, one directory per dashboard section
 src/app/api.ts         the browser's whole view of the API, with every query key
-src/app/link.tsx       Link with next/link's shape: a route change inside the applet, a navigation elsewhere
+src/app/link.tsx       Link: a route change inside the applet, a navigation elsewhere
 src/components/islands/ what Astro pages hydrate: nav, footer, auth forms, contact form, root bootstraps
 src/server/api/        framework-agnostic API handlers, one file per resource
 src/stores/            nanostores shared across islands (the signed-in user)
@@ -126,12 +126,12 @@ Other conventions:
 - Strict TypeScript, no `any`.
 - PRs are opened ready for review, never draft. Automerge is on: once every check passes and the PR is mergeable, squash-merge it without asking.
 
-## Known gaps
+## Domains
 
-- **Deployment protection hides the apex redirect.** Both `diamondheart.app` and `www.diamondheart.app` serve the app, with www canonical. While Vercel Authentication is on, the edge answers with an SSO redirect before the apex-to-www hop, so that redirect cannot be observed from outside.
+`www.diamondheart.app` is canonical; the apex answers 308 to it. Production is public since 2026-09-21 (Vercel Authentication covers previews only), so that redirect is observable from outside again.
 
 ## Scope
 
 The app has 16 dashboard sections, most of them shallow. See `docs/ROADMAP.md` for which are being kept and why.
 
-**The Astro port has landed through Phase 4** — `docs/PORT-PLAN.md` is the plan and the status. Phase 5 (the bundled native applet) and Phase 6 (cleanup) remain. New server code goes in `src/server/api/` as framework-agnostic handlers (plan, Decision 1), mounted by an adapter in `src/pages/api/`.
+**The Astro port has landed** — `docs/PORT-PLAN.md` records the decisions and what each phase turned out to be. New server code goes in `src/server/api/` as framework-agnostic handlers (plan, Decision 1), mounted by an adapter in `src/pages/api/`.
