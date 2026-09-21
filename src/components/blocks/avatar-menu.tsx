@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import {
   DropdownMenu,
@@ -18,10 +17,12 @@ interface AvatarMenuProps {
     avatarUrl?: string | null;
   };
   notificationCount?: number;
+  /** How to reach a menu item: the applet passes its router, the public nav leaves it to the browser. */
+  onNavigate?: (href: string) => void;
 }
 
-export function AvatarMenu({ user, notificationCount = 0 }: AvatarMenuProps) {
-  const router = useRouter();
+export function AvatarMenu({ user, notificationCount = 0, onNavigate }: AvatarMenuProps) {
+  const go = onNavigate ?? ((href: string) => window.location.assign(href));
   const initials = user.displayName
     .split(" ")
     .map((n) => n[0])
@@ -31,8 +32,8 @@ export function AvatarMenu({ user, notificationCount = 0 }: AvatarMenuProps) {
 
   async function handleLogout() {
     await authClient.signOut();
-    router.push("/login");
-    router.refresh();
+    // A full load: the applet's caches and the public nav's user store both start over.
+    window.location.assign("/login");
   }
 
   return (
@@ -56,16 +57,16 @@ export function AvatarMenu({ user, notificationCount = 0 }: AvatarMenuProps) {
           <p className="text-xs text-muted-foreground">{user.email}</p>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push("/account")} className="cursor-pointer">
+        <DropdownMenuItem onClick={() => go("/account")} className="cursor-pointer">
           Account
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => router.push("/orders")} className="cursor-pointer">
+        <DropdownMenuItem onClick={() => go("/orders")} className="cursor-pointer">
           Orders
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => router.push("/metrics")} className="cursor-pointer">
+        <DropdownMenuItem onClick={() => go("/metrics")} className="cursor-pointer">
           Metrics
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer">
+        <DropdownMenuItem onClick={() => go("/settings")} className="cursor-pointer">
           Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />

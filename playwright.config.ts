@@ -15,7 +15,6 @@ if (process.env.E2E_DB_READY !== "1") {
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = `http://127.0.0.1:${PORT}`;
-const isCI = !!process.env.CI;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -24,18 +23,17 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
-  timeout: isCI ? 60_000 : 30_000,
+  timeout: process.env.CI ? 60_000 : 30_000,
   use: {
     baseURL,
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  // dev compiles routes on demand, which is fine locally but times out on a cold
-  // CI runner. CI builds first (see the e2e job) and serves the production output.
+  // Astro's dev server, locally and on CI: the Vercel adapter's build output is
+  // not runnable outside Vercel, and Vite's on-demand compile is fast enough
+  // that `gotoReady`'s hydration wait covers the first hit of each page.
   webServer: {
-    command: isCI
-      ? `pnpm exec next start --port ${PORT}`
-      : `pnpm exec next dev --port ${PORT}`,
+    command: `pnpm exec astro dev --port ${PORT} --host 127.0.0.1`,
     url: baseURL,
     // Better Auth checks every browser call's Origin against its base URL, and
     // Next reports the server's own host, not the one Playwright connects to.

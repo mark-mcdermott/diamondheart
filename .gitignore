@@ -49,3 +49,6 @@ android/
 www/
 src-tauri/target/
 .env*
+
+# Astro
+.astro/

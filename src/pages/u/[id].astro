@@ -1,0 +1,52 @@
+---
+import { eq, sql } from "drizzle-orm";
+import { ArrowLeft } from "lucide-react";
+import Public from "@/layouts/Public.astro";
+import { db } from "@/db";
+import { users, workouts, workoutSets, foodLog } from "@/db/schema";
+
+/** A public profile, rendered on the server per request: it reads the database and needs no session. */
+export const prerender = false;
+
+const id = Astro.params.id ?? "";
+const [user] = await db
+  .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl, createdAt: users.createdAt })
+  .from(users)
+  .where(eq(users.id, id))
+  .limit(1);
+if (!user) return Astro.rewrite("/404");
+
+const [[workoutCount], [setCount], [mealCount]] = await Promise.all([
+  db.select({ count: sql<number>`count(*)` }).from(workouts).where(eq(workouts.userId, id)),
+  db.select({ count: sql<number>`count(*)` }).from(workoutSets).innerJoin(workouts, eq(workoutSets.workoutId, workouts.id)).where(eq(workouts.userId, id)),
+  db.select({ count: sql<number>`count(*)` }).from(foodLog).where(eq(foodLog.userId, id)),
+]);
+const joinedDate = user.createdAt.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+const stats = [
+  { label: "Workouts", value: Number(workoutCount?.count ?? 0) },
+  { label: "Sets Logged", value: Number(setCount?.count ?? 0) },
+  { label: "Meals Logged", value: Number(mealCount?.count ?? 0) },
+];
+---
+
+<Public title={`${user.name || "Anonymous"} — Diamondheart`}>
+  <div class="max-w-2xl mx-auto px-4 py-16">
+    <a href="/" class="mb-8 inline-flex items-center rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted">
+      <ArrowLeft className="w-4 h-4 mr-2" />
+      Home
+    </a>
+    <div class="text-center mb-8">
+      {user.avatarUrl && <img src={user.avatarUrl} alt={user.name || "User"} class="w-20 h-20 rounded-full mx-auto mb-4 object-cover" />}
+      <h1>{user.name || "Anonymous"}</h1>
+      <p class="text-muted-foreground mt-1">Joined {joinedDate}</p>
+    </div>
+    <div class="grid grid-cols-3 gap-4">
+      {stats.map((stat) => (
+        <div class="border border-border rounded-lg p-4 text-center">
+          <p class="text-2xl font-semibold">{String(stat.value)}</p>
+          <p class="text-xs text-muted-foreground">{stat.label}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</Public>

@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
+import { Link } from "@/app/link";
 
 interface NavLink {
   href: string;
@@ -23,7 +22,7 @@ export function SimpleNav({ siteName, logo, logoIcon, links = [] }: SimpleNavPro
       <Link href="/" className="flex items-center gap-2 no-underline">
         {logoIcon && <span className="text-2xl">{logoIcon}</span>}
         {isLogoImage && (
-          <Image src={logo} alt="" width={32} height={32} className="rounded" />
+          <img src={logo} alt="" width={32} height={32} className="rounded" />
         )}
         {logo && !isLogoImage && <span className="text-2xl">{logo}</span>}
         {siteName && <span className="font-bold text-lg">{siteName}</span>}

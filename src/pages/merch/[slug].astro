@@ -1,0 +1,16 @@
+---
+import Public from "@/layouts/Public.astro";
+import { getProduct, products } from "@/lib/data/products";
+import { ProductPage } from "@/components/islands/product-page";
+
+export function getStaticPaths() {
+  return products.map((product) => ({ params: { slug: product.slug } }));
+}
+
+const product = getProduct(Astro.params.slug ?? "");
+if (!product) return Astro.rewrite("/404");
+---
+
+<Public title={`${product.name} — Diamondheart`}>
+  <ProductPage client:load product={product} />
+</Public>

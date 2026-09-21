@@ -1,0 +1,11 @@
+---
+import Base from "@/layouts/Base.astro";
+import { AppRoot } from "@/app/AppRoot";
+
+/** Mounts the applet for this section; scoped per section so unknown URLs elsewhere stay real 404s. */
+export const prerender = false;
+---
+
+<Base>
+  <AppRoot client:only="react" />
+</Base>

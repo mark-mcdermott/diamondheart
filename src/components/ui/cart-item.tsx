@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus } from "lucide-react";
@@ -17,7 +16,7 @@ export function CartItemImage({ src, alt = "" }: { src?: string; alt?: string })
   return (
     <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
       {src ? (
-        <Image src={src} alt={alt} width={80} height={80} className="w-full h-full object-cover" />
+        <img src={src} alt={alt} width={80} height={80} className="w-full h-full object-cover" />
       ) : (
         <div className="w-full h-full flex items-center justify-center text-2xl">📦</div>
       )}

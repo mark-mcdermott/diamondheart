@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { Link } from "@/app/link";
 import { Button } from "@/components/ui/button";
 
 const COOKIE_KEY = "cookie-consent";

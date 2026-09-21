@@ -1,0 +1,20 @@
+---
+import Base from "@/layouts/Base.astro";
+import { PublicNav } from "@/components/islands/public-nav";
+import { PublicFooter } from "@/components/islands/public-footer";
+
+/** The marketing chrome: a nav island that knows who is signed in, static content, a footer. */
+interface Props {
+  title?: string;
+  description?: string;
+}
+const { title, description } = Astro.props;
+---
+
+<Base title={title} description={description}>
+  <div class="flex min-h-screen flex-col">
+    <PublicNav client:only="react" />
+    <main class="flex flex-1 flex-col"><slot /></main>
+    <PublicFooter client:load />
+  </div>
+</Base>

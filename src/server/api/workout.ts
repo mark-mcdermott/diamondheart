@@ -147,6 +147,36 @@ export async function deleteSet(userId: string, setId: string): Promise<void> {
 }
 
 /** Per day: total minutes, total volume (weight × reps), and sessions. */
+export interface PersonalRecordRow {
+  id: string;
+  exerciseId: string;
+  repCount: number;
+  weight: number;
+  unit: string;
+  date: Date;
+  exerciseName: string;
+  muscleGroup: string;
+}
+
+/** Best lifts by exercise and rep count, grouped the way the records page reads them. */
+export function listRecords(userId: string): Promise<PersonalRecordRow[]> {
+  return db
+    .select({
+      id: personalRecords.id,
+      exerciseId: personalRecords.exerciseId,
+      repCount: personalRecords.repCount,
+      weight: personalRecords.weight,
+      unit: personalRecords.unit,
+      date: personalRecords.date,
+      exerciseName: exercises.name,
+      muscleGroup: exercises.muscleGroup,
+    })
+    .from(personalRecords)
+    .innerJoin(exercises, eq(personalRecords.exerciseId, exercises.id))
+    .where(eq(personalRecords.userId, userId))
+    .orderBy(exercises.muscleGroup, exercises.name, personalRecords.repCount);
+}
+
 export async function dailyTotals(userId: string, from: Date, to: Date) {
   const rows = await db
     .select({
@@ -205,6 +235,14 @@ export const set = {
       const { userId } = await requireSession(request);
       await deleteSet(userId, params.id);
       return noContent();
+    })) satisfies ApiHandler,
+};
+
+export const records = {
+  GET: (({ request }) =>
+    handler(async () => {
+      const { userId } = await requireSession(request);
+      return json({ records: await listRecords(userId) });
     })) satisfies ApiHandler,
 };
 

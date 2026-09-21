@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/app/navigation";
 import { Capacitor } from "@capacitor/core";
 
 /** Pull down at the top of the page to refresh. Pages that read through the API pass their refetch; the rest reload the route. */
@@ -24,7 +24,7 @@ export function usePullToRefresh(onRefresh?: () => unknown) {
       const dy = e.changedTouches[0].clientY - startY.current;
       if (dy > 80) if (onRefresh) void onRefresh(); else router.refresh();
     },
-    [router],
+    [router, onRefresh],
   );
 
   useEffect(() => {
