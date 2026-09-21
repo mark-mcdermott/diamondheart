@@ -154,6 +154,97 @@ serving; a logged item also carries `quantity`, and every total multiplies the t
 
 Notifications are created server-side only. The old action file exported `createNotification`, which made it a callable action for any signed-in client against any user id; it has no callers and now lives in the server module.
 
+### Tracking, medical and appointments
+
+Three shelved sections, each a plain owned list.
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` / `POST` | `/api/tracking` | `{ items }` by category then name / `name` required; `category`, `count`, `unit`, `icon`, `notes` → 201 `{ item }`. |
+| `PATCH` / `DELETE` | `/api/tracking/:id` | Partial → `{ item }` / 204. |
+| `POST` | `/api/tracking/:id/count` | `{ delta }` (non-zero) adds to the count in one statement → `{ item }`. |
+| `GET` / `POST` | `/api/medical` | `{ logs }` newest first / `type` required; `subtype`, `severity` (1–5), `notes`, `date` → 201 `{ log }`. |
+| `DELETE` | `/api/medical/:id` | 204. |
+| `GET` | `/api/medical/totals?from=&to=` | `{ byType, bySeverity }` — counts per type, and average severity per day where one was recorded. |
+| `GET` / `POST` | `/api/appointments` | `{ appointments }` newest first / `title`, `date` (ISO) required; `appointmentType` (default `doctor`), `provider`, `location`, `durationMinutes`, `status` (default `upcoming`), `notes`, `followUp` → 201 `{ appointment }`. |
+| `PATCH` / `DELETE` | `/api/appointments/:id` | Partial → `{ appointment }` / 204. |
+### Meditation
+
+The first shelved section with endpoints. Durations are seconds.
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/meditation` | `{ sessions, styles, presets, defaultTimerSeconds }` — the meditate page's read; sessions newest first, at most a thousand. |
+| `POST` | `/api/meditation/defaults` | Seeds the starter styles and presets for whichever list is empty; safe to repeat. Returns both lists. |
+| `GET` / `POST` | `/api/meditation/sessions` | `{ sessions }` / `duration` required, `type` (default `guided`), `notes`, `date` (default now) → 201 `{ session }`. |
+| `PATCH` / `DELETE` | `/api/meditation/sessions/:id` | Partial `duration`, `type`, `notes` → `{ session }` / 204. |
+| `GET` | `/api/meditation/totals?from=&to=` | `{ days: [{ date, minutes, sessions }] }`, inclusive of both days. |
+| `GET` / `POST` | `/api/meditation/styles` | `{ styles }` / `{ label, iconName? }` → 201 `{ style }`. |
+| `PATCH` / `DELETE` | `/api/meditation/styles/:id` | `{ label, iconName? }` → `{ style }` / 204. |
+| `GET` / `POST` | `/api/meditation/presets` | `{ presets }` / `{ label, seconds }` → 201 `{ preset }`. |
+| `PATCH` / `DELETE` | `/api/meditation/presets/:id` | `{ label, seconds }` → `{ preset }` / 204. |
+| `PATCH` | `/api/meditation/timer` | `{ seconds }` → `{ defaultTimerSeconds }`. |
+| `PUT` / `DELETE` | `/api/meditation/presence` | Heartbeat while the timer runs / stop. Both 204. |
+| `GET` | `/api/meditation/presence` | `{ count, meditators }` — everyone else meditating now, names redacted where they chose that. |
+
+### Workout
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/workout?active=` | `{ exercises, recentWorkouts, active }` — built-in then custom exercises, the last five hundred workouts, and the named workout with its sets (exercise names joined in) or `null`. |
+| `POST` | `/api/workout/workouts` | `{ name? }` → 201 `{ workout }`. |
+| `PATCH` | `/api/workout/workouts/:id` | `{ duration?, notes? }` → `{ workout }` — finishing. |
+| `POST` | `/api/workout/workouts/:id/sets` | `{ exerciseId, reps, weight, unit?, type?, notes? }` → 201 `{ set, isPR }`. The exercise must be built-in or the caller's; the set number continues per exercise; a heavier weight at the same rep count is a personal record. |
+| `DELETE` | `/api/workout/sets/:id` | 204. Sets have no `user_id`; ownership is the workout's. |
+| `GET` | `/api/workout/totals?from=&to=` | `{ days: [{ date, duration, volume, sessions }] }`. |
+
+### Entertainment
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` / `POST` | `/api/entertainment` | `{ items }` by last update / `type`, `title` required; `creator`, `status` (default `completed`), `rating` 1–5, `notes`, `startDate`, `endDate`, and the OMDB fields → 201 `{ item }`. |
+| `PATCH` / `DELETE` | `/api/entertainment/:id` | Partial → `{ item }` / 204. |
+| `GET` | `/api/entertainment/totals` | `{ byType, byStatus }`. |
+| `GET` | `/api/entertainment/episodes?series=` | `{ episodes }` the caller has watched of a series. |
+| `PUT` | `/api/entertainment/episodes` | `{ seriesImdbId, episodeImdbId, watched, season?, episode?, title?, airDate? }` → `{ episode }` or `{ episode: null }` when cleared. Marking is idempotent; season and episode are required to mark. |
+
+### Feed
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/feed` | `{ items }` — the last thirty meditations by other members who have not opted out, with reaction counts and whether the caller reacted. |
+| `PUT` | `/api/feed/reactions/:sessionId` | `{ reacted }` → `{ reacted, reactionCount }`. Explicit rather than a toggle, so a retry cannot flip it twice. |
+
+### Finances
+
+Every amount is **integer cents**; the form wrappers convert from dollars. Accounts are
+archived, never deleted. Categories are seeded with twenty-four defaults on first read.
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/finances` | The finances page's read: accounts, investments, properties, retirement plans, the last twelve snapshots, the last ten transactions, net worth, this month's spending by category and income, and categories. |
+| `GET` / `POST` | `/api/finances/accounts` | `{ accounts }` (unarchived) / `name`, `accountType` required → 201 `{ account }`. |
+| `PATCH` / `DELETE` | `/api/finances/accounts/:id` | Partial (including `archived`) → `{ account }` / archive, 204. |
+| `GET` / `POST` | `/api/finances/categories` | `{ categories }` / `{ name, type?, icon? }` → 201 `{ category }`. |
+| `GET` | `/api/finances/transactions` | `?accountId&categoryId&type&from&to&limit&offset` → `{ transactions }`, newest first, at most five hundred. |
+| `POST` | `/api/finances/transactions` | `accountId` (must be the caller's), `type`, `amountCents` (the magnitude; signed by type), `description` required; `categoryId`, `merchant`, `date`, `notes`, `isRecurring` → 201 `{ transaction }`. Moves the account balance. |
+| `PATCH` / `DELETE` | `/api/finances/transactions/:id` | `categoryId`, `description`, `merchant`, `notes` → `{ transaction }` / 204, reversing the balance. |
+| `POST` | `/api/finances/transactions/import` | `{ accountId, transactions: [{ date, description, amount (dollars), type, merchant?, categoryId? }] }` → `{ imported, skipped }`. Repeats are skipped by an import key; the balance is recomputed from every transaction on the account. |
+| `GET` | `/api/finances/months/:year/:month` | `{ spending: [{ categoryId, totalCents, count }], incomeCents, year, month }`. |
+| `GET` / `PUT` | `/api/finances/budgets` | `{ budgets }` / `{ categoryId, amountCents, period? }` sets the one budget a category has → `{ budget }`. |
+| `DELETE` | `/api/finances/budgets/:id` | 204. |
+| `GET` / `POST` | `/api/finances/investments` | `{ investments }` / `symbol` (upper-cased), `name`, `investmentType` required → 201 `{ investment }`. |
+| `PATCH` / `DELETE` | `/api/finances/investments/:id` | Partial → `{ investment }` / 204. |
+| `GET` / `POST` | `/api/finances/properties` | `{ properties }` / `name` required → 201 `{ property }`. |
+| `PATCH` / `DELETE` | `/api/finances/properties/:id` | Partial → `{ property }` / 204. |
+| `GET` / `POST` | `/api/finances/retirement` | `{ plans }` / `name`, `planType` required → 201 `{ plan }`. |
+| `PATCH` / `DELETE` | `/api/finances/retirement/:id` | Partial → `{ plan }` / 204. |
+| `GET` | `/api/finances/net-worth` | `{ netWorthCents, totalAssetsCents, totalLiabilitiesCents }`. |
+| `GET` / `POST` | `/api/finances/snapshots?limit=` | `{ snapshots }` / take one now → 201 `{ snapshot }`. |
+
+The old actions moved an account balance without checking the account was the caller's,
+and the CSV import took any account id. Both are 404 now.
+
 ## Verifying against a deploy
 
 ```bash

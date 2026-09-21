@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import Image from "next/image";
 import { ChevronDown, Loader2, Check, Film } from "lucide-react";
-import {
-  getWatchedEpisodes,
-  setEpisodeWatched,
-} from "@/app/actions/show-episodes";
+import { api, errorMessage, keys, type EpisodeWatched } from "@/app/api";
 
 interface Episode {
   imdbId: string;
@@ -31,6 +29,8 @@ interface ShowEpisodeTrackerProps {
 // Module-level poster cache so the same episode isn't re-fetched across modal opens.
 const posterCache = new Map<string, string | null>();
 
+const WATCH_KEY = ["entertainment", "episodes", "watch"] as const;
+
 export function ShowEpisodeTracker({
   seriesImdbId,
   seasonCount,
@@ -42,20 +42,34 @@ export function ShowEpisodeTracker({
   );
   const [brokenPosters, setBrokenPosters] = useState<Set<string>>(new Set());
   const [openSeason, setOpenSeason] = useState<number | null>(null);
-  const [, startTransition] = useTransition();
+  const queryClient = useQueryClient();
 
-  // Load already-watched episodes once.
+  // The watched set is local so a tap flips at once; the query re-syncs it
+  // after the last in-flight toggle settles.
+  const watchedRows = useQuery({ queryKey: keys.watchedEpisodes(seriesImdbId), queryFn: () => api.entertainment.watchedEpisodes(seriesImdbId) });
+  const watchedData = watchedRows.data;
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const rows = await getWatchedEpisodes(seriesImdbId);
-      if (cancelled) return;
-      setWatched(new Set(rows.map((r) => r.episodeImdbId)));
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [seriesImdbId]);
+    if (watchedData) setWatched(new Set(watchedData.map((r) => r.episodeImdbId)));
+  }, [watchedData]);
+
+  const mark = useMutation({
+    mutationKey: WATCH_KEY,
+    mutationFn: (input: EpisodeWatched) => api.entertainment.setEpisodeWatched(input),
+    onError: (error, input) => {
+      setWatched((prev) => {
+        const next = new Set(prev);
+        if (input.watched) next.delete(input.episodeImdbId);
+        else next.add(input.episodeImdbId);
+        return next;
+      });
+      toast.error(errorMessage(error));
+    },
+    onSettled: () => {
+      if (queryClient.isMutating({ mutationKey: WATCH_KEY }) === 1) {
+        void queryClient.invalidateQueries({ queryKey: keys.watchedEpisodes(seriesImdbId) });
+      }
+    },
+  });
 
   async function loadPosters(episodes: Episode[]) {
     const missing = episodes.filter((e) => !posterCache.has(e.imdbId));
@@ -130,17 +144,19 @@ export function ShowEpisodeTracker({
       return next;
     });
 
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("seriesImdbId", seriesImdbId);
-      fd.set("episodeImdbId", ep.imdbId);
-      fd.set("watched", isWatched ? "false" : "true");
-      fd.set("season", String(season));
-      if (ep.episode !== null) fd.set("episode", String(ep.episode));
-      if (ep.title) fd.set("title", ep.title);
-      if (ep.airDate) fd.set("airDate", ep.airDate);
-      await surfaceErrors(setEpisodeWatched(fd));
-    });
+    mark.mutate(
+      isWatched
+        ? { seriesImdbId, episodeImdbId: ep.imdbId, watched: false }
+        : {
+            seriesImdbId,
+            episodeImdbId: ep.imdbId,
+            watched: true,
+            season,
+            episode: ep.episode ?? 0,
+            title: ep.title || null,
+            airDate: ep.airDate || null,
+          }
+    );
   }
 
   const seasonsList = Array.from({ length: seasonCount }, (_, i) => i + 1);

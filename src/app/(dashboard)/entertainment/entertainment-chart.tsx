@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -12,9 +13,11 @@ import {
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart-container";
 import { CHART_PALETTE } from "@/lib/chart-utils";
-import { getEntertainmentChartData } from "@/app/actions/chart-data";
+import { api, keys, type EntertainmentTotals } from "@/app/api";
 
 type ChartView = "type" | "status";
+
+const EMPTY_TOTALS: EntertainmentTotals = { byType: [], byStatus: [] };
 
 const STATUS_LABELS: Record<string, string> = {
   watching: "Watching",
@@ -36,18 +39,8 @@ const TYPE_LABELS: Record<string, string> = {
 
 export function EntertainmentChart() {
   const [view, setView] = useState<ChartView>("type");
-  const [, startTransition] = useTransition();
-  const [data, setData] = useState<{
-    byType: { type: string; count: number }[];
-    byStatus: { status: string; count: number }[];
-  }>({ byType: [], byStatus: [] });
-
-  useEffect(() => {
-    startTransition(async () => {
-      const result = await getEntertainmentChartData();
-      setData(result);
-    });
-  }, []);
+  const totals = useQuery({ queryKey: keys.entertainmentTotals, queryFn: api.entertainment.totals });
+  const data = totals.data ?? EMPTY_TOTALS;
 
   const chartData = view === "type"
     ? data.byType.map((d) => ({ label: TYPE_LABELS[d.type] || d.type, count: d.count }))

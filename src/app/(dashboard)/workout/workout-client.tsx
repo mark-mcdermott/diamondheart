@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useTransition, lazy, Suspense } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useState, lazy, Suspense } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { api, type AddSet, type ExerciseView, type FinishWorkout, type WorkoutSetView, type WorkoutView } from "@/app/api";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { startWorkout, addSet, deleteSet, finishWorkout } from "@/app/actions/workout";
-import type { Exercise } from "@/db/schema";
 import {
   ArrowLeft,
   Plus,
@@ -23,38 +23,15 @@ import { DateNavigator } from "@/components/ui/date-navigator";
 import { useViewRange } from "@/lib/use-view-range";
 import { filterByBounds, viewRangeBounds, viewRangeLabel } from "@/lib/view-range";
 
-interface WorkoutSet {
-  id: string;
-  workoutId: string;
-  exerciseId: string;
-  setNumber: number;
-  reps: number;
-  weight: number;
-  unit: string;
-  type: string;
-  notes: string | null;
-  createdAt: string;
-  exerciseName: string;
-  muscleGroup: string;
-}
-
-interface SerializedWorkout {
-  id: string;
-  userId: string;
-  name: string | null;
-  date: string;
-  duration: number | null;
-  notes: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
 interface WorkoutClientProps {
-  exercises: Exercise[];
-  recentWorkouts: SerializedWorkout[];
-  activeWorkout: SerializedWorkout | null;
-  activeSets: WorkoutSet[];
+  exercises: ExerciseView[];
+  recentWorkouts: WorkoutView[];
+  activeWorkout: WorkoutView | null;
+  activeSets: WorkoutSetView[];
 }
+
+/** A workout write touches every overview (idle and active) and the dashboard's summary. */
+const AFTER_WRITE = [["workout"], ["dashboard"]] as const;
 
 const WorkoutChart = lazy(() => import("./workout-chart").then((m) => ({ default: m.WorkoutChart })));
 
@@ -68,8 +45,11 @@ export function WorkoutClient({
   const bounds = viewRangeBounds(view, anchor ?? new Date());
   const rangedWorkouts = filterByBounds(recentWorkouts, bounds);
   const periodLabel = viewRangeLabel(view, anchor);
-  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const [prAlert, setPrAlert] = useState<string | null>(null);
+
+  // Start form state
+  const [workoutName, setWorkoutName] = useState("");
 
   // Add set form state
   const [selectedExercise, setSelectedExercise] = useState("");
@@ -84,35 +64,54 @@ export function WorkoutClient({
 
   const muscleGroups = [...new Set(exercises.map((e) => e.muscleGroup))].sort();
 
-  function handleAddSet() {
-    if (!activeWorkout || !selectedExercise || !reps || !weight) return;
-
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("workoutId", activeWorkout.id);
-      fd.set("exerciseId", selectedExercise);
-      fd.set("reps", reps);
-      fd.set("weight", weight);
-      fd.set("unit", unit);
-      const result = await surfaceErrors(addSet(fd));
-      if (result.isPR) {
-        const ex = exercises.find((e) => e.id === selectedExercise);
-        setPrAlert(`New PR! ${ex?.name ?? "Exercise"} — ${weight} ${unit} x ${reps}`);
+  const start = useApiMutation({
+    mutationFn: (name: string | null) => api.workout.start({ name }),
+    invalidates: AFTER_WRITE,
+    onSuccess: (workout) => router.push(`/workout?active=${workout.id}`),
+  });
+  const addSet = useApiMutation({
+    mutationFn: ({ workoutId, input }: { workoutId: string; input: AddSet }) => api.workout.addSet(workoutId, input),
+    invalidates: AFTER_WRITE,
+    onSuccess: ({ isPR }, { input }) => {
+      if (isPR) {
+        const ex = exercises.find((e) => e.id === input.exerciseId);
+        setPrAlert(`New PR! ${ex?.name ?? "Exercise"} — ${input.weight} ${input.unit} x ${input.reps}`);
         setTimeout(() => setPrAlert(null), 4000);
       }
       setReps("");
       setWeight("");
+    },
+  });
+  const removeSet = useApiMutation({ mutationFn: (setId: string) => api.workout.removeSet(setId), invalidates: AFTER_WRITE });
+  const finish = useApiMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: FinishWorkout }) => api.workout.finish(id, patch),
+    invalidates: AFTER_WRITE,
+    onSuccess: () => router.push("/workout"),
+  });
+  const isPending = start.isPending || addSet.isPending || removeSet.isPending || finish.isPending;
+
+  function handleStart(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    start.mutate(workoutName.trim() || null);
+  }
+
+  function handleAddSet() {
+    if (!activeWorkout || !selectedExercise || !reps || !weight) return;
+    addSet.mutate({
+      workoutId: activeWorkout.id,
+      input: { exerciseId: selectedExercise, reps: Number.parseInt(reps, 10), weight: Number.parseInt(weight, 10), unit },
     });
   }
 
   function handleDeleteSet(setId: string) {
+    removeSet.mutate(setId);
+  }
+
+  function handleFinish(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     if (!activeWorkout) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("setId", setId);
-      fd.set("workoutId", activeWorkout.id);
-      await surfaceErrors(deleteSet(fd));
-    });
+    const minutes = Number.parseInt(duration, 10);
+    finish.mutate({ id: activeWorkout.id, patch: { duration: Number.isNaN(minutes) ? null : minutes, notes: notes.trim() || null } });
   }
 
   return (
@@ -152,13 +151,10 @@ export function WorkoutClient({
       {!activeWorkout ? (
         <>
           {/* Start Workout */}
-          <form
-            action={(fd) => startTransition(() => startWorkout(fd))}
-            className="border border-border rounded-lg p-6 mb-8"
-          >
+          <form onSubmit={handleStart} className="border border-border rounded-lg p-6 mb-8">
             <Label htmlFor="name">Workout Name (optional)</Label>
             <div className="flex gap-3 mt-2">
-              <Input id="name" name="name" placeholder="e.g. Push Day, Leg Day" />
+              <Input id="name" name="name" value={workoutName} onChange={(e) => setWorkoutName(e.target.value)} placeholder="e.g. Push Day, Leg Day" />
               <Button type="submit" disabled={isPending}>
                 <Plus className="w-4 h-4 mr-2" />
                 Start
@@ -317,6 +313,7 @@ export function WorkoutClient({
                         <Button
                           variant="ghost"
                           size="sm"
+                          aria-label={`Delete set ${set.setNumber} of ${set.exerciseName}`}
                           onClick={() => handleDeleteSet(set.id)}
                           disabled={isPending}
                         >
@@ -336,11 +333,7 @@ export function WorkoutClient({
               Finish Workout
             </Button>
           ) : (
-            <form
-              action={(fd) => startTransition(() => finishWorkout(fd))}
-              className="border border-border rounded-lg p-6 space-y-4"
-            >
-              <input type="hidden" name="workoutId" value={activeWorkout.id} />
+            <form onSubmit={handleFinish} className="border border-border rounded-lg p-6 space-y-4">
               <div>
                 <Label htmlFor="duration">Duration (minutes)</Label>
                 <Input

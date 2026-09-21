@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { addTransaction, deleteTransaction } from "@/app/actions/financial";
+import { toast } from "sonner";
+import { api, type CreateTransactionInput, type FinanceAccountView, type FinanceCategoryView, type TransactionView } from "@/app/api";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatCents } from "@/lib/financial-utils";
+import { REFETCH_FINANCES, dollarsToCents, optionalIsoDate, optionalText, text } from "../finance-forms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,34 +35,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { FinancialAccount, FinancialCategory } from "@/db/schema";
-
-type SerializedTransaction = {
-  id: string;
-  userId: string;
-  accountId: string;
-  categoryId: string | null;
-  type: string;
-  amountCents: number;
-  description: string;
-  merchant: string | null;
-  date: string;
-  notes: string | null;
-  isRecurring: boolean;
-  importSource: string | null;
-  importId: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
 
 type Props = {
-  transactions: SerializedTransaction[];
-  accounts: FinancialAccount[];
-  categories: FinancialCategory[];
+  transactions: TransactionView[];
+  accounts: FinanceAccountView[];
+  categories: FinanceCategoryView[];
 };
 
+const TRANSACTION_TYPES = ["income", "expense", "transfer"] as const;
+type TransactionType = (typeof TRANSACTION_TYPES)[number];
+
+function isTransactionType(value: string): value is TransactionType {
+  return (TRANSACTION_TYPES as readonly string[]).includes(value);
+}
+
 export function TransactionsClient({ transactions, accounts, categories }: Props) {
-  const [isPending, startTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Filter state
@@ -85,21 +74,38 @@ export function TransactionsClient({ transactions, accounts, categories }: Props
     return true;
   });
 
-  function handleAdd(formData: FormData) {
-    startTransition(async () => {
-      const result = await surfaceErrors(addTransaction(formData));
-      if (result.success) {
-        setDialogOpen(false);
-      }
+  const create = useApiMutation({
+    mutationFn: (input: CreateTransactionInput) => api.finances.transactions.create(input),
+    invalidates: REFETCH_FINANCES,
+    onSuccess: () => setDialogOpen(false),
+  });
+  const remove = useApiMutation({ mutationFn: (id: string) => api.finances.transactions.remove(id), invalidates: REFETCH_FINANCES });
+  const isPending = create.isPending || remove.isPending;
+
+  function handleAdd(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const fd = new FormData(event.currentTarget);
+    const type = text(fd, "type");
+    if (!isTransactionType(type)) return;
+    const amountCents = Math.abs(dollarsToCents(text(fd, "amount")));
+    if (amountCents === 0) {
+      toast.error("Amount is required");
+      return;
+    }
+    create.mutate({
+      accountId: text(fd, "accountId"),
+      categoryId: optionalText(fd, "categoryId"),
+      type,
+      amountCents,
+      description: text(fd, "description"),
+      merchant: optionalText(fd, "merchant"),
+      date: optionalIsoDate(fd, "date") ?? undefined,
+      notes: optionalText(fd, "notes"),
     });
   }
 
   function handleDelete(transactionId: string) {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.append("transactionId", transactionId);
-      await surfaceErrors(deleteTransaction(fd));
-    });
+    remove.mutate(transactionId);
   }
 
   const today = new Date().toISOString().split("T")[0];
@@ -126,7 +132,7 @@ export function TransactionsClient({ transactions, accounts, categories }: Props
             <DialogHeader>
               <DialogTitle>Add Transaction</DialogTitle>
             </DialogHeader>
-            <form action={handleAdd} className="space-y-4">
+            <form onSubmit={handleAdd} className="space-y-4">
               {/* Type */}
               <div className="space-y-2">
                 <Label htmlFor="type">Type</Label>
@@ -311,6 +317,7 @@ export function TransactionsClient({ transactions, accounts, categories }: Props
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Delete ${tx.description}`}
                       disabled={isPending}
                       onClick={() => handleDelete(tx.id)}
                     >

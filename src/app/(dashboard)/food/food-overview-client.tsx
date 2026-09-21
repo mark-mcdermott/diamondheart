@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
 import {
   BarChart,
   Bar,
@@ -14,7 +13,8 @@ import { ChartContainer } from "@/components/ui/chart-container";
 import { MACRO_COLORS } from "@/lib/chart-utils";
 import { useViewRange } from "@/lib/use-view-range";
 import { viewRangeBounds, viewRangeLabel, toISODateAnchor } from "@/lib/view-range";
-import { getFoodDailyTotals } from "@/app/actions/chart-data";
+import { useQuery } from "@tanstack/react-query";
+import { api, keys } from "@/app/api";
 import { Flame, Beef, Wheat, Droplet } from "lucide-react";
 
 interface DailyTotal {
@@ -76,18 +76,17 @@ export function FoodOverviewClient() {
   const periodLabel = viewRangeLabel(view, anchor);
   const bounds = viewRangeBounds(view, anchor ?? new Date());
 
-  const [data, setData] = useState<DailyTotal[]>([]);
-  const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    startTransition(async () => {
-      const rows = await getFoodDailyTotals(
-        toISODateAnchor(bounds.start),
-        toISODateAnchor(new Date(bounds.end.getTime() - 1)),
-      );
-      setData(rows);
-    });
-  }, [bounds.start.getTime(), bounds.end.getTime()]);
+  const from = toISODateAnchor(bounds.start);
+  const to = toISODateAnchor(new Date(bounds.end.getTime() - 1));
+  const totalsQuery = useQuery({ queryKey: keys.foodTotals(from, to), queryFn: () => api.food.totals(from, to) });
+  const isPending = totalsQuery.isPending;
+  const data: DailyTotal[] = (totalsQuery.data ?? []).map((d) => ({
+    date: d.date,
+    calories: Math.round(d.calories),
+    protein: Math.round(d.protein),
+    carbs: Math.round(d.carbs),
+    fat: Math.round(d.fat),
+  }));
 
   const isYear = view === "year";
   const monthly = isYear ? rollupByMonth(data) : [];

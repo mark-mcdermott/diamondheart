@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowLeft, Upload, FileText, Code } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -24,12 +24,11 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { processImportAction } from "./actions";
-import type { FinancialAccount, FinancialCategory } from "@/db/schema";
+import { api, errorMessage, type FinanceAccountView, type FinanceCategoryView } from "@/app/api";
 
 type Props = {
-  accounts: FinancialAccount[];
-  categories: FinancialCategory[];
+  accounts: FinanceAccountView[];
+  categories: FinanceCategoryView[];
 };
 
 type ColumnMapping = {
@@ -104,6 +103,7 @@ function guessMapping(headers: string[]): ColumnMapping {
 }
 
 export function ImportClient({ accounts, categories: _categories }: Props) {
+  const queryClient = useQueryClient();
   const [accountId, setAccountId] = useState("");
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
@@ -170,17 +170,15 @@ export function ImportClient({ accounts, categories: _categories }: Props) {
     setError(null);
     setResult(null);
 
-    const formData = new FormData();
-    formData.set("accountId", accountId);
-    formData.set("transactions", JSON.stringify(mappedTransactions));
-
-    const res = await surfaceErrors(processImportAction(formData));
-    setImporting(false);
-
-    if (res.success) {
-      setResult({ imported: res.imported, skipped: res.skipped });
-    } else {
-      setError(res.error ?? "Import failed");
+    try {
+      const res = await api.finances.transactions.import({ accountId, transactions: mappedTransactions });
+      setResult(res);
+      // The account balance was recomputed, so every finance read is stale.
+      await queryClient.invalidateQueries({ queryKey: ["finances"] });
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -381,7 +379,7 @@ export function ImportClient({ accounts, categories: _categories }: Props) {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Badge>POST</Badge>
-              <code className="text-sm">/api/finances/import</code>
+              <code className="text-sm">/api/finances/transactions/import</code>
             </div>
             <p className="text-sm text-muted-foreground">
               Requires authentication via session cookie. All requests must include a valid session.
@@ -441,7 +439,7 @@ export function ImportClient({ accounts, categories: _categories }: Props) {
           <div className="space-y-2">
             <Label className="text-sm font-medium">Example</Label>
             <pre className="rounded-md bg-muted p-4 text-xs overflow-x-auto">
-{`curl -X POST http://localhost:3000/api/finances/import \\
+{`curl -X POST https://www.diamondheart.app/api/finances/transactions/import \\
   -H "Content-Type: application/json" \\
   -H "Cookie: session=YOUR_SESSION_TOKEN" \\
   -d '{

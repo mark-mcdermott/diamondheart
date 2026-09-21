@@ -1,16 +1,27 @@
 import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  appointments,
+  entertainmentItems,
+  financialAccounts,
+  foodLog,
+  foodLogItems,
+  medicalLogs,
+  meditationSessions,
   trackerCategories,
   trackerEntries,
   trackerMetrics,
+  trackingItems,
+  workouts,
+  type TrackerCategory,
   type TrackerEntry,
   type TrackerMetric,
 } from "@/db/schema";
-import { dayBounds } from "@/lib/dates";
+import { dayBounds, daysAgo, todayStart } from "@/lib/dates";
 import { slugify } from "@/lib/slug";
 import { toStoredValue, type MassUnit } from "@/lib/units";
-import { ensureDefaultCategory } from "./categories";
+import { ensureDefaultCategory, listCategories } from "./categories";
+import { categoryNavStatus, trackingSectionStatus } from "./nav";
 import type { ApiHandler } from "./_lib/context";
 import { requireSession } from "./_lib/guard";
 import { HttpError, fail, handler, json, noContent, notFound, readJson } from "./_lib/http";
@@ -246,11 +257,104 @@ export async function deleteEntry(userId: string, entryId: string): Promise<void
   if (deleted.length === 0) throw new HttpError(notFound("Entry not found"));
 }
 
+export interface MetricsOverview {
+  categories: TrackerCategory[];
+  metrics: TrackerMetric[];
+  /** Whether each category has a visible nav item. */
+  categoryNavStatus: Record<string, boolean>;
+  /** Whether each tracking section is shown in the nav. */
+  sectionStatus: Record<string, boolean>;
+  /** One line per tracking section, e.g. "3 sessions this week". */
+  sectionSummaries: Record<string, string>;
+}
+
+/** Everything the metrics page shows, in one read. The summaries used to be nine queries in the page. */
+export async function readOverview(userId: string): Promise<MetricsOverview> {
+  const count = (n: unknown) => Number(n ?? 0);
+  const [
+    categories,
+    metrics,
+    sectionStatus,
+    foodCalories,
+    trackingCount,
+    medicalCount,
+    appointmentCount,
+    entertainmentCount,
+    workoutCount,
+    meditationStats,
+    financeAccountCount,
+  ] = await Promise.all([
+    listCategories(userId),
+    listMetrics(userId),
+    trackingSectionStatus(userId),
+    db
+      .select({ total: sql<number>`COALESCE(SUM(${foodLogItems.calories} * ${foodLogItems.quantity}), 0)` })
+      .from(foodLog)
+      .innerJoin(foodLogItems, eq(foodLogItems.foodLogId, foodLog.id))
+      .where(and(eq(foodLog.userId, userId), gte(foodLog.date, todayStart()))),
+    db.select({ count: sql<number>`COUNT(*)` }).from(trackingItems).where(eq(trackingItems.userId, userId)),
+    db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(medicalLogs)
+      .where(and(eq(medicalLogs.userId, userId), gte(medicalLogs.date, daysAgo(7)))),
+    db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(appointments)
+      .where(and(eq(appointments.userId, userId), eq(appointments.status, "upcoming"))),
+    db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(entertainmentItems)
+      .where(and(eq(entertainmentItems.userId, userId), sql`${entertainmentItems.status} IN ('watching', 'reading', 'listening')`)),
+    db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(workouts)
+      .where(and(eq(workouts.userId, userId), gte(workouts.date, daysAgo(7)))),
+    db
+      .select({
+        count: sql<number>`COUNT(*)`,
+        totalMinutes: sql<number>`COALESCE(SUM(${meditationSessions.duration}), 0) / 60`,
+      })
+      .from(meditationSessions)
+      .where(and(eq(meditationSessions.userId, userId), gte(meditationSessions.date, daysAgo(7)))),
+    db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(financialAccounts)
+      .where(and(eq(financialAccounts.userId, userId), eq(financialAccounts.archived, false))),
+  ]);
+
+  const sectionSummaries: Record<string, string> = {
+    food: `${count(foodCalories[0]?.total)} cal today`,
+    tracking: `${count(trackingCount[0]?.count)} items tracked`,
+    medical: `${count(medicalCount[0]?.count)} logs this week`,
+    appointments: `${count(appointmentCount[0]?.count)} upcoming`,
+    entertainment: `${count(entertainmentCount[0]?.count)} in progress`,
+    workout: `${count(workoutCount[0]?.count)} sessions this week`,
+    meditate: `${count(meditationStats[0]?.count)} sessions, ${count(meditationStats[0]?.totalMinutes)} min this week`,
+    finances: `${count(financeAccountCount[0]?.count)} accounts tracked`,
+  };
+
+  return {
+    categories,
+    metrics,
+    categoryNavStatus: await categoryNavStatus(userId, categories.map((c) => c.id)),
+    sectionStatus,
+    sectionSummaries,
+  };
+}
+
 export const GET: ApiHandler = ({ request }) =>
   handler(async () => {
     const { userId } = await requireSession(request);
     return json({ metrics: await listMetrics(userId) });
   });
+
+export const overview = {
+  GET: (({ request }) =>
+    handler(async () => {
+      const { userId } = await requireSession(request);
+      return json(await readOverview(userId));
+    })) satisfies ApiHandler,
+};
 
 export const POST: ApiHandler = ({ request }) =>
   handler(async () => {

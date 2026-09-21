@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ApiError, api, errorMessage, keys } from "@/app/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, User, Lock, Mail, Camera } from "lucide-react";
 import { AvatarUpload } from "@/components/blocks/avatar-upload";
 import { BiometricUnlockToggle } from "@/components/biometric-unlock-toggle";
-import { changePassword, removeAvatar, type AccountResult } from "@/app/actions/account";
 import { useUploadThing } from "@/lib/uploadthing-client";
 
 interface AccountUser {
@@ -32,7 +33,18 @@ interface AccountPageProps {
   className?: string;
 }
 
-const initialPasswordState: AccountResult = { success: false };
+interface PasswordFormState {
+  success?: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string[]>;
+}
+
+const MIN_PASSWORD_LENGTH = 8;
+
+function field(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : "";
+}
 
 export function AccountPage({
   user,
@@ -46,10 +58,46 @@ export function AccountPage({
   className,
 }: AccountPageProps) {
   const router = useRouter();
-  const [passwordState, passwordAction, passwordPending] = useActionState(
-    changePassword,
-    initialPasswordState
-  );
+  const queryClient = useQueryClient();
+  const [passwordState, setPasswordState] = useState<PasswordFormState>({});
+
+  // The sidebar's avatar is still server-rendered until Phase 4, so a route
+  // refresh goes with the refetch.
+  function refreshUser() {
+    void queryClient.invalidateQueries({ queryKey: keys.me });
+    router.refresh();
+  }
+
+  const changePassword = useMutation({
+    mutationFn: (input: { currentPassword: string; newPassword: string }) => api.account.changePassword(input),
+    onSuccess: () => setPasswordState({ success: true }),
+    onError: (error: unknown) => {
+      if (error instanceof ApiError && error.fields) setPasswordState({ fieldErrors: error.fields });
+      else setPasswordState({ error: errorMessage(error) });
+    },
+  });
+  const passwordPending = changePassword.isPending;
+
+  function handlePasswordSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const fd = new FormData(form);
+    const currentPassword = field(fd, "currentPassword");
+    const newPassword = field(fd, "newPassword");
+    const confirmPassword = field(fd, "confirmPassword");
+
+    const fieldErrors: Record<string, string[]> = {};
+    if (!currentPassword) fieldErrors.currentPassword = ["Current password is required"];
+    if (newPassword.length < MIN_PASSWORD_LENGTH) fieldErrors.newPassword = [`New password must be at least ${MIN_PASSWORD_LENGTH} characters`];
+    if (newPassword !== confirmPassword) fieldErrors.confirmPassword = ["Passwords do not match"];
+    if (Object.keys(fieldErrors).length > 0) {
+      setPasswordState({ fieldErrors });
+      return;
+    }
+
+    setPasswordState({});
+    changePassword.mutate({ currentPassword, newPassword }, { onSuccess: () => form.reset() });
+  }
 
   const { startUpload } = useUploadThing("avatarUploader");
 
@@ -58,17 +106,21 @@ export function AccountPage({
       const res = await startUpload([file]);
       const url = res?.[0]?.ufsUrl;
       if (!url) return { error: "Upload failed" };
-      router.refresh();
+      refreshUser();
       return { url };
     } catch {
       return { error: "Upload failed" };
     }
   }
 
-  async function handleAvatarRemove() {
-    const result = await removeAvatar();
-    if (!result.error) router.refresh();
-    return result;
+  async function handleAvatarRemove(): Promise<{ error?: string }> {
+    try {
+      await api.account.removeAvatar();
+      refreshUser();
+      return {};
+    } catch (cause) {
+      return { error: errorMessage(cause) };
+    }
   }
 
   if (!user) {
@@ -170,7 +222,7 @@ export function AccountPage({
               <CardDescription>Change your password</CardDescription>
             </CardHeader>
             <CardContent>
-              <form action={passwordAction} className="space-y-4">
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
                 {passwordState.error && (
                   <p className="text-sm text-destructive">{passwordState.error}</p>
                 )}

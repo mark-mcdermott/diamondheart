@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -23,20 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { setBudget, deleteBudget } from "@/app/actions/financial";
+import { api, type BudgetView, type FinanceCategoryView, type MonthSummaryView, type SetBudget } from "@/app/api";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatCents } from "@/lib/financial-utils";
-import type { FinancialBudget, FinancialCategory } from "@/db/schema";
-
-type MonthlySpendingRow = {
-  categoryId: string | null;
-  totalCents: number;
-  count: number;
-};
+import { REFETCH_FINANCES, dollarsToCents, text } from "../finance-forms";
 
 type Props = {
-  budgets: FinancialBudget[];
-  categories: FinancialCategory[];
-  monthlySpending: MonthlySpendingRow[];
+  budgets: BudgetView[];
+  categories: FinanceCategoryView[];
+  monthlySpending: MonthSummaryView["spending"];
 };
 
 function budgetColor(pct: number): string {
@@ -52,9 +46,19 @@ function progressColor(pct: number): string {
 }
 
 export function BudgetsClient({ budgets, categories, monthlySpending }: Props) {
-  const [isPending, startTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
+
+  const set = useApiMutation({
+    mutationFn: (input: SetBudget) => api.finances.budgets.set(input),
+    invalidates: REFETCH_FINANCES,
+    onSuccess: () => {
+      setDialogOpen(false);
+      setSelectedCategoryId("");
+    },
+  });
+  const remove = useApiMutation({ mutationFn: (id: string) => api.finances.budgets.remove(id), invalidates: REFETCH_FINANCES });
+  const isPending = set.isPending || remove.isPending;
 
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
   const spendingMap = new Map(
@@ -67,20 +71,14 @@ export function BudgetsClient({ budgets, categories, monthlySpending }: Props) {
     (c) => !budgetedCategoryIds.has(c.id)
   );
 
-  function handleSetBudget(formData: FormData) {
-    startTransition(async () => {
-      await surfaceErrors(setBudget(formData));
-      setDialogOpen(false);
-      setSelectedCategoryId("");
-    });
+  function handleSetBudget(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const fd = new FormData(event.currentTarget);
+    set.mutate({ categoryId: selectedCategoryId, amountCents: Math.abs(dollarsToCents(text(fd, "amount"))), period: "monthly" });
   }
 
   function handleDeleteBudget(budgetId: string) {
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.append("budgetId", budgetId);
-      await surfaceErrors(deleteBudget(fd));
-    });
+    remove.mutate(budgetId);
   }
 
   return (
@@ -104,7 +102,7 @@ export function BudgetsClient({ budgets, categories, monthlySpending }: Props) {
             <DialogHeader>
               <DialogTitle>Add Budget</DialogTitle>
             </DialogHeader>
-            <form action={handleSetBudget} className="space-y-4">
+            <form onSubmit={handleSetBudget} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="categoryId">Category</Label>
                 <Select
@@ -123,7 +121,6 @@ export function BudgetsClient({ budgets, categories, monthlySpending }: Props) {
                     ))}
                   </SelectContent>
                 </Select>
-                <input type="hidden" name="categoryId" value={selectedCategoryId} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="amount">Monthly Limit ($)</Label>
@@ -168,6 +165,7 @@ export function BudgetsClient({ budgets, categories, monthlySpending }: Props) {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 text-muted-foreground hover:text-[#f8383f]"
+                        aria-label={`Delete budget for ${category?.name ?? "category"}`}
                         disabled={isPending}
                         onClick={() => handleDeleteBudget(budget.id)}
                       >

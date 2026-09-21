@@ -10,10 +10,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import type { TrackerMetric } from "@/db/schema";
+import type { Metric } from "@/app/api";
 
 interface WeeklyChartProps {
-  metrics: TrackerMetric[];
+  metrics: Metric[];
   sparklines: Record<string, { date: string; value: number }[]>;
 }
 

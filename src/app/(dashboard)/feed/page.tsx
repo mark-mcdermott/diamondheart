@@ -2,21 +2,14 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
-import { getCommunityFeed } from "@/app/actions/feed";
-import { getMeditatingNow } from "@/app/actions/presence";
-import { FeedList } from "./feed-client";
-import { MeditatingNowRow } from "./meditating-now";
+import { FeedPageClient } from "./feed-page-client";
 
 export const metadata = { title: "Community · Diamondheart" };
 
+/** Reads `GET /api/feed` and the presence endpoint from the browser (docs/PORT-PLAN.md, Phase 3). */
 export default async function FeedPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
-
-  const [items, meditatingNow] = await Promise.all([
-    getCommunityFeed(session.userId),
-    getMeditatingNow(),
-  ]);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -31,8 +24,7 @@ export default async function FeedPage() {
           </p>
         </div>
       </div>
-      <MeditatingNowRow initial={meditatingNow} />
-      <FeedList items={items} />
+      <FeedPageClient />
     </div>
   );
 }

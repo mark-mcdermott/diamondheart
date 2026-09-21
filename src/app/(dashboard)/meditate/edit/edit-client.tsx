@@ -1,32 +1,55 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useState } from "react";
+import { api, keys, type MeditationPresetInput, type MeditationPresetView, type MeditationStyleInput, type MeditationStyleView } from "@/app/api";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  addMeditationStyle,
-  updateMeditationStyle,
-  deleteMeditationStyle,
-  addMeditationPreset,
-  updateMeditationPreset,
-  deleteMeditationPreset,
-  setDefaultTimerSeconds,
-} from "@/app/actions/meditation";
-import type { MeditationStyle, MeditationPreset } from "@/db/schema";
 import { Plus, Pencil, Trash2, Save, X } from "lucide-react";
 import { ICON_MAP, LucideIconByName } from "../icon-map";
 
 interface MeditateEditClientProps {
-  styles: MeditationStyle[];
-  presets: MeditationPreset[];
+  styles: MeditationStyleView[];
+  presets: MeditationPresetView[];
   defaultTimerSeconds: number;
 }
 
+const AFTER_WRITE = [keys.meditation] as const;
+
 export function MeditateEditClient({ styles, presets, defaultTimerSeconds }: MeditateEditClientProps) {
-  const [isPending, startTransition] = useTransition();
   const [deleteError, setDeleteError] = useState("");
+
+  const saveTimer = useApiMutation({ mutationFn: (seconds: number) => api.meditation.setTimer(seconds), invalidates: AFTER_WRITE });
+  const addStyle = useApiMutation({
+    mutationFn: (input: MeditationStyleInput) => api.meditation.createStyle(input),
+    invalidates: AFTER_WRITE,
+    onSuccess: () => {
+      setStyleLabel("");
+      setStyleIcon("brain");
+    },
+  });
+  const saveStyle = useApiMutation({
+    mutationFn: ({ id, input }: { id: string; input: MeditationStyleInput }) => api.meditation.updateStyle(id, input),
+    invalidates: AFTER_WRITE,
+    onSuccess: () => setEditingStyle(null),
+  });
+  const removeStyle = useApiMutation({ mutationFn: (id: string) => api.meditation.removeStyle(id), invalidates: AFTER_WRITE });
+  const addPreset = useApiMutation({
+    mutationFn: (input: MeditationPresetInput) => api.meditation.createPreset(input),
+    invalidates: AFTER_WRITE,
+    onSuccess: () => {
+      setPresetLabel("");
+      setPresetMinutes("");
+    },
+  });
+  const savePreset = useApiMutation({
+    mutationFn: ({ id, input }: { id: string; input: MeditationPresetInput }) => api.meditation.updatePreset(id, input),
+    invalidates: AFTER_WRITE,
+    onSuccess: () => setEditingPreset(null),
+  });
+  const removePreset = useApiMutation({ mutationFn: (id: string) => api.meditation.removePreset(id), invalidates: AFTER_WRITE });
+  const isPending = [saveTimer, addStyle, saveStyle, removeStyle, addPreset, savePreset, removePreset].some((m) => m.isPending);
 
   // Default timer
   const [defaultMinutes, setDefaultMinutes] = useState(String(defaultTimerSeconds / 60));
@@ -45,28 +68,18 @@ export function MeditateEditClient({ styles, presets, defaultTimerSeconds }: Med
   const [editPresetLabel, setEditPresetLabel] = useState("");
   const [editPresetMinutes, setEditPresetMinutes] = useState("");
 
+  function iconOrDefault(name: string): string {
+    return name.trim() || "brain";
+  }
+
   function handleAddStyle() {
     if (!styleLabel.trim()) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("label", styleLabel);
-      fd.set("iconName", styleIcon);
-      await surfaceErrors(addMeditationStyle(fd));
-      setStyleLabel("");
-      setStyleIcon("brain");
-    });
+    addStyle.mutate({ label: styleLabel.trim(), iconName: iconOrDefault(styleIcon) });
   }
 
   function handleUpdateStyle(styleId: string) {
     if (!editStyleLabel.trim()) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("styleId", styleId);
-      fd.set("label", editStyleLabel);
-      fd.set("iconName", editStyleIcon);
-      await surfaceErrors(updateMeditationStyle(fd));
-      setEditingStyle(null);
-    });
+    saveStyle.mutate({ id: styleId, input: { label: editStyleLabel.trim(), iconName: iconOrDefault(editStyleIcon) } });
   }
 
   function handleDeleteStyle(styleId: string) {
@@ -75,37 +88,19 @@ export function MeditateEditClient({ styles, presets, defaultTimerSeconds }: Med
       return;
     }
     setDeleteError("");
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("styleId", styleId);
-      await surfaceErrors(deleteMeditationStyle(fd));
-    });
+    removeStyle.mutate(styleId);
   }
 
   function handleAddPreset() {
     const mins = parseInt(presetMinutes);
     if (!presetLabel.trim() || !mins || mins <= 0) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("label", presetLabel);
-      fd.set("seconds", String(mins * 60));
-      await surfaceErrors(addMeditationPreset(fd));
-      setPresetLabel("");
-      setPresetMinutes("");
-    });
+    addPreset.mutate({ label: presetLabel.trim(), seconds: mins * 60 });
   }
 
   function handleUpdatePreset(presetId: string) {
     const mins = parseInt(editPresetMinutes);
     if (!editPresetLabel.trim() || !mins || mins <= 0) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("presetId", presetId);
-      fd.set("label", editPresetLabel);
-      fd.set("seconds", String(mins * 60));
-      await surfaceErrors(updateMeditationPreset(fd));
-      setEditingPreset(null);
-    });
+    savePreset.mutate({ id: presetId, input: { label: editPresetLabel.trim(), seconds: mins * 60 } });
   }
 
   function handleDeletePreset(presetId: string) {
@@ -114,21 +109,13 @@ export function MeditateEditClient({ styles, presets, defaultTimerSeconds }: Med
       return;
     }
     setDeleteError("");
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("presetId", presetId);
-      await surfaceErrors(deleteMeditationPreset(fd));
-    });
+    removePreset.mutate(presetId);
   }
 
   function handleSaveDefaultTimer() {
     const mins = parseInt(defaultMinutes);
     if (!mins || mins <= 0) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("seconds", String(mins * 60));
-      await surfaceErrors(setDefaultTimerSeconds(fd));
-    });
+    saveTimer.mutate(mins * 60);
   }
 
   const iconNames = Object.keys(ICON_MAP);

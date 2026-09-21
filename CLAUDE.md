@@ -83,14 +83,16 @@ Auth is Better Auth (`src/lib/server/auth.ts`), mounted at `/api/auth/*`, with b
 ```
 src/app/(public)/      unauthenticated pages — landing, login, signup, merch
 src/app/(dashboard)/   authenticated app, one directory per section
-src/app/actions/       server actions, one file per feature
+src/app/actions/       the last server actions: auth and the contact form
+src/server/api/        framework-agnostic API handlers, one file per resource
+src/app/api.ts         the browser's whole view of the API, with every query key
 src/app/api/           route handlers — integrations, webhooks, export, push
 src/lib/               shared client + server helpers
 src/lib/server/db/     Drizzle schema (the real one; src/db/schema.ts just re-exports)
 scripts/               seeds and migrations
 ```
 
-Pages are server components that query Drizzle directly and hand data to a `*-client.tsx`. Mutations go through server actions, not API routes; API routes are for external callers (integrations, webhooks, the widget).
+Every dashboard page is a thin server component (session check, then a `*-page-client.tsx`) whose client reads through `src/app/api.ts` with TanStack Query and writes through the `/api/*` handlers in `src/server/api/` (Phase 3 of the port). `QueryGate` gives each page its skeleton and retry card; `useApiMutation` toasts a failed write and refetches what it touched. The only server actions left are sign-in, sign-up and sign-out (Better Auth's client replaces them) and the public contact form.
 
 ## Conventions
 

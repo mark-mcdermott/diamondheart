@@ -265,6 +265,26 @@ account module does not import `next/headers`. `createNotification` was an expor
 action any client could call for any user; it is server-side only now. **Every plan
 section has endpoints.** What remains in Phase 1 is the shelved sections.
 
+**Landed 2026-09-20 — tracking, medical and appointments** (`feat/api-sections-1`): three
+small shelved sections in one PR, fourteen endpoints. The count increment is one
+`UPDATE … SET count = count + delta`, where the action read the row and wrote back a
+number it might have computed from a stale copy.
+**Landed 2026-09-20 — meditation** (`feat/api-meditation`): the first shelved section,
+seventeen endpoints covering sessions, the chart totals, styles, presets, the default timer
+and presence. The meditation and presence action files are wrappers; the chart reader
+delegates.
+
+**Landed 2026-09-20 — workout, entertainment, episodes and feed** (`feat/api-sections-2`):
+nineteen endpoints. Reactions became an explicit set instead of a toggle. With this,
+`chart-data.ts` is nothing but delegates, and finances is the last section without
+endpoints.
+
+**Landed 2026-09-20 — finances** (`feat/api-finances`): thirty-three endpoints over the
+eight financial tables, amounts in integer cents on the wire. Two ownership holes closed:
+adding a transaction moved any account's balance, and the CSV import wrote into any
+account. **Phase 1 is complete: every section has endpoints.** What remains before
+Phase 4 is Phase 3 for the shelved sections, the account block and the auth forms.
+
 - `src/server/api/_lib/`: `http.ts` (`json`, `fail`, `HttpError`, `handler`, `readJson`),
   `guard.ts` (`requireSession` → `{ userId }`; ownership helpers that put the owner in the
   `WHERE` clause so a foreign row is a 404, never an oracle), `schemas.ts` (Zod shapes;
@@ -321,6 +341,90 @@ section has endpoints.** What remains in Phase 1 is the shelved sections.
   the UI) green.
 
 ## Phase 3 — Applet-ize under Next
+
+**Landed 2026-09-20 — settings** (`feat/applet-settings`): the first page that reads and
+writes through the API from the browser. `src/app/api.ts` is the applet's whole view of
+the API and owns the query keys; `src/app/query-provider.tsx` is Decision 5's one
+`QueryClient`, mounted in the dashboard layout. Every preference write is one partial
+PATCH with an optimistic cache patch that is put back if the server disagrees; nav
+toggles and reorders work the same way. Nine server actions were deleted with it. The
+page shows a skeleton while loading and a retry card on failure, which the
+server-rendered version never had to.
+
+**Landed 2026-09-20 — the metrics page** (`feat/applet-metrics`): `GET /api/metrics/overview`
+replaces the nine queries the page ran, and the client does every edit — add, hide,
+reorder, delete, section create/rename/delete, nav toggles — through the endpoints with
+optimistic cache patches. Seven more server actions and the whole categories action file
+are gone.
+
+**Landed 2026-09-20 — metric detail, edit and entry** (`feat/applet-metric-pages`): the
+three pages read `GET /api/metrics/:id` and `GET /api/metrics`, and write entries and
+metric edits through the endpoints, passing the viewer's unit so mass readings convert on
+the server as before. A foreign or missing metric renders its own "page not found", which
+is what the isolation spec asserts. Four more actions gone; `quickLog` is the last
+tracker action and moves with the dashboard.
+
+**Landed 2026-09-20 — food** (`feat/applet-food`): the day view reads the log, the
+targets, favourites and saved meals through the API; the 778-line client kept its markup
+and its eight handlers became API calls that refetch. The chart and the overview read
+`GET /api/food/totals`. The food action file is gone, and so are the two food chart
+readers.
+
+**Landed 2026-09-20 — the dashboard** (`feat/applet-dashboard`): one aggregate read plus
+the preferences; the four quick-log buttons became one API call that refetches, and
+pull-to-refresh refetches instead of reloading the route. The tracker action file is gone.
+**Every plan section now reads and writes through the API.** What remains for Phase 3 is
+the account block, the login and signup forms (which Better Auth's client will take over),
+and the shelved sections once their endpoints exist.
+
+**Landed 2026-09-20 — tracking, medical and appointments** (`feat/applet-tracking-medical-appointments`):
+the first shelved sections on the API, and the first to share `RetryCard` for the failed
+read. A tracking count tap patches the cached list and only refetches once the last tap in
+a burst has settled, so two quick taps never snap back to one. The medical chart reads
+`GET /api/medical/totals` through Query with the range in its key. An appointment's date
+is now turned into an instant in the browser, in the zone it was typed, where the action
+used to parse it in the server's zone. Three action files gone. `e2e/sections.spec.ts` covers one
+round trip per section, and its first run found that the base dialog never scrolled, so a tall
+form's buttons sat below the fold on a phone; the shared component now caps at the viewport.
+
+**Landed 2026-09-20 — meditation, community and notifications**
+(`feat/applet-meditation-feed-notifications`): the meditate page reads its one aggregate
+endpoint; the timer's presence heartbeat is a `PUT` and its stop a `DELETE`; the edit page
+seeds the starter styles and presets with one explicit call instead of while rendering. The
+community feed's heart flips in the cached list and is put back if the server disagrees;
+"meditating now" is a Query that refetches on the heartbeat cadence. Notifications read and
+write through the endpoints, with a route refresh after each write because the sidebar badge
+is still server-rendered until Phase 4. `useApiMutation` is the write pattern the clients
+share: toast the failure, refetch what was touched. Four action files gone; `chart-data.ts`
+has two delegates left (workout, entertainment).
+
+**Landed 2026-09-20 — workout and entertainment** (`feat/applet-workout-entertainment`):
+the workout page reads its one aggregate with the active workout named in the query string,
+and starting or finishing a workout is a call followed by a client-side navigation instead of
+a redirecting action. Both entertainment libraries read the same list, and which one shows is
+the preference read through Query rather than on the server. The episode tracker keeps its
+watched set local so a tap flips at once and re-syncs from the query after the last in-flight
+toggle. Three more action files gone, and `chart-data.ts` with them: every chart now reads its
+section's totals endpoint. What is left of `src/app/actions/` is finances, account, auth, the
+contact form and the three read-only delegates the layout still uses.
+
+**Landed 2026-09-20 — finances** (`feat/applet-finances`): the section's seven pages read
+through the endpoints from #232, the dashboard through its one aggregate, the others through
+the lists and the month summary combined into one gate. `QueryGate` and `combineQueries` are
+the page-level pattern from here on: skeleton, retry card, then the page once every read has
+data. The dollars-to-cents and date conversions the action file did once now happen once on
+the client, in `finance-forms.ts`, and the CSV import posts straight to the import endpoint.
+The 345-line financial action file and the import action are gone. **Every section's client
+reads and writes through the API.** What remains of `src/app/actions/` is account, auth, the
+contact form and the three read-only delegates the dashboard layout uses.
+
+**Landed 2026-09-20 — the account block** (`feat/applet-account`): the account page reads
+`GET /api/auth/me` and changes the password and clears the avatar through the endpoints from
+the account PR, with the form's own checks (length, confirmation) done before the call and the
+server's field errors shown under the field they name. The dashboard layout reads nav and
+preferences from the server modules directly, so the last three delegate action files are
+gone. What remains of `src/app/actions/` is sign-in, sign-up and sign-out, which Better Auth's
+client replaces (#223), and the public contact form, which Phase 4 turns into an Astro page.
 
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the

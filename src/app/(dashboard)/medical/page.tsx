@@ -1,24 +1,15 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
-import { db } from "@/db";
-import { medicalLogs } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { MedicalClient } from "./medical-client";
+import { getCurrentUser } from "@/lib/auth";
 import { PageViewToggle } from "@/components/ui/view-toggle";
 import { DateNavigator } from "@/components/ui/date-navigator";
+import { MedicalPageClient } from "./medical-page-client";
 
+/** Reads `GET /api/medical` and the totals endpoint from the browser (docs/PORT-PLAN.md, Phase 3). */
 export default async function MedicalPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
-
-  const logs = await db
-    .select()
-    .from(medicalLogs)
-    .where(eq(medicalLogs.userId, session.userId))
-    .orderBy(desc(medicalLogs.date))
-    .limit(1000);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -33,7 +24,7 @@ export default async function MedicalPage() {
         <DateNavigator />
         <PageViewToggle />
       </div>
-      <MedicalClient logs={logs} />
+      <MedicalPageClient />
     </div>
   );
 }

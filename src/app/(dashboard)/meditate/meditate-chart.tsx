@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -11,20 +12,17 @@ import {
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart-container";
 import { TimeRangePicker } from "@/components/ui/time-range-picker";
-import { type TimeRange, CHART_COLORS, formatDateLabel, generateDateKeys } from "@/lib/chart-utils";
-import { getMeditationChartData } from "@/app/actions/chart-data";
+import { type TimeRange, CHART_COLORS, formatDateLabel, generateDateKeys, getDateRange } from "@/lib/chart-utils";
+import { toISODate } from "@/lib/dates";
+import { api, keys } from "@/app/api";
 
 export function MeditateChart() {
   const [range, setRange] = useState<TimeRange>("week");
-  const [, startTransition] = useTransition();
-  const [rawData, setRawData] = useState<{ date: string; minutes: number; sessions: number }[]>([]);
-
-  useEffect(() => {
-    startTransition(async () => {
-      const data = await getMeditationChartData(range);
-      setRawData(data);
-    });
-  }, [range]);
+  const { start, end } = getDateRange(range);
+  const from = toISODate(start);
+  const to = toISODate(end);
+  const totals = useQuery({ queryKey: keys.meditationTotals(from, to), queryFn: () => api.meditation.totals(from, to) });
+  const rawData = totals.data ?? [];
 
   const data = generateDateKeys(range).map((key) => {
     const match = rawData.find((r) => r.date === key);

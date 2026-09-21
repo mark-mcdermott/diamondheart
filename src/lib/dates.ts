@@ -38,3 +38,15 @@ export function daysAgo(n: number): Date {
   d.setDate(d.getDate() - n);
   return startOfDay(d);
 }
+
+/**
+ * A `<input type="date">` value and an optional `<input type="time">` value, read
+ * in local time, as an ISO string. Invalid input yields null rather than a
+ * Date that stringifies to "Invalid Date".
+ */
+export function localDateTimeToISO(date: string, time?: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const parsed = time && /^\d{2}:\d{2}(:\d{2})?$/.test(time) ? new Date(`${date}T${time}`) : parseDate(date);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
+}

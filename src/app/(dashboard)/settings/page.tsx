@@ -1,28 +1,15 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { getNavItems } from "@/app/actions/nav";
-import { getUserPreferences } from "@/app/actions/preferences";
 import { SettingsClient } from "./settings-client";
 
+/**
+ * The first page to read through the API instead of server-rendering its data
+ * (docs/PORT-PLAN.md, Phase 3). The session check stays so an anonymous visit
+ * redirects before any client code runs.
+ */
 export default async function SettingsPage() {
   const session = await getCurrentUser();
   if (!session) redirect("/login");
 
-  const [navItems, prefs] = await Promise.all([
-    getNavItems(session.userId),
-    getUserPreferences(session.userId),
-  ]);
-
-  return (
-    <SettingsClient
-      navItems={navItems}
-      useNetflixUI={prefs.useNetflixUI}
-      showSiteName={prefs.showSiteName}
-      showMeditationInFeed={prefs.showMeditationInFeed}
-      weightUnit={prefs.weightUnit}
-      targets={prefs.targets}
-      showNameWhenMeditating={prefs.showNameWhenMeditating}
-      dashboardSections={prefs.dashboardSections}
-    />
-  );
+  return <SettingsClient />;
 }
