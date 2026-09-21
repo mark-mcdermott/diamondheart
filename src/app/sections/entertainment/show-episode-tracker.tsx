@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronDown, Loader2, Check, Film } from "lucide-react";
-import { api, errorMessage, keys, type EpisodeWatched } from "@/app/api";
+import { api, errorMessage, keys, type EpisodeWatched, apiFetch } from "@/app/api";
 
 interface Episode {
   imdbId: string;
@@ -75,7 +75,7 @@ export function ShowEpisodeTracker({
     await Promise.allSettled(
       missing.map(async (ep) => {
         try {
-          const res = await fetch(`/api/omdb/${encodeURIComponent(ep.imdbId)}`);
+          const res = await apiFetch(`/api/omdb/${encodeURIComponent(ep.imdbId)}`);
           const url = res.ok
             ? ((await res.json()).posterUrl as string | null)
             : null;
@@ -97,7 +97,7 @@ export function ShowEpisodeTracker({
       return next;
     });
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/omdb/season?seriesId=${encodeURIComponent(seriesImdbId)}&season=${season}`,
       );
       const data = await res.json();

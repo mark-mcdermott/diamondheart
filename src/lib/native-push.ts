@@ -1,4 +1,5 @@
 import { Capacitor } from "@capacitor/core";
+import { apiFetch } from "@/app/api";
 
 export async function registerNativePush(): Promise<string | null> {
   if (!Capacitor.isNativePlatform()) return null;
@@ -30,7 +31,7 @@ export async function syncDeviceToken(): Promise<boolean> {
   if (!token) return false;
 
   try {
-    const res = await fetch("/api/push/device-token", {
+    const res = await apiFetch("/api/push/device-token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ platform, token }),

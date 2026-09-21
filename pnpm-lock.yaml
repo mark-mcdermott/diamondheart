@@ -16,7 +16,7 @@ importers:
         version: 6.0.6(@types/node@22.19.17)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(tsx@4.21.0)(yaml@2.9.1)
       '@astrojs/vercel':
         specifier: ^11.0.10
-        version: 11.0.10(astro@7.3.3(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.21.0)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2))(yaml@2.9.1))(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(rollup@4.60.1)
+        version: 11.0.10(astro@7.3.3(@capacitor/preferences@8.0.1(@capacitor/core@8.3.1))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.21.0)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2))(yaml@2.9.1))(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(rollup@4.60.1)
       '@capacitor/android':
         specifier: ^8.3.1
         version: 8.3.1(@capacitor/core@8.3.1)
@@ -39,6 +39,9 @@ importers:
         specifier: ^8.0.3
         version: 8.0.3(@capacitor/core@8.3.1)
       '@capacitor/network':
+        specifier: ^8.0.1
+        version: 8.0.1(@capacitor/core@8.3.1)
+      '@capacitor/preferences':
         specifier: ^8.0.1
         version: 8.0.1(@capacitor/core@8.3.1)
       '@capacitor/push-notifications':
@@ -79,7 +82,7 @@ importers:
         version: 7.3.3(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2))
       astro:
         specifier: ^7.3.3
-        version: 7.3.3(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.21.0)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2))(yaml@2.9.1)
+        version: 7.3.3(@capacitor/preferences@8.0.1(@capacitor/core@8.3.1))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.21.0)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2))(yaml@2.9.1)
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -180,6 +183,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^8.0.0
         version: 8.58.1(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
+      '@vitejs/plugin-react':
+        specifier: ^6.1.1
+        version: 6.1.1(vite@8.3.0(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.1))
       dotenv:
         specifier: ^18.0.2
         version: 18.0.2
@@ -210,6 +216,9 @@ importers:
       typescript-eslint:
         specifier: ^8.0.0
         version: 8.58.1(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
+      vite:
+        specifier: ^8.3.0
+        version: 8.3.0(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.1)
       vitest:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@22.19.17)(lightningcss@1.33.0)
@@ -595,6 +604,11 @@ packages:
 
   '@capacitor/network@8.0.1':
     resolution: {integrity: sha512-9xK/FHFmzKGanB6BdoSZOzXk8vF0OFVQSQ4PAsIrzAzLuXHryO317qy8dcHVpgxYeuZq2noI0My9z1DvVDi/9w==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capacitor/preferences@8.0.1':
+    resolution: {integrity: sha512-T6no3ebi79XJCk91U3Jp/liJUwgBdvHR+s6vhvPkPxSuch7z3zx5Rv1bdWM6sWruNx+pViuEGqZvbfCdyBvcHQ==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -3431,6 +3445,22 @@ packages:
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
 
+  '@vitejs/plugin-react@6.1.1':
+    resolution: {integrity: sha512-yxLaQV9gkhS8ezJqCM6+ndU7mDY6gqAg75NQ+0IjwEI8IYOmQCgkRwHKVSfWXW076DsqMo0Dk+0FK1U+M5RgFw==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    peerDependencies:
+      '@rolldown/plugin-babel': ^0.1.7 || ^0.2.0
+      babel-plugin-react-compiler: ^1.0.0
+      oxc-transform-react: ^0.145.0
+      vite: ^8.0.0
+    peerDependenciesMeta:
+      '@rolldown/plugin-babel':
+        optional: true
+      babel-plugin-react-compiler:
+        optional: true
+      oxc-transform-react:
+        optional: true
+
   '@vitest/expect@2.1.9':
     resolution: {integrity: sha512-UJCIkTBenHeKT1TTlKMJWy1laZewsRIzYighyYiJKZreqtdxSos/S1t+ktRMQWu2CKqaarrkeszJx1cgC5tGZw==}
 
@@ -6236,14 +6266,14 @@ snapshots:
       is-docker: 4.0.0
       package-manager-detector: 1.8.0
 
-  '@astrojs/vercel@11.0.10(astro@7.3.3(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.21.0)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2))(yaml@2.9.1))(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(rollup@4.60.1)':
+  '@astrojs/vercel@11.0.10(astro@7.3.3(@capacitor/preferences@8.0.1(@capacitor/core@8.3.1))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.21.0)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2))(yaml@2.9.1))(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(rollup@4.60.1)':
     dependencies:
       '@astrojs/internal-helpers': 0.11.0
       '@vercel/analytics': 2.0.1(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
       '@vercel/functions': 3.9.8
       '@vercel/nft': 1.11.0(rollup@4.60.1)
       '@vercel/routing-utils': 6.6.0
-      astro: 7.3.3(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.21.0)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2))(yaml@2.9.1)
+      astro: 7.3.3(@capacitor/preferences@8.0.1(@capacitor/core@8.3.1))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.21.0)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2))(yaml@2.9.1)
       esbuild: 0.28.2
       tinyglobby: 0.2.16
     transitivePeerDependencies:
@@ -6377,50 +6407,50 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@better-auth/core@1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.6)(nanostores@1.5.3)':
+  '@better-auth/core@1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3)':
     dependencies:
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.2
       '@opentelemetry/semantic-conventions': 1.43.0
       '@standard-schema/spec': 1.1.0
       better-call: 1.4.0(zod@4.6.5)
-      jose: 6.2.2
+      jose: 6.2.12
       kysely: 0.29.6
       nanostores: 1.5.3
       zod: 4.6.5
 
   '@better-auth/drizzle-adapter@1.7.5(@better-auth/core@1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3))(@better-auth/utils@0.4.2)(drizzle-orm@0.44.7(@neondatabase/serverless@1.0.2)(@types/pg@8.20.0)(kysely@0.29.6))':
     dependencies:
-      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.6)(nanostores@1.5.3)
+      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3)
       '@better-auth/utils': 0.4.2
     optionalDependencies:
       drizzle-orm: 0.44.7(@neondatabase/serverless@1.0.2)(@types/pg@8.20.0)(kysely@0.29.6)
 
   '@better-auth/kysely-adapter@1.7.5(@better-auth/core@1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3))(@better-auth/utils@0.4.2)(kysely@0.29.6)':
     dependencies:
-      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.6)(nanostores@1.5.3)
+      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3)
       '@better-auth/utils': 0.4.2
     optionalDependencies:
       kysely: 0.29.6
 
   '@better-auth/memory-adapter@1.7.5(@better-auth/core@1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3))(@better-auth/utils@0.4.2)':
     dependencies:
-      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.6)(nanostores@1.5.3)
+      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3)
       '@better-auth/utils': 0.4.2
 
   '@better-auth/mongo-adapter@1.7.5(@better-auth/core@1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3))(@better-auth/utils@0.4.2)':
     dependencies:
-      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.6)(nanostores@1.5.3)
+      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3)
       '@better-auth/utils': 0.4.2
 
   '@better-auth/prisma-adapter@1.7.5(@better-auth/core@1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3))(@better-auth/utils@0.4.2)':
     dependencies:
-      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.6)(nanostores@1.5.3)
+      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3)
       '@better-auth/utils': 0.4.2
 
   '@better-auth/telemetry@1.7.5(@better-auth/core@1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)':
     dependencies:
-      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.6)(nanostores@1.5.3)
+      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.2
 
@@ -6516,6 +6546,10 @@ snapshots:
       '@capacitor/core': 8.3.1
 
   '@capacitor/network@8.0.1(@capacitor/core@8.3.1)':
+    dependencies:
+      '@capacitor/core': 8.3.1
+
+  '@capacitor/preferences@8.0.1(@capacitor/core@8.3.1)':
     dependencies:
       '@capacitor/core': 8.3.1
 
@@ -8836,6 +8870,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@vitejs/plugin-react@6.1.1(vite@8.3.0(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.1))':
+    dependencies:
+      '@rolldown/pluginutils': 1.0.1
+      vite: 8.3.0(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.1)
+
   '@vitest/expect@2.1.9':
     dependencies:
       '@vitest/spy': 2.1.9
@@ -9002,7 +9041,7 @@ snapshots:
 
   astral-regex@2.0.0: {}
 
-  astro@7.3.3(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.21.0)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2))(yaml@2.9.1):
+  astro@7.3.3(@capacitor/preferences@8.0.1(@capacitor/core@8.3.1))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.21.0)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2))(yaml@2.9.1):
     dependencies:
       '@astrojs/compiler-rs': 0.4.1(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
       '@astrojs/internal-helpers': 0.11.0
@@ -9050,7 +9089,7 @@ snapshots:
       tinyglobby: 0.2.16
       ultrahtml: 1.7.0
       unifont: 0.7.5
-      unstorage: 1.17.5(@vercel/functions@3.9.8)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2))
+      unstorage: 1.17.5(@capacitor/preferences@8.0.1(@capacitor/core@8.3.1))(@vercel/functions@3.9.8)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2))
       verkit: 0.4.1
       vite: 8.3.0(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.1)
       vitefu: 1.1.3(vite@8.3.0(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.1))
@@ -9113,7 +9152,7 @@ snapshots:
 
   better-auth@1.7.5(drizzle-kit@0.31.10)(drizzle-orm@0.44.7(@neondatabase/serverless@1.0.2)(@types/pg@8.20.0)(kysely@0.29.6))(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vitest@2.1.9(@types/node@22.19.17)(lightningcss@1.33.0)):
     dependencies:
-      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.6)(nanostores@1.5.3)
+      '@better-auth/core': 1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3)
       '@better-auth/drizzle-adapter': 1.7.5(@better-auth/core@1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3))(@better-auth/utils@0.4.2)(drizzle-orm@0.44.7(@neondatabase/serverless@1.0.2)(@types/pg@8.20.0)(kysely@0.29.6))
       '@better-auth/kysely-adapter': 1.7.5(@better-auth/core@1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3))(@better-auth/utils@0.4.2)(kysely@0.29.6)
       '@better-auth/memory-adapter': 1.7.5(@better-auth/core@1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3))(@better-auth/utils@0.4.2)
@@ -11062,7 +11101,7 @@ snapshots:
 
   universalify@2.0.1: {}
 
-  unstorage@1.17.5(@vercel/functions@3.9.8)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2)):
+  unstorage@1.17.5(@capacitor/preferences@8.0.1(@capacitor/core@8.3.1))(@vercel/functions@3.9.8)(uploadthing@7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2)):
     dependencies:
       anymatch: 3.1.3
       chokidar: 5.0.0
@@ -11073,6 +11112,7 @@ snapshots:
       ofetch: 1.5.1
       ufo: 1.6.4
     optionalDependencies:
+      '@capacitor/preferences': 8.0.1(@capacitor/core@8.3.1)
       '@vercel/functions': 3.9.8
       uploadthing: 7.7.4(h3@1.15.11)(next@15.5.15(@babel/core@7.29.7)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tailwindcss@4.2.2)
 

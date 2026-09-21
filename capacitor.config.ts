@@ -3,10 +3,8 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "app.diamondheart.mobile",
   appName: "Diamondheart",
-  server: {
-    url: "https://www.diamondheart.app",
-    cleartext: false,
-  },
+  // The bundled applet (docs/PORT-PLAN.md, Phase 5): `pnpm build:native` writes it.
+  webDir: "dist-native",
   ios: {
     scheme: "Diamondheart",
     contentInset: "always",

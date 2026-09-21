@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { NATIVE } from "@/app/platform";
 import { authClient, safeRedirect } from "@/lib/auth-client";
 import { LoginForm } from "@/components/blocks/login-form";
 
@@ -16,6 +17,11 @@ export function Login() {
     if (failure) {
       setPending(false);
       setError(failure.message || "Invalid email or password");
+      return;
+    }
+    if (NATIVE) {
+      // The token is stored; a reload takes the bundle from its sign-in screen into the applet.
+      window.location.reload();
       return;
     }
     window.location.assign(safeRedirect(new URLSearchParams(window.location.search).get("redirect")));

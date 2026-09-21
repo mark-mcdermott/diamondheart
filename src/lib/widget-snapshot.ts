@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { apiFetch } from "@/app/api";
 
 export const widgetSnapshotSchema = z.object({
   current: z.number().int().nonnegative(),
@@ -10,7 +11,7 @@ export const widgetSnapshotSchema = z.object({
 export type WidgetSnapshot = z.infer<typeof widgetSnapshotSchema>;
 
 export async function fetchWidgetSnapshot(
-  fetcher: typeof fetch = fetch
+  fetcher: (path: string, init?: RequestInit) => Promise<Response> = apiFetch
 ): Promise<WidgetSnapshot | null> {
   try {
     const res = await fetcher("/api/widget/snapshot", {

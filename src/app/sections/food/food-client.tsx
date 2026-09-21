@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useCallback, useRef, useEffect, lazy, Suspense } from "react";
 import { toast } from "sonner";
-import { api, errorMessage } from "@/app/api";
+import { api, errorMessage, apiFetch } from "@/app/api";
 import { targetProgress, type FoodTargets, type MacroKey } from "@/lib/targets";
 import { Link } from "@/app/link";
 import { useRouter } from "@/app/navigation";
@@ -188,7 +188,7 @@ export function FoodClient({ onChanged, meals, totals, targets, favoriteFoods, f
     }
     setSearching(true);
     try {
-      const res = await fetch(`/api/food/search?q=${encodeURIComponent(q)}`);
+      const res = await apiFetch(`/api/food/search?q=${encodeURIComponent(q)}`);
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {

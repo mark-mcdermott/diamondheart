@@ -6,6 +6,8 @@ import { useRouter } from "@/app/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ArrowLeft, RefreshCw, Unplug, ExternalLink, Heart, Watch } from "lucide-react";
+import { API_BASE, apiFetch } from "@/app/api";
+import { siteUrl } from "@/app/platform";
 
 interface Connection {
   id: string;
@@ -39,19 +41,19 @@ export function IntegrationsClient({ connections, ouraConfigured }: Integrations
   async function syncOura() {
     setSyncing("oura");
     try {
-      const res = await fetch("/api/integrations/oura/sync", { method: "POST" });
+      const res = await apiFetch("/api/integrations/oura/sync", { method: "POST" });
       if (res.ok) router.refresh();
     } catch { /* silent */ }
     setSyncing(null);
   }
 
   async function disconnectOura() {
-    await fetch("/api/integrations/oura/disconnect", { method: "POST" });
+    await apiFetch("/api/integrations/oura/disconnect", { method: "POST" });
     router.refresh();
   }
 
   async function connectHealthKit() {
-    await fetch("/api/integrations/healthkit/connect", { method: "POST" });
+    await apiFetch("/api/integrations/healthkit/connect", { method: "POST" });
     router.refresh();
   }
 
@@ -59,7 +61,7 @@ export function IntegrationsClient({ connections, ouraConfigured }: Integrations
     setSyncing("healthkit");
     try {
       const today = new Date().toISOString().split("T")[0];
-      await fetch("/api/integrations/healthkit/sync", {
+      await apiFetch("/api/integrations/healthkit/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: today }),
@@ -70,7 +72,7 @@ export function IntegrationsClient({ connections, ouraConfigured }: Integrations
   }
 
   async function disconnectHealthKit() {
-    await fetch("/api/integrations/healthkit/disconnect", { method: "POST" });
+    await apiFetch("/api/integrations/healthkit/disconnect", { method: "POST" });
     router.refresh();
   }
 
@@ -120,7 +122,7 @@ export function IntegrationsClient({ connections, ouraConfigured }: Integrations
                 </div>
               </>
             ) : ouraConfigured ? (
-              <Button onClick={() => { window.location.href = "/api/integrations/oura/authorize"; }}>
+              <Button onClick={() => { window.location.href = siteUrl("/api/integrations/oura/authorize", API_BASE); }}>
                 <ExternalLink className="w-4 h-4 mr-2" /> Connect Oura Ring
               </Button>
             ) : (

@@ -1,6 +1,8 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
+import { NATIVE } from "@/app/platform";
+import { clearToken } from "@/lib/session-token";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,8 +34,11 @@ export function AvatarMenu({ user, notificationCount = 0, onNavigate }: AvatarMe
 
   async function handleLogout() {
     await authClient.signOut();
-    // A full load: the applet's caches and the public nav's user store both start over.
-    window.location.assign("/login");
+    await clearToken();
+    // A full load: the applet's caches and the public nav's user store both
+    // start over. The bundle reloads into its own sign-in screen.
+    if (NATIVE) window.location.reload();
+    else window.location.assign("/login");
   }
 
   return (

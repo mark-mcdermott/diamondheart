@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { NATIVE } from "@/app/platform";
 import { authClient } from "@/lib/auth-client";
 import { SignupForm } from "@/components/blocks/signup-form";
 
@@ -35,6 +36,11 @@ export function Signup() {
     if (failure) {
       setPending(false);
       setError(failure.message || "Could not create the account");
+      return;
+    }
+    if (NATIVE) {
+      // The token is stored; a reload takes the bundle from its sign-in screen into the applet.
+      window.location.reload();
       return;
     }
     window.location.assign("/dashboard");

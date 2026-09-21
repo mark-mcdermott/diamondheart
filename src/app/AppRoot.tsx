@@ -1,8 +1,10 @@
-import { lazy, Suspense, type ComponentType } from "react";
+import { lazy, Suspense, useEffect, type ComponentType } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { BrowserRouter, MemoryRouter, Route, Routes, useNavigate } from "react-router";
 import { ApiError } from "./api";
 import { AppShell } from "./AppShell";
+import { NATIVE } from "./platform";
+import { isAppletPath } from "./paths";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -79,11 +81,42 @@ function PageSkeleton() {
   );
 }
 
-export function AppRoot() {
+/**
+ * A deep link into the bundle (`https://www.diamondheart.app/<section>`)
+ * becomes a route change in the memory history.
+ */
+function DeepLinks() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!NATIVE) return;
+    let remove: (() => void) | undefined;
+    void import("@capacitor/app").then(({ App }) =>
+      App.addListener("appUrlOpen", ({ url }) => {
+        const { pathname, search } = new URL(url);
+        if (isAppletPath(pathname)) navigate(pathname + search);
+      }).then((handle) => {
+        remove = () => void handle.remove();
+      })
+    );
+    return () => remove?.();
+  }, [navigate]);
+  return null;
+}
+
+interface AppRootProps {
+  /** The bundle has no URL bar: memory history, starting at the dashboard. */
+  router?: "browser" | "memory";
+  /** The bundle's way out when the session is gone; the web build navigates to sign in. */
+  onSignedOut?: () => void;
+}
+
+export function AppRoot({ router = "browser", onSignedOut }: AppRootProps) {
+  const Router = router === "memory" ? MemoryRouter : BrowserRouter;
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AppShell>
+      <Router {...(router === "memory" ? { initialEntries: ["/dashboard"] } : {})}>
+        <DeepLinks />
+        <AppShell onSignedOut={onSignedOut}>
           <Suspense fallback={<PageSkeleton />}>
             <Routes>
               <Route path="/dashboard" element={<DashboardRoute />} />
@@ -118,7 +151,7 @@ export function AppRoot() {
             </Routes>
           </Suspense>
         </AppShell>
-      </BrowserRouter>
+      </Router>
     </QueryClientProvider>
   );
 }
