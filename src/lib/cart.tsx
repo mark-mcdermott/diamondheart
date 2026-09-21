@@ -40,7 +40,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (stored) {
       try {
         setItems(JSON.parse(stored));
-      } catch {}
+      } catch {
+        // A corrupt entry starts an empty cart.
+      }
     }
     setHydrated(true);
   }, []);

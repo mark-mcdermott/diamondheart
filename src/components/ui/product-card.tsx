@@ -1,5 +1,4 @@
-import Link from "next/link";
-import Image from "next/image";
+import { Link } from "@/app/link";
 import { cn } from "@/lib/utils";
 
 export function ProductCard({ href, className, children }: { href: string; className?: string; children: React.ReactNode }) {
@@ -14,7 +13,7 @@ export function ProductCardImage({ src, alt = "" }: { src?: string; alt?: string
   return (
     <div className="aspect-square overflow-hidden rounded-lg bg-muted mb-3">
       {src ? (
-        <Image
+        <img
           src={src}
           alt={alt}
           width={400}

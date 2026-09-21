@@ -53,7 +53,7 @@ export function PushToggle() {
         setPermission(result);
 
         if (result === "granted") {
-          const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+          const vapidKey = import.meta.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
           if (!vapidKey) return;
 
           const sub = await reg.pushManager.subscribe({

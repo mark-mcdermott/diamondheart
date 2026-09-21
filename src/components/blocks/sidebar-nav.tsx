@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/app/link";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "@/app/navigation";
 import {
   SquaresFour,
   FlowerLotus,
@@ -86,6 +86,7 @@ export function SidebarNav({
 }: SidebarNavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const isLoggedIn = !!user;
 
   const allVisibleLinks = links.filter((link) => {
@@ -173,6 +174,7 @@ export function SidebarNav({
           {user && (
             <div className="mt-1">
               <AvatarMenu
+                onNavigate={router.push}
                 user={{
                   displayName: user.name || user.email,
                   email: user.email,
@@ -210,6 +212,7 @@ export function SidebarNav({
             )}
             {user && (
               <AvatarMenu
+                onNavigate={router.push}
                 user={{
                   displayName: user.name || user.email,
                   email: user.email,

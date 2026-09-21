@@ -1,5 +1,5 @@
-import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { getCurrentUser } from "@/lib/auth";
+import { createUploadthing, type FileRouter } from "uploadthing/server";
+import { resolveSession } from "@/server/api/_lib/session";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -11,8 +11,8 @@ export const uploadRouter = {
   avatarUploader: f({
     image: { maxFileSize: "4MB", maxFileCount: 1 },
   })
-    .middleware(async () => {
-      const session = await getCurrentUser();
+    .middleware(async ({ req }) => {
+      const session = await resolveSession(req);
       if (!session) throw new Error("Not authenticated");
 
       // Fetch current avatar so we can delete the old one after upload

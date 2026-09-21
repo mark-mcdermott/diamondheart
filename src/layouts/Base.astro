@@ -1,0 +1,50 @@
+---
+import "@/styles/global.css";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { RootIslands } from "@/components/islands/root-islands";
+
+/**
+ * Every page's document (docs/PORT-PLAN.md, Phase 4). The theme is applied by an
+ * inline script before first paint; the toaster, service worker, PWA and native
+ * bootstraps are one island at the end of the body so a static page pays for
+ * them once and the applet does not have to carry them.
+ */
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "Diamondheart",
+  description = "Mindful tracking for meditation, wellness, and daily habits",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Diamondheart" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#C4653A" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script is:inline set:html={THEME_BOOT_SCRIPT}></script>
+  </head>
+  <body>
+    <slot />
+    <RootIslands client:only="react" />
+  </body>
+</html>

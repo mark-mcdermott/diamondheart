@@ -1,17 +1,10 @@
-"use client";
-
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Capacitor } from "@capacitor/core";
 
+/** Inside the native shell the marketing home is skipped for sign-in. */
 export function NativeRedirect() {
-  const router = useRouter();
-
   useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      router.replace("/login");
-    }
-  }, [router]);
-
+    if (Capacitor.isNativePlatform()) window.location.replace("/login");
+  }, []);
   return null;
 }

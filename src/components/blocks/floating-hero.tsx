@@ -1,4 +1,3 @@
-import Image from "next/image";
 
 interface FloatingHeroProps {
   title?: string;
@@ -30,7 +29,7 @@ export function FloatingHero({
       }`}
     >
       {image && (
-        <Image
+        <img
           src={image}
           alt=""
           width={120}
@@ -42,7 +41,7 @@ export function FloatingHero({
       <div className="flex items-center gap-3 mb-4">
         {logoIcon && <span className="text-4xl">{logoIcon}</span>}
         {isLogoImage && (
-          <Image src={logo} alt="" width={48} height={48} className="rounded" />
+          <img src={logo} alt="" width={48} height={48} className="rounded" />
         )}
         {logo && !isLogoImage && <span className="text-4xl">{logo}</span>}
         <h1 className="text-5xl font-bold tracking-tight">{title}</h1>

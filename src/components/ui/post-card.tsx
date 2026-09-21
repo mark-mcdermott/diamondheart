@@ -1,5 +1,4 @@
-import Link from "next/link";
-import Image from "next/image";
+import { Link } from "@/app/link";
 import { cn } from "@/lib/utils";
 
 export function PostCard({ href, className, children }: { href: string; className?: string; children: React.ReactNode }) {
@@ -13,7 +12,7 @@ export function PostCard({ href, className, children }: { href: string; classNam
 export function PostCardImage({ src, alt = "" }: { src?: string; alt?: string }) {
   if (!src) return null;
   return (
-    <Image
+    <img
       src={src}
       alt={alt}
       width={600}

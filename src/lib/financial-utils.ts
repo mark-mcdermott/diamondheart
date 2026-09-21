@@ -20,7 +20,7 @@ export function formatCentsCompact(cents: number): string {
 }
 
 export function parseDollarsTocents(dollars: string): number {
-  const cleaned = dollars.replace(/[^0-9.\-]/g, "");
+  const cleaned = dollars.replace(/[^0-9.-]/g, "");
   return Math.round(parseFloat(cleaned || "0") * 100);
 }
 

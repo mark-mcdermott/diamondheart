@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/app/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/app/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiError, api, errorMessage, keys } from "@/app/api";
 import { Button } from "@/components/ui/button";

@@ -457,6 +457,45 @@ reports its own hostname in `request.url`, so Better Auth's inferred base URL is
 
 ## Phase 4 — The shell swap (one PR)
 
+**Landed 2026-09-21** (`feat/astro-shell`). What the swap turned out to be:
+
+- Astro 7 with `@astrojs/react`, `@astrojs/vercel` and Tailwind through `@tailwindcss/vite`,
+  at the repo root; `next`, `next-themes` and the never-registered `middleware.ts` gone.
+  `dotenv/config` at the top of `astro.config.mjs` is what puts `.env` into `process.env`
+  for dev, since every server module reads it there; `envPrefix` keeps the `NEXT_PUBLIC_`
+  names working on the client so the Vercel project needed no renaming.
+- `src/pages/api/**`: 81 adapters generated from the Next ones by a script, three lines each
+  over `src/server/api/*` (Decision 1 paid off exactly as written). The eighteen hand-written
+  Next handlers became Astro endpoints by mechanical rewrite: `NextResponse` → `Response`,
+  `getCurrentUser()` → `resolveSession(request)`. UploadThing moved to its generic server
+  handler, Better Auth to a `[...all]` catch-all with `/api/auth/me` as the static route
+  that wins over it, and the contact form to a `POST /api/contact` endpoint.
+- The applet: `src/app/AppRoot.tsx` is QueryClient → BrowserRouter → `AppShell` → lazy
+  routes, one `src/app/routes/<section>.tsx` per section carrying the old page's header
+  markup, mounted by sixteen `src/pages/<section>/[...slug].astro` files so unknown URLs
+  elsewhere stay real 404s. The shell reads who is signed in, the nav, the unread badge and
+  the site-name preference through the API; signed-out sends the browser to sign in with
+  the path remembered.
+- The mechanical replacements went through two shims rather than an edit per call site:
+  `src/app/link.tsx` keeps `next/link`'s `href` shape and decides per link whether it is a
+  route change inside the applet or a navigation out, and `src/app/navigation.ts` keeps
+  `useRouter` / `usePathname` / `useSearchParams` for the applet, with `refresh()` meaning
+  "refetch every query". Fifty-eight files changed only an import. `next/image` became
+  `<img>` in eight.
+- Public pages are `.astro` with the React blocks rendered statically and hydrated
+  `client:visible` only where they animate; sign-in, sign-up and the contact form are
+  `client:only` islands; the public nav is an island on a `stores/user.ts` nanostore; the
+  profile page renders per request from the database. The theme boot script replaced
+  `next-themes`, same storage key and same `dark` class, so nobody's preference reset.
+- Playwright runs against `astro dev` (the Vercel adapter's output is not runnable outside
+  Vercel), told its base URL, with `--ignore-lock` because Astro 7 daemonises the dev
+  server when it detects an agent-driven shell. `astro check` replaced `tsc --noEmit` and
+  `eslint .` replaced `next lint`, which had only ever linted the directories Next was told
+  about; `src/lib` had four lint errors nobody had seen.
+- Three pages were still reading the database on the server (records, integrations,
+  reminders); they got endpoints and page clients on the way through.
+
+
 - Astro 7, `@astrojs/react`, `@astrojs/vercel`, Tailwind 4 via `@tailwindcss/vite`, at
   the repo root. `next`, `next-themes` and `middleware.ts` removed.
 - `src/pages/api/**`: three-line `APIRoute` adapters over `src/server/api/*`.

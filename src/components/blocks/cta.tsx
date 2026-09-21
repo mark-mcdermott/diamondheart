@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/app/link";
 import { Button } from "@/components/ui/button";
 
 interface CtaProps {

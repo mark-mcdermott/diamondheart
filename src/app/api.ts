@@ -59,11 +59,13 @@ import type {
   Transaction,
 } from "@/server/api/finances";
 import type { MedicalLog, MedicalTotals } from "@/server/api/medical";
+import type { IntegrationConnection } from "@/server/api/integrations";
 import type { MeditatingNow, MeditationOverview } from "@/server/api/meditation";
 import type { MetricsOverview } from "@/server/api/metrics";
 import type { Preferences } from "@/server/api/preferences";
 import type { TrackingItem } from "@/server/api/tracking";
-import type { Exercise, Workout, WorkoutSet } from "@/server/api/workout";
+import type { Exercise, PersonalRecordRow, Workout, WorkoutSet } from "@/server/api/workout";
+import type { ReminderSchedule } from "@/db/schema";
 
 /**
  * The applet's whole view of the API (docs/PORT-PLAN.md, Phase 3).
@@ -77,7 +79,7 @@ import type { Exercise, Workout, WorkoutSet } from "@/server/api/workout";
  * token instead (Phase 5).
  */
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
+export const API_BASE = import.meta.env.NEXT_PUBLIC_API_BASE ?? "";
 
 export class ApiError extends Error {
   constructor(
@@ -126,8 +128,9 @@ export interface NavItem {
   locked: boolean;
 }
 
-/** A row as JSON delivers it: every `Date` column is an ISO string. */
-export type Serialized<T> = { [K in keyof T]: T[K] extends Date ? string : T[K] };
+/** A row as JSON delivers it: every `Date` column is an ISO string, a nullable one a nullable string. */
+type SerializedValue<V> = V extends Date ? string : V;
+export type Serialized<T> = { [K in keyof T]: SerializedValue<T[K]> };
 
 export type Metric = Serialized<TrackerMetric>;
 export type Category = Serialized<TrackerCategory>;
@@ -224,6 +227,9 @@ export type UpdateInvestmentInput = Omit<UpdateInvestment, "vestingDate" | "expi
   grantDate?: string | null;
 };
 export type CreatePropertyInput = Omit<CreateProperty, "purchaseDate"> & { purchaseDate?: string | null };
+export type ReminderView = Omit<Serialized<ReminderSchedule>, "days"> & { days: number[] };
+export type IntegrationConnectionView = Serialized<IntegrationConnection>;
+export type PersonalRecordView = Serialized<PersonalRecordRow>;
 export type UpdatePropertyInput = Omit<UpdateProperty, "purchaseDate"> & { purchaseDate?: string | null };
 
 export const keys = {
@@ -261,6 +267,9 @@ export const keys = {
   financeInvestments: ["finances", "investments"] as const,
   financeProperties: ["finances", "properties"] as const,
   financeRetirement: ["finances", "retirement"] as const,
+  reminders: ["reminders"] as const,
+  integrations: ["integrations"] as const,
+  records: ["workout", "records"] as const,
 };
 
 export const api = {
@@ -273,6 +282,10 @@ export const api = {
     changePassword: (input: { currentPassword: string; newPassword: string }) =>
       request<void>("/api/account/password", { method: "PATCH", ...json(input) }),
     removeAvatar: () => request<void>("/api/account/avatar", { method: "DELETE" }),
+  },
+  contact: {
+    send: (input: { name: string; email: string; message: string }) =>
+      request<{ sent: boolean }>("/api/contact", { method: "POST", ...json(input) }),
   },
   preferences: {
     get: () => request<{ preferences: Preferences }>("/api/preferences").then((r) => r.preferences),
@@ -417,6 +430,13 @@ export const api = {
     removeSet: (id: string) => request<void>(`/api/workout/sets/${id}`, { method: "DELETE" }),
     totals: (from: string, to: string) =>
       request<{ days: WorkoutDay[] }>(`/api/workout/totals?from=${from}&to=${to}`).then((r) => r.days),
+    records: () => request<{ records: PersonalRecordView[] }>("/api/workout/records").then((r) => r.records),
+  },
+  reminders: {
+    list: () => request<{ reminders: ReminderView[] }>("/api/reminders").then((r) => r.reminders),
+  },
+  integrations: {
+    list: () => request<{ connections: IntegrationConnectionView[]; ouraConfigured: boolean }>("/api/integrations"),
   },
   entertainment: {
     list: () => request<{ items: EntertainmentItemView[] }>("/api/entertainment").then((r) => r.items),

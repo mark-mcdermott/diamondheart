@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/app/link";
 import { Heart } from "lucide-react";
 
 interface FooterLink {

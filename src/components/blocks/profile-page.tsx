@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/app/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Settings } from "lucide-react";

@@ -11,7 +11,7 @@
 
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { eq, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import {
   users,

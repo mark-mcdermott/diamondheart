@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { Link } from "@/app/link";
+import { useEffect, useState } from "react";
 import { Menu, X, ChevronDown, Github, Bell } from "lucide-react";
 import { Sheet, SheetContent, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -50,7 +49,9 @@ export function Nav({
   showSiteName = true,
 }: NavProps) {
   const [open, setOpen] = useState(false);
-  const pathname = usePathname();
+  // An Astro page, not the applet: the path is read once the island is on the page.
+  const [pathname, setPathname] = useState("");
+  useEffect(() => setPathname(window.location.pathname), []);
   const isLoggedIn = !!user;
 
   const allVisibleLinks = links.filter((link) => {

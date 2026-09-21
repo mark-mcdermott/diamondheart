@@ -356,7 +356,7 @@ async function seed() {
   // --- Write credentials to .secrets ---
   const secretsPath = resolve(import.meta.dirname, "../.secrets");
   let existing = "";
-  try { existing = readFileSync(secretsPath, "utf-8"); } catch {}
+  try { existing = readFileSync(secretsPath, "utf-8"); } catch { /* first seed: no file yet */ }
 
   existing = existing.replace(/# --- SEED CREDENTIALS ---[\s\S]*# --- END SEED CREDENTIALS ---\n?/, "");
 

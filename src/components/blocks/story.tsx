@@ -1,4 +1,3 @@
-import Image from "next/image";
 
 interface StoryProps {
   title: string;
@@ -25,11 +24,10 @@ export function Story({
 
   const imageEl = image ? (
     <div className="relative aspect-video overflow-hidden rounded-lg">
-      <Image
+      <img
         src={image}
         alt={title}
-        fill
-        className="object-cover"
+        className="absolute inset-0 h-full w-full object-cover"
       />
     </div>
   ) : null;

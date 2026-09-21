@@ -1,9 +1,8 @@
 # Diamondheart API
 
 The REST surface the app calls. Every route is a framework-agnostic handler in
-`src/server/api/<resource>.ts`, mounted today by a three-line Next route file under
-`src/app/api/` and, after Phase 4 of `docs/PORT-PLAN.md`, by the same three lines as an
-Astro `APIRoute`.
+`src/server/api/<resource>.ts`, mounted by a three-line Astro `APIRoute` file under
+`src/pages/api/` (Phase 4 of `docs/PORT-PLAN.md`).
 
 **The auth boundary is here, not on the page.** Each handler resolves the session itself
 and answers 401 when there is none. There is no per-request `locals` and no page guard to
