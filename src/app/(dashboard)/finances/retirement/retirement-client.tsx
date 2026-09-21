@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, PiggyBank, Trash2, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -34,25 +33,34 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { formatCents, RETIREMENT_PLAN_TYPES, calculateRetirementProjection } from "@/lib/financial-utils";
-import {
-  addRetirementPlan,
-  updateRetirementPlan,
-  deleteRetirementPlan,
-} from "@/app/actions/financial";
-import type { FinancialRetirementPlan } from "@/db/schema";
+import { api, type CreateRetirementPlan, type RetirementPlanView, type UpdateRetirementPlan } from "@/app/api";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { REFETCH_FINANCES, dollarsToCents, optionalCents, optionalInt, optionalText, text } from "../finance-forms";
 
 function planTypeLabel(type: string): string {
   return RETIREMENT_PLAN_TYPES.find((t) => t.value === type)?.label ?? type;
 }
 
 type Props = {
-  plans: FinancialRetirementPlan[];
+  plans: RetirementPlanView[];
 };
 
 export function RetirementClient({ plans }: Props) {
-  const [isPending, startTransition] = useTransition();
   const [addOpen, setAddOpen] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<FinancialRetirementPlan | null>(null);
+  const [editingPlan, setEditingPlan] = useState<RetirementPlanView | null>(null);
+
+  const create = useApiMutation({
+    mutationFn: (input: CreateRetirementPlan) => api.finances.retirement.create(input),
+    invalidates: REFETCH_FINANCES,
+    onSuccess: () => setAddOpen(false),
+  });
+  const update = useApiMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: UpdateRetirementPlan }) => api.finances.retirement.update(id, patch),
+    invalidates: REFETCH_FINANCES,
+    onSuccess: () => setEditingPlan(null),
+  });
+  const remove = useApiMutation({ mutationFn: (id: string) => api.finances.retirement.remove(id), invalidates: REFETCH_FINANCES });
+  const isPending = create.isPending || update.isPending || remove.isPending;
 
   // Projection calculator state
   const [projCurrentAge, setProjCurrentAge] = useState("");
@@ -74,27 +82,44 @@ export function RetirementClient({ plans }: Props) {
     0
   );
 
-  function handleAdd(formData: FormData) {
-    startTransition(async () => {
-      await surfaceErrors(addRetirementPlan(formData));
-      setAddOpen(false);
+  function handleAdd(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const fd = new FormData(event.currentTarget);
+    create.mutate({
+      name: text(fd, "name"),
+      planType: text(fd, "planType"),
+      institution: optionalText(fd, "institution"),
+      balanceCents: dollarsToCents(text(fd, "balance")),
+      employerMatch: optionalText(fd, "employerMatch"),
+      contributionYtdCents: dollarsToCents(text(fd, "contributionYtd")),
+      contributionLimitCents: optionalCents(fd, "contributionLimit"),
+      targetRetirementAge: optionalInt(fd, "targetRetirementAge"),
+      monthlyContributionCents: optionalCents(fd, "monthlyContribution"),
+      expectedReturnPercent: optionalText(fd, "expectedReturn"),
+      notes: optionalText(fd, "notes"),
     });
   }
 
-  function handleUpdate(formData: FormData) {
-    startTransition(async () => {
-      await surfaceErrors(updateRetirementPlan(formData));
-      setEditingPlan(null);
+  function handleUpdate(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingPlan) return;
+    const fd = new FormData(event.currentTarget);
+    // A blank money field leaves that column alone; notes always save, so they can be cleared.
+    update.mutate({
+      id: editingPlan.id,
+      patch: {
+        ...(text(fd, "balance") ? { balanceCents: dollarsToCents(text(fd, "balance")) } : {}),
+        ...(text(fd, "contributionYtd") ? { contributionYtdCents: dollarsToCents(text(fd, "contributionYtd")) } : {}),
+        ...(text(fd, "monthlyContribution") ? { monthlyContributionCents: dollarsToCents(text(fd, "monthlyContribution")) } : {}),
+        ...(text(fd, "expectedReturn") ? { expectedReturnPercent: text(fd, "expectedReturn") } : {}),
+        notes: optionalText(fd, "notes"),
+      },
     });
   }
 
   function handleDelete(planId: string) {
     if (!confirm("Delete this retirement plan?")) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("planId", planId);
-      await surfaceErrors(deleteRetirementPlan(fd));
-    });
+    remove.mutate(planId);
   }
 
   function runProjection() {
@@ -152,7 +177,7 @@ export function RetirementClient({ plans }: Props) {
             <DialogHeader>
               <DialogTitle>Add Retirement Plan</DialogTitle>
             </DialogHeader>
-            <form action={handleAdd} className="space-y-4">
+            <form onSubmit={handleAdd} className="space-y-4">
               <div>
                 <Label htmlFor="add-name">Plan Name *</Label>
                 <Input id="add-name" name="name" required placeholder="e.g. Company 401(k)" />
@@ -310,6 +335,7 @@ export function RetirementClient({ plans }: Props) {
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Edit ${plan.name}`}
                       onClick={() => setEditingPlan(plan)}
                     >
                       <Pencil className="w-3.5 h-3.5" />
@@ -317,6 +343,7 @@ export function RetirementClient({ plans }: Props) {
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Delete ${plan.name}`}
                       onClick={() => handleDelete(plan.id)}
                       disabled={isPending}
                     >
@@ -382,8 +409,7 @@ export function RetirementClient({ plans }: Props) {
             <DialogTitle>Edit {editingPlan?.name}</DialogTitle>
           </DialogHeader>
           {editingPlan && (
-            <form action={handleUpdate} className="space-y-4">
-              <input type="hidden" name="planId" value={editingPlan.id} />
+            <form onSubmit={handleUpdate} className="space-y-4">
               <div>
                 <Label htmlFor="edit-balance">Balance ($)</Label>
                 <Input

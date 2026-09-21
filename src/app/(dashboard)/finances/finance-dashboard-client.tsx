@@ -5,52 +5,28 @@ import { ArrowLeft, Wallet, TrendingUp, Home, PiggyBank, ArrowUpDown, Receipt, T
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { formatCents, formatCentsCompact, accountTypeLabel } from "@/lib/financial-utils";
 import type {
-  FinancialAccount,
-  FinancialInvestment,
-  FinancialProperty,
-  FinancialRetirementPlan,
-  FinancialCategory,
-} from "@/db/schema";
-
-type SerializedSnapshot = {
-  id: string;
-  date: string;
-  netWorthCents: number;
-  totalAssetsCents: number;
-  totalLiabilitiesCents: number;
-};
-
-type SerializedTransaction = {
-  id: string;
-  type: string;
-  amountCents: number;
-  description: string;
-  merchant: string | null;
-  date: string;
-  categoryId: string | null;
-};
-
-type MonthlySpendingRow = {
-  categoryId: string | null;
-  totalCents: number;
-  count: number;
-};
+  FinanceAccountView,
+  FinanceCategoryView,
+  InvestmentView,
+  MonthSummaryView,
+  NetWorth,
+  PropertyView,
+  RetirementPlanView,
+  SnapshotView,
+  TransactionView,
+} from "@/app/api";
 
 type Props = {
-  accounts: FinancialAccount[];
-  investments: FinancialInvestment[];
-  properties: FinancialProperty[];
-  retirementPlans: FinancialRetirementPlan[];
-  snapshots: SerializedSnapshot[];
-  recentTransactions: SerializedTransaction[];
-  netWorth: {
-    netWorthCents: number;
-    totalAssetsCents: number;
-    totalLiabilitiesCents: number;
-  };
-  monthlySpending: MonthlySpendingRow[];
+  accounts: FinanceAccountView[];
+  investments: InvestmentView[];
+  properties: PropertyView[];
+  retirementPlans: RetirementPlanView[];
+  snapshots: SnapshotView[];
+  recentTransactions: TransactionView[];
+  netWorth: NetWorth;
+  monthlySpending: MonthSummaryView["spending"];
   monthlyIncome: number;
-  categories: FinancialCategory[];
+  categories: FinanceCategoryView[];
 };
 
 const NAV_LINKS = [

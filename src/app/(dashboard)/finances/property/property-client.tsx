@@ -1,7 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
-import { surfaceErrors } from "@/lib/action-result";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Home, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -24,12 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { addProperty, deleteProperty } from "@/app/actions/financial";
+import { api, type CreatePropertyInput, type PropertyView } from "@/app/api";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatCents, PROPERTY_TYPES } from "@/lib/financial-utils";
-import type { FinancialProperty } from "@/db/schema";
+import { REFETCH_FINANCES, dollarsToCents, optionalCents, optionalIsoDate, optionalText, text } from "../finance-forms";
 
 type Props = {
-  properties: FinancialProperty[];
+  properties: PropertyView[];
 };
 
 function propertyTypeLabel(type: string): string {
@@ -37,26 +37,39 @@ function propertyTypeLabel(type: string): string {
 }
 
 export function PropertyClient({ properties }: Props) {
-  const [isPending, startTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const create = useApiMutation({
+    mutationFn: (input: CreatePropertyInput) => api.finances.properties.create(input),
+    invalidates: REFETCH_FINANCES,
+    onSuccess: () => setDialogOpen(false),
+  });
+  const remove = useApiMutation({ mutationFn: (id: string) => api.finances.properties.remove(id), invalidates: REFETCH_FINANCES });
+  const isPending = create.isPending || remove.isPending;
 
   const totalValue = properties.reduce((sum, p) => sum + p.currentValueCents, 0);
   const totalMortgage = properties.reduce((sum, p) => sum + p.mortgageBalanceCents, 0);
   const totalEquity = totalValue - totalMortgage;
 
-  function handleAdd(formData: FormData) {
-    startTransition(async () => {
-      await surfaceErrors(addProperty(formData));
-      setDialogOpen(false);
+  function handleAdd(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const fd = new FormData(event.currentTarget);
+    create.mutate({
+      name: text(fd, "name"),
+      address: optionalText(fd, "address"),
+      purchasePriceCents: dollarsToCents(text(fd, "purchasePrice")),
+      currentValueCents: dollarsToCents(text(fd, "currentValue")),
+      purchaseDate: optionalIsoDate(fd, "purchaseDate"),
+      mortgageBalanceCents: dollarsToCents(text(fd, "mortgageBalance")),
+      mortgageRatePercent: optionalText(fd, "mortgageRate"),
+      mortgageMonthlyPaymentCents: optionalCents(fd, "mortgageMonthlyPayment"),
+      propertyType: text(fd, "propertyType") || "primary",
+      notes: optionalText(fd, "notes"),
     });
   }
 
   function handleDelete(propertyId: string) {
-    const fd = new FormData();
-    fd.set("propertyId", propertyId);
-    startTransition(async () => {
-      await surfaceErrors(deleteProperty(fd));
-    });
+    remove.mutate(propertyId);
   }
 
   return (
@@ -81,7 +94,7 @@ export function PropertyClient({ properties }: Props) {
             <DialogHeader>
               <DialogTitle>Add Property</DialogTitle>
             </DialogHeader>
-            <form action={handleAdd} className="space-y-4">
+            <form onSubmit={handleAdd} className="space-y-4">
               <div>
                 <Label htmlFor="name">Name *</Label>
                 <Input id="name" name="name" required placeholder="Primary Residence" />
@@ -198,6 +211,7 @@ export function PropertyClient({ properties }: Props) {
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Delete ${property.name}`}
                       onClick={() => handleDelete(property.id)}
                       disabled={isPending}
                       className="text-muted-foreground hover:text-[#f8383f]"

@@ -60,6 +60,15 @@ describe("the API client", () => {
     expect(calls[1][0]).toBe("/api/workout?active=w%201");
   });
 
+  it("sets a budget with a PUT, since a category has one budget", async () => {
+    respond(200, { budget: { id: "b1", amountCents: 5000 } });
+    const budget = await api.finances.budgets.set({ categoryId: "c1", amountCents: 5000 });
+    const [url, init] = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/finances/budgets");
+    expect(init.method).toBe("PUT");
+    expect(budget.amountCents).toBe(5000);
+  });
+
   it("turns an error body into an ApiError with its fields", async () => {
     respond(422, { error: "Validation failed", fields: { weightUnit: ["Invalid"] } });
     const failure = await api.preferences.update({ weightUnit: "kg" }).catch((e: unknown) => e);
