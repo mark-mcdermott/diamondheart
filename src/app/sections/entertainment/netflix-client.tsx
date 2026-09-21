@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { api, type CreateEntertainmentInput, type EntertainmentItemView, type UpdateEntertainmentInput } from "@/app/api";
+import { api, type CreateEntertainmentInput, type EntertainmentItemView, type UpdateEntertainmentInput, apiFetch } from "@/app/api";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { ShowEpisodeTracker } from "./show-episode-tracker";
 import {
@@ -281,10 +281,10 @@ export function NetflixClient({ items }: NetflixClientProps) {
       setIsSearching(true);
       try {
         const [movieRes, showRes] = await Promise.all([
-          fetch(
+          apiFetch(
             `/api/omdb/search?query=${encodeURIComponent(searchQuery)}&type=movie`
           ),
-          fetch(
+          apiFetch(
             `/api/omdb/search?query=${encodeURIComponent(searchQuery)}&type=show`
           ),
         ]);
@@ -319,7 +319,7 @@ export function NetflixClient({ items }: NetflixClientProps) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/omdb/${encodeURIComponent(addingResult.imdbId)}`);
+        const res = await apiFetch(`/api/omdb/${encodeURIComponent(addingResult.imdbId)}`);
         if (!res.ok) return;
         const data = await res.json();
         if (!cancelled) setAddDetails(data);

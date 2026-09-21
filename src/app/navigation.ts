@@ -1,7 +1,9 @@
 import { useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useSearchParams as useRouterSearchParams } from "react-router";
+import { API_BASE } from "./api";
 import { isAppletPath } from "./paths";
+import { NATIVE } from "./platform";
 
 /**
  * `next/navigation`'s hooks, for the applet only: every caller lives under the
@@ -14,7 +16,11 @@ export function useRouter() {
   const queryClient = useQueryClient();
   return useMemo(
     () => ({
-      push: (to: string) => (isAppletPath(to) ? navigate(to) : window.location.assign(to)),
+      push: (to: string) => {
+        if (isAppletPath(to)) return navigate(to);
+        if (NATIVE) return void window.open(`${API_BASE}${to}`, "_blank", "noreferrer");
+        window.location.assign(to);
+      },
       replace: (to: string, options?: { scroll?: boolean }) =>
         navigate(to, { replace: true, preventScrollReset: options?.scroll === false }),
       back: () => navigate(-1),

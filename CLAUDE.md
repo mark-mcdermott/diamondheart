@@ -13,8 +13,11 @@ Personal health and life tracking app. Web + iOS/Android (Capacitor) + desktop (
 | `pnpm test:unit` | Vitest |
 | `pnpm test:e2e` | Playwright against `astro dev` — provisions a disposable Neon branch, see below |
 | `pnpm test:api` | API integration tests (Vitest) — same disposable branch, see `docs/API.md` |
+| `pnpm build:native` | The applet as static files in `dist-native/` for the native shells, see below |
+| `pnpm cap:sync` | `build:native`, then copy it into the iOS and Android projects |
+| `pnpm tauri:build` | The desktop app — runs `build:native` itself |
 
-**The verify loop is `typecheck` → `lint` → `test:unit` → `build`.** CI runs exactly these. Run them before opening a PR.
+**The verify loop is `typecheck` → `lint` → `test:unit` → `build` → `build:native`.** CI runs exactly these. Run them before opening a PR.
 
 > `.env` reaches `process.env` in dev through `dotenv/config` at the top of `astro.config.mjs`; Astro alone loads it only into its own layer. Client-side reads use `import.meta.env` and keep their `NEXT_PUBLIC_` names through `envPrefix`, so the Vercel project needed no renaming.
 
@@ -75,6 +78,12 @@ Running `playwright test` directly is refused on purpose: without the wrapper it
 Playwright's server is `astro dev`, told its own origin (`BETTER_AUTH_URL`) because Better Auth checks every browser call's `Origin` against its base URL and Next used to report `localhost` where the browser said `127.0.0.1`. The Vercel adapter's build output is not runnable outside Vercel, which is why the suite does not run against a build.
 
 `e2e/isolation.spec.ts` is the regression test for the user-scoping rule above — two accounts, and the second must not see or be able to open the first's metric. It has been verified to fail when that scoping is removed.
+
+### Native shells
+
+`pnpm build:native` bundles the applet with `vite.native.config.ts` in `--mode native`, so `.env.native` stamps `NEXT_PUBLIC_NATIVE=1` and the production `NEXT_PUBLIC_API_BASE`. The shells sign in with Better Auth's bearer token (`src/lib/session-token.ts`), never a cookie, and every call is cross-origin: `src/middleware.ts` answers CORS for the origins in `src/lib/server/origins.ts` and nothing else.
+
+To point a build at a local server instead: `NEXT_PUBLIC_API_BASE=http://localhost:3000 pnpm build:native`, then `pnpm exec cap sync ios`. `astro dev` already allows the native origins (`astro.config.mjs`); the iOS project is not in git, so its `Info.plist` needs `NSAppTransportSecurity` → `NSAllowsLocalNetworking` for cleartext to `localhost`.
 
 ## Stack
 

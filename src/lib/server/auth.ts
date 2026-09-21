@@ -4,6 +4,7 @@ import { bearer } from "better-auth/plugins";
 import { db } from "@/db";
 import { account, session, users, verification } from "@/db/schema";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { NATIVE_ORIGINS } from "@/lib/server/origins";
 
 /**
  * Better Auth (Phase 2 of docs/PORT-PLAN.md, Decision 2).
@@ -32,9 +33,15 @@ function baseURL(): string | undefined {
   return process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? undefined;
 }
 
-/** Vercel's per-deploy hosts, so sign-in works on previews without configuration. */
+/**
+ * Vercel's per-deploy hosts, so sign-in works on previews without configuration,
+ * and the native shells' local origins: the bundle signs in from a webview whose
+ * origin is not the site's (Decision 9). Those calls carry no cookie, so a
+ * cross-site form could not forge them; what the origin check protects is the
+ * cookie session, and it still does.
+ */
 function trustedOrigins(): string[] {
-  const origins = [LOCAL_URL];
+  const origins = [LOCAL_URL, ...NATIVE_ORIGINS];
   for (const host of [process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL]) {
     if (host) origins.push(`https://${host}`);
   }

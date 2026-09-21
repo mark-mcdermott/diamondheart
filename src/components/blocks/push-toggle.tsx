@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Bell } from "lucide-react";
+import { apiFetch } from "@/app/api";
 
 export function PushToggle() {
   const [permission, setPermission] = useState<NotificationPermission>("default");
@@ -39,7 +40,7 @@ export function PushToggle() {
         // Unsubscribe
         const sub = await reg.pushManager.getSubscription();
         if (sub) {
-          await fetch("/api/push/subscribe", {
+          await apiFetch("/api/push/subscribe", {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ endpoint: sub.endpoint }),
@@ -61,7 +62,7 @@ export function PushToggle() {
             applicationServerKey: urlBase64ToUint8Array(vapidKey),
           });
 
-          await fetch("/api/push/subscribe", {
+          await apiFetch("/api/push/subscribe", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ subscription: sub.toJSON() }),

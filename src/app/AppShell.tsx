@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  * to sign in with the path remembered; the applet never shows an empty screen
  * that looks like owning nothing.
  */
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, onSignedOut }: { children: ReactNode; onSignedOut?: () => void }) {
   const me = useQuery({ queryKey: keys.me, queryFn: api.auth.me });
   const signedIn = me.isSuccess && me.data !== null;
   const nav = useQuery({ queryKey: keys.nav, queryFn: api.nav.list, enabled: signedIn });
@@ -21,11 +21,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const notifications = useQuery({ queryKey: keys.notifications, queryFn: api.notifications.list, enabled: signedIn });
 
   useEffect(() => {
-    if (me.isSuccess && me.data === null) {
-      const here = window.location.pathname + window.location.search;
-      window.location.assign(`/login?redirect=${encodeURIComponent(here)}`);
+    if (!(me.isSuccess && me.data === null)) return;
+    if (onSignedOut) {
+      onSignedOut();
+      return;
     }
-  }, [me.isSuccess, me.data]);
+    const here = window.location.pathname + window.location.search;
+    window.location.assign(`/login?redirect=${encodeURIComponent(here)}`);
+  }, [me.isSuccess, me.data, onSignedOut]);
 
   if (me.isError) {
     return (

@@ -66,6 +66,7 @@ import type { Preferences } from "@/server/api/preferences";
 import type { TrackingItem } from "@/server/api/tracking";
 import type { Exercise, PersonalRecordRow, Workout, WorkoutSet } from "@/server/api/workout";
 import type { ReminderSchedule } from "@/db/schema";
+import { getToken } from "@/lib/session-token";
 
 /**
  * The applet's whole view of the API (docs/PORT-PLAN.md, Phase 3).
@@ -80,6 +81,31 @@ import type { ReminderSchedule } from "@/db/schema";
  */
 
 export const API_BASE = import.meta.env.NEXT_PUBLIC_API_BASE ?? "";
+
+/**
+ * What happens when the session is gone. On the web the browser goes to sign
+ * in; the native bundle swaps that for clearing its token and showing its own
+ * sign-in screen (`native/NativeRoot.tsx`).
+ */
+let onUnauthorized: () => void = () => {
+  if (typeof window !== "undefined") window.location.assign("/login");
+};
+
+export function setUnauthorizedHandler(handler: () => void): void {
+  onUnauthorized = handler;
+}
+
+/**
+ * `fetch` against the API: the base URL prefixed and, when the bundle holds a
+ * bearer token, the `Authorization` header set. Returns the raw `Response`, for
+ * the callers that want the status or a stream rather than the JSON envelope.
+ */
+export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(init.headers);
+  const token = getToken();
+  if (token && !headers.has("authorization")) headers.set("authorization", `Bearer ${token}`);
+  return fetch(`${API_BASE}${path}`, { ...init, headers });
+}
 
 export class ApiError extends Error {
   constructor(
@@ -96,12 +122,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   if (init.body !== undefined) headers.set("content-type", "application/json");
 
-  const response = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  const response = await apiFetch(path, { ...init, headers });
 
   if (response.status === 401) {
     // The session is gone — expired, or signed out in another tab. Sending them
     // to sign in beats rendering an empty screen that looks like they own nothing.
-    if (typeof window !== "undefined") window.location.assign("/login");
+    onUnauthorized();
     throw new ApiError(401, "Not signed in");
   }
 

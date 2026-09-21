@@ -1,3 +1,4 @@
+import { NATIVE } from "@/app/platform";
 import { Toaster } from "@/components/ui/sonner";
 import { NativeInit } from "@/components/native-init";
 import { ServiceWorkerRegister } from "@/components/blocks/sw-register";
@@ -10,9 +11,13 @@ export function RootIslands() {
     <>
       <Toaster position="top-center" richColors />
       <NativeInit />
-      <ServiceWorkerRegister />
-      <PWADetector />
-      <PWAInstallPrompt />
+      {!NATIVE && (
+        <>
+          <ServiceWorkerRegister />
+          <PWADetector />
+          <PWAInstallPrompt />
+        </>
+      )}
     </>
   );
 }

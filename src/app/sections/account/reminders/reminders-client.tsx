@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Plus, Trash2, Bell, BellOff } from "lucide-react";
+import { apiFetch } from "@/app/api";
 
 interface Reminder {
   id: string;
@@ -38,7 +39,7 @@ export function RemindersClient({ reminders, metrics: _metrics }: RemindersClien
   async function handleAdd() {
     if (!label) return;
     setSaving(true);
-    await fetch("/api/reminders", {
+    await apiFetch("/api/reminders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ label, time, days }),
@@ -50,7 +51,7 @@ export function RemindersClient({ reminders, metrics: _metrics }: RemindersClien
   }
 
   async function handleToggle(id: string, enabled: boolean) {
-    await fetch(`/api/reminders/${id}`, {
+    await apiFetch(`/api/reminders/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ enabled: !enabled }),
@@ -59,7 +60,7 @@ export function RemindersClient({ reminders, metrics: _metrics }: RemindersClien
   }
 
   async function handleDelete(id: string) {
-    await fetch(`/api/reminders/${id}`, { method: "DELETE" });
+    await apiFetch(`/api/reminders/${id}`, { method: "DELETE" });
     router.refresh();
   }
 

@@ -52,3 +52,4 @@ src-tauri/target/
 
 # Astro
 .astro/
+dist-native/
