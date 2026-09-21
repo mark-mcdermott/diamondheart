@@ -51,6 +51,15 @@ describe("the API client", () => {
     expect(result.reactionCount).toBe(2);
   });
 
+  it("asks for the active workout by query string only when there is one", async () => {
+    respond(200, { exercises: [], recentWorkouts: [], active: null });
+    await api.workout.overview(null);
+    await api.workout.overview("w 1");
+    const calls = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls as [string][];
+    expect(calls[0][0]).toBe("/api/workout");
+    expect(calls[1][0]).toBe("/api/workout?active=w%201");
+  });
+
   it("turns an error body into an ApiError with its fields", async () => {
     respond(422, { error: "Validation failed", fields: { weightUnit: ["Invalid"] } });
     const failure = await api.preferences.update({ weightUnit: "kg" }).catch((e: unknown) => e);

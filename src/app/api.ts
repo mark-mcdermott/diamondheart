@@ -1,19 +1,25 @@
 import type { MeditationPreset, MeditationSession, MeditationStyle, Notification, TrackerCategory, TrackerEntry, TrackerMetric } from "@/db/schema";
 import type {
+  AddSet,
   CreateAppointment,
   CreateCustomFood,
+  CreateEntertainment,
   CreateEntry,
   CreateFavoriteFood,
   CreateMedicalLog,
   CreateMeditationSession,
   CreateMetric,
   CreateTrackingItem,
+  CreateWorkout,
+  EpisodeWatched,
+  FinishWorkout,
   LogFood,
   LogMeal,
   MeditationPresetInput,
   MeditationStyleInput,
   SaveMeal,
   UpdateAppointment,
+  UpdateEntertainment,
   UpdateEntry,
   UpdateMeditationSession,
   UpdateMetric,
@@ -23,12 +29,14 @@ import type {
 import type { Appointment } from "@/server/api/appointments";
 import type { CustomFood, FavoriteFood, FavoriteMeal, FoodDay, FoodLogItem, MacroTotals } from "@/server/api/food";
 import type { Dashboard } from "@/server/api/dashboard";
+import type { EntertainmentItem, EntertainmentTotals, ShowEpisode } from "@/server/api/entertainment";
 import type { FeedItem } from "@/server/api/feed";
 import type { MedicalLog, MedicalTotals } from "@/server/api/medical";
 import type { MeditatingNow, MeditationOverview } from "@/server/api/meditation";
 import type { MetricsOverview } from "@/server/api/metrics";
 import type { Preferences } from "@/server/api/preferences";
 import type { TrackingItem } from "@/server/api/tracking";
+import type { Exercise, Workout, WorkoutSet } from "@/server/api/workout";
 
 /**
  * The applet's whole view of the API (docs/PORT-PLAN.md, Phase 3).
@@ -138,6 +146,27 @@ export interface MeditationDay {
 }
 export type FeedItemView = Serialized<FeedItem>;
 export type NotificationView = Serialized<Notification>;
+export type WorkoutView = Serialized<Workout>;
+export type ExerciseView = Serialized<Exercise>;
+export type WorkoutSetView = Serialized<WorkoutSet>;
+export interface WorkoutOverviewView {
+  /** Built-in exercises first, then the caller's custom ones. */
+  exercises: ExerciseView[];
+  /** Newest first, at most five hundred. */
+  recentWorkouts: WorkoutView[];
+  active: { workout: WorkoutView; sets: WorkoutSetView[] } | null;
+}
+/** One calendar day of training: minutes, weight moved, and how many sessions. */
+export interface WorkoutDay {
+  date: string;
+  duration: number;
+  volume: number;
+  sessions: number;
+}
+export type EntertainmentItemView = Serialized<EntertainmentItem>;
+export type ShowEpisodeView = Serialized<ShowEpisode>;
+export type CreateEntertainmentInput = Omit<CreateEntertainment, "startDate" | "endDate"> & { startDate?: string | null; endDate?: string | null };
+export type UpdateEntertainmentInput = Omit<UpdateEntertainment, "startDate" | "endDate"> & { startDate?: string | null; endDate?: string | null };
 
 export const keys = {
   preferences: ["preferences"] as const,
@@ -159,6 +188,11 @@ export const keys = {
   meditatingNow: ["meditation", "presence"] as const,
   feed: ["feed"] as const,
   notifications: ["notifications"] as const,
+  workout: (active: string | null) => ["workout", "overview", active] as const,
+  workoutTotals: (from: string, to: string) => ["workout", "totals", from, to] as const,
+  entertainment: ["entertainment", "items"] as const,
+  entertainmentTotals: ["entertainment", "totals"] as const,
+  watchedEpisodes: (series: string) => ["entertainment", "episodes", series] as const,
 };
 
 export const api = {
@@ -292,6 +326,34 @@ export const api = {
       request<{ notification: NotificationView }>(`/api/notifications/${id}`, { method: "PATCH", ...json({ read }) }).then((r) => r.notification),
     remove: (id: string) => request<void>(`/api/notifications/${id}`, { method: "DELETE" }),
   },
+  workout: {
+    /** The exercise library, recent workouts, and the named active workout with its sets. */
+    overview: (active: string | null) =>
+      request<WorkoutOverviewView>(`/api/workout${active ? `?active=${encodeURIComponent(active)}` : ""}`),
+    start: (input: CreateWorkout) =>
+      request<{ workout: WorkoutView }>("/api/workout/workouts", { method: "POST", ...json(input) }).then((r) => r.workout),
+    finish: (id: string, patch: FinishWorkout) =>
+      request<{ workout: WorkoutView }>(`/api/workout/workouts/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.workout),
+    addSet: (workoutId: string, input: AddSet) =>
+      request<{ set: WorkoutSetView; isPR: boolean }>(`/api/workout/workouts/${workoutId}/sets`, { method: "POST", ...json(input) }),
+    removeSet: (id: string) => request<void>(`/api/workout/sets/${id}`, { method: "DELETE" }),
+    totals: (from: string, to: string) =>
+      request<{ days: WorkoutDay[] }>(`/api/workout/totals?from=${from}&to=${to}`).then((r) => r.days),
+  },
+  entertainment: {
+    list: () => request<{ items: EntertainmentItemView[] }>("/api/entertainment").then((r) => r.items),
+    create: (input: CreateEntertainmentInput) =>
+      request<{ item: EntertainmentItemView }>("/api/entertainment", { method: "POST", ...json(input) }).then((r) => r.item),
+    update: (id: string, patch: UpdateEntertainmentInput) =>
+      request<{ item: EntertainmentItemView }>(`/api/entertainment/${id}`, { method: "PATCH", ...json(patch) }).then((r) => r.item),
+    remove: (id: string) => request<void>(`/api/entertainment/${id}`, { method: "DELETE" }),
+    totals: () => request<EntertainmentTotals>("/api/entertainment/totals"),
+    watchedEpisodes: (series: string) =>
+      request<{ episodes: ShowEpisodeView[] }>(`/api/entertainment/episodes?series=${encodeURIComponent(series)}`).then((r) => r.episodes),
+    /** Idempotent: marking twice is one row, clearing answers `null`. */
+    setEpisodeWatched: (input: EpisodeWatched) =>
+      request<{ episode: ShowEpisodeView | null }>("/api/entertainment/episodes", { method: "PUT", ...json(input) }).then((r) => r.episode),
+  },
 };
 
 export type {
@@ -308,6 +370,11 @@ export type {
   MeditationStyleInput,
   MeditationPresetInput,
   MeditatingNow,
+  CreateWorkout,
+  FinishWorkout,
+  AddSet,
+  EpisodeWatched,
+  EntertainmentTotals,
 };
 
 /** What to show a person when a call fails: the first field message, else the error, else a generic line. */

@@ -376,6 +376,16 @@ is still server-rendered until Phase 4. `useApiMutation` is the write pattern th
 share: toast the failure, refetch what was touched. Four action files gone; `chart-data.ts`
 has two delegates left (workout, entertainment).
 
+**Landed 2026-09-20 — workout and entertainment** (`feat/applet-workout-entertainment`):
+the workout page reads its one aggregate with the active workout named in the query string,
+and starting or finishing a workout is a call followed by a client-side navigation instead of
+a redirecting action. Both entertainment libraries read the same list, and which one shows is
+the preference read through Query rather than on the server. The episode tracker keeps its
+watched set local so a tap flips at once and re-syncs from the query after the last in-flight
+toggle. Three more action files gone, and `chart-data.ts` with them: every chart now reads its
+section's totals endpoint. What is left of `src/app/actions/` is finances, account, auth, the
+contact form and the three read-only delegates the layout still uses.
+
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the
   dashboard layout (Decision 5).
