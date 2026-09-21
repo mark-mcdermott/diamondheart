@@ -313,8 +313,9 @@ Phase 4 is Phase 3 for the shelved sections, the account block and the auth form
   rather than let that happen. Plus Better Auth's own `session`, `account` and
   `verification` tables. `scripts/migrate-better-auth.ts` applies both as explicit SQL and backfills a
   credential `account` row per user from `password_hash`, which is where Better Auth reads
-  the hash. Development is migrated; production is applied with the same script and
-  `--production`.
+  the hash. Development was migrated on 2026-09-20 and production on 2026-09-21, by hand
+  with `--production`; the session's own attempt was refused by its permission layer, so a
+  production schema change is a step the developer runs.
 - The custom hasher keeps bcrypt (`src/lib/password.ts`), so no password was reset and new
   ones are hashed the same way as old ones.
 - The server actions kept their signatures: `login` and `signup` call
