@@ -12,7 +12,10 @@ interface LoginFormProps {
   signupHref?: string;
   signupText?: string;
   error?: string;
-  action?: (formData: FormData) => void;
+  /** Receives the form's data; a client function is fine, React 19 awaits it. */
+  action?: (formData: FormData) => void | Promise<void>;
+  /** Disables the submit while a sign-in or sign-up call is in flight. */
+  pending?: boolean;
   className?: string;
 }
 
@@ -23,6 +26,7 @@ export function LoginForm({
   signupText,
   error,
   action,
+  pending = false,
   className,
 }: LoginFormProps) {
   return (
@@ -67,8 +71,8 @@ export function LoginForm({
                   required
                 />
               </div>
-              <Button type="submit" className="w-full">
-                Sign in
+              <Button type="submit" className="w-full" disabled={pending}>
+                {pending ? "Signing in…" : "Sign in"}
               </Button>
             </form>
           </CardContent>

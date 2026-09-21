@@ -427,6 +427,14 @@ preferences from the server modules directly, so the last three delegate action 
 gone. What remains of `src/app/actions/` is sign-in, sign-up and sign-out, which Better Auth's
 client replaces (#223), and the public contact form, which Phase 4 turns into an Astro page.
 
+**Landed 2026-09-21 — the auth forms** (`feat/applet-auth-forms`): sign-in, sign-up and
+sign-out go through Better Auth's browser client (`src/lib/auth-client.ts`), so the last
+auth server actions are gone and `src/app/actions/` holds only the public contact form.
+The sign-up form now checks that the two passwords match, which the action never did, and
+sign-in honours the `redirect` the middleware sets, for paths on this site only. **Phase 3
+is complete**: every page reads and writes through the API, and Phase 4 can begin once the
+Vercel framework preset is switched.
+
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the
   dashboard layout (Decision 5).
