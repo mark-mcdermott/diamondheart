@@ -6,9 +6,9 @@ import { eq } from "drizzle-orm";
 import { SidebarNav } from "@/components/blocks/sidebar-nav";
 import { BiometricLockGate } from "@/components/biometric-lock-gate";
 import { QueryProvider } from "@/app/query-provider";
-import { getNavItems } from "@/app/actions/nav";
+import { readNavItems } from "@/server/api/nav";
 import { unreadCount } from "@/server/api/notifications";
-import { getUserPreferences } from "@/app/actions/preferences";
+import { readPreferences } from "@/server/api/preferences";
 import type { NavLink } from "@/components/blocks/sidebar-nav";
 
 export default async function DashboardLayout({
@@ -28,9 +28,9 @@ export default async function DashboardLayout({
   if (!user) redirect("/login");
 
   const [navItems, notificationCount, prefs] = await Promise.all([
-    getNavItems(session.userId),
+    readNavItems(session.userId),
     unreadCount(session.userId),
-    getUserPreferences(session.userId),
+    readPreferences(session.userId),
   ]);
 
   // Convert user nav items to NavLink format
