@@ -1,24 +1,38 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { createSessionToken } from "@/lib/session-token";
+import { auth } from "@/lib/server/auth";
 import type { ApiContext, ApiHandler } from "@/server/api/_lib/context";
 
 export interface TestUser {
   id: string;
   email: string;
+  password: string;
+  /** The session token, sent as `Authorization: Bearer` — the native build's path. */
   token: string;
+  /** The signed cookie, for the one test that exercises the browser's path. */
+  cookie: string;
 }
 
-/** A real user row, so ownership checks run against the database, not a mock. */
+export const TEST_PASSWORD = "correct-horse-battery";
+
+/**
+ * A real account through Better Auth's own sign-up, so the session is real and
+ * every ownership check runs against the database, not a mock.
+ */
 export async function createUser(): Promise<TestUser> {
-  const id = crypto.randomUUID();
-  const email = `api-${id.slice(0, 8)}@example.test`;
-  await db.insert(users).values({ id, email, passwordHash: "not-a-real-hash", name: "API Test" });
-  return { id, email, token: await createSessionToken(id) };
+  const email = `api-${crypto.randomUUID().slice(0, 8)}@example.test`;
+  const { headers, response } = await auth.api.signUpEmail({
+    body: { name: "API Test", email, password: TEST_PASSWORD },
+    returnHeaders: true,
+  });
+  const token = headers.get("set-auth-token");
+  const cookie = headers.getSetCookie().find((c) => c.includes("session_token"))?.split(";")[0];
+  if (!token || !cookie) throw new Error("sign-up returned no session");
+  return { id: response.user.id, email, password: TEST_PASSWORD, token, cookie };
 }
 
-/** Cascades through every table with a `user_id`. */
+/** Cascades through every table with a `user_id`, sessions and accounts included. */
 export async function deleteUser(user: TestUser): Promise<void> {
   await db.delete(users).where(eq(users.id, user.id));
 }
@@ -29,8 +43,8 @@ interface CallOptions {
   /** Raw body, for sending something that is not JSON. */
   rawBody?: string;
   as?: TestUser;
-  /** Send the token as `Authorization: Bearer` instead of the cookie. */
-  bearer?: boolean;
+  /** Send the signed cookie instead of the bearer header. */
+  cookie?: boolean;
   params?: Record<string, string>;
 }
 
@@ -41,12 +55,12 @@ interface CallOptions {
 export async function call(
   handler: ApiHandler,
   path: string,
-  { method = "GET", body, rawBody, as, bearer = false, params = {} }: CallOptions = {}
+  { method = "GET", body, rawBody, as, cookie = false, params = {} }: CallOptions = {}
 ): Promise<{ status: number; json: unknown }> {
   const headers = new Headers();
   if (as) {
-    if (bearer) headers.set("authorization", `Bearer ${as.token}`);
-    else headers.set("cookie", `session=${as.token}`);
+    if (cookie) headers.set("cookie", as.cookie);
+    else headers.set("authorization", `Bearer ${as.token}`);
   }
   let init: RequestInit = { method, headers };
   if (rawBody !== undefined) {
@@ -57,7 +71,7 @@ export async function call(
     init = { ...init, body: JSON.stringify(body) };
   }
 
-  const context: ApiContext = { request: new Request(`http://test.local${path}`, init), params };
+  const context: ApiContext = { request: new Request(`http://localhost:3000${path}`, init), params };
   const response = await handler(context);
   const text = await response.text();
   return { status: response.status, json: text ? JSON.parse(text) : null };

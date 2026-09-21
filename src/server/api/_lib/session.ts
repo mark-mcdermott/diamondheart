@@ -1,4 +1,4 @@
-import { readSessionCookie, verifySessionToken } from "@/lib/session-token";
+import { auth } from "@/lib/server/auth";
 
 export interface ResolvedSession {
   userId: string;
@@ -9,21 +9,13 @@ export interface ResolvedSession {
  * middleware equivalent by design: every handler resolves the session itself,
  * so each endpoint is independently safe when reached directly.
  *
- * The same token is accepted as `Authorization: Bearer`, which is what a
- * bundled native build sends (it never receives the cookie) and what makes an
- * endpoint checkable with curl. Better Auth takes this function over in
- * Phase 2; `ResolvedSession` stays as it is so nothing above it changes.
+ * Better Auth reads either its cookie or an `Authorization: Bearer` header —
+ * the latter is what a bundled native build sends, since it never receives
+ * the cookie. `ResolvedSession` kept its shape through the swap, so nothing
+ * above this function changed.
  */
 export async function resolveSession(request: Request): Promise<ResolvedSession | null> {
-  const token = readSessionCookie(request) ?? bearerToken(request);
-  if (!token) return null;
-  return verifySessionToken(token);
-}
-
-function bearerToken(request: Request): string | null {
-  const header = request.headers.get("authorization");
-  if (!header) return null;
-  const [scheme, value] = header.split(" ", 2);
-  if (scheme?.toLowerCase() !== "bearer" || !value) return null;
-  return value.trim() || null;
+  const result = await auth.api.getSession({ headers: request.headers });
+  if (!result) return null;
+  return { userId: result.user.id };
 }

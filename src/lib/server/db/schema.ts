@@ -4,13 +4,67 @@ import { pgTable, text, timestamp, boolean, jsonb, integer, doublePrecision, uni
 export const users = pgTable('users', {
 	id: text('id').primaryKey(),
 	email: text('email').notNull().unique(),
-	passwordHash: text('password_hash').notNull(),
+	/** Pre-Phase-2 hashes, kept for the account row backfill. Better Auth writes the working hash to `account.password` and never this column, so new accounts leave it null. */
+	passwordHash: text('password_hash'),
 	name: text('name'),
+	/** Better Auth's `image`, mapped in `src/lib/server/auth.ts`. */
 	avatarUrl: text('avatar_url'),
+	/** Required by Better Auth. Nobody has verified an address yet; sign-in does not require it. */
+	emailVerified: boolean('email_verified').notNull().default(false),
 	defaultTimerSeconds: integer('default_timer_seconds').notNull().default(600),
 	role: text('role').notNull().default('user'),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
+
+// ============================================
+// Better Auth (Phase 2 of docs/PORT-PLAN.md)
+// ============================================
+//
+// `users` above is Better Auth's `user` model, mapped by name. These three are
+// its own tables with its default names and columns. The legacy `sessions`
+// table below is untouched until Phase 6 drops it.
+
+export const session = pgTable('session', {
+	id: text('id').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	token: text('token').notNull().unique(),
+	expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
+	ipAddress: text('ip_address'),
+	userAgent: text('user_agent'),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
+});
+
+/** One authentication method per row. Email + password is `providerId: 'credential'` with the hash in `password`. */
+export const account = pgTable('account', {
+	id: text('id').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	accountId: text('account_id').notNull(),
+	providerId: text('provider_id').notNull(),
+	accessToken: text('access_token'),
+	refreshToken: text('refresh_token'),
+	idToken: text('id_token'),
+	accessTokenExpiresAt: timestamp('access_token_expires_at', { withTimezone: true, mode: 'date' }),
+	refreshTokenExpiresAt: timestamp('refresh_token_expires_at', { withTimezone: true, mode: 'date' }),
+	scope: text('scope'),
+	password: text('password'),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
+});
+
+/** Short-lived tokens: email verification and password reset. */
+export const verification = pgTable('verification', {
+	id: text('id').primaryKey(),
+	identifier: text('identifier').notNull(),
+	value: text('value').notNull(),
+	expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow()
 });
 
 // Sessions table (kept for backward compatibility with SvelteKit version)

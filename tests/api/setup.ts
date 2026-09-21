@@ -1,5 +1,5 @@
 /**
- * Refuses to run against production, and gives the token signer a secret.
+ * Refuses to run against production, and gives the auth instance what it needs.
  *
  * `scripts/e2e-db.ts` sets DATABASE_URL to a throwaway branch; TEST_DATABASE_URL
  * points wherever the developer says. Neither should ever be the production
@@ -14,3 +14,4 @@ if (url.includes("ep-patient-fire")) {
 }
 
 process.env.AUTH_SECRET ??= "api-test-secret";
+process.env.BETTER_AUTH_URL ??= "http://localhost:3000";

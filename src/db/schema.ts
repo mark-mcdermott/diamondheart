@@ -1,5 +1,8 @@
 export {
   users,
+  session,
+  account,
+  verification,
   sessions,
   trackerCategories,
   trackerMetrics,

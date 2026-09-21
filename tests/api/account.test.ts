@@ -2,9 +2,9 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { hashPassword, verifyPassword } from "@/lib/password";
+import { auth } from "@/lib/server/auth";
 import * as account from "@/server/api/account";
-import { call, createUser, deleteUser, type TestUser } from "./support";
+import { call, createUser, deleteUser, TEST_PASSWORD, type TestUser } from "./support";
 
 type Failure = { error: string; fields?: Record<string, string[]> };
 
@@ -13,7 +13,6 @@ describe("account", () => {
 
   beforeAll(async () => {
     user = await createUser();
-    await db.update(users).set({ passwordHash: await hashPassword("old-password") }).where(eq(users.id, user.id));
   });
 
   afterAll(async () => {
@@ -26,7 +25,7 @@ describe("account", () => {
   });
 
   it("changes the password only when the current one is right and the new one is long enough", async () => {
-    const short = await call(account.password.PATCH, "/api/account/password", { method: "PATCH", as: user, body: { currentPassword: "old-password", newPassword: "short" } });
+    const short = await call(account.password.PATCH, "/api/account/password", { method: "PATCH", as: user, body: { currentPassword: TEST_PASSWORD, newPassword: "short" } });
     expect(short.status).toBe(422);
     expect(Object.keys((short.json as Failure).fields ?? {})).toEqual(["newPassword"]);
 
@@ -34,12 +33,12 @@ describe("account", () => {
     expect(wrong.status).toBe(422);
     expect(Object.keys((wrong.json as Failure).fields ?? {})).toEqual(["currentPassword"]);
 
-    const ok = await call(account.password.PATCH, "/api/account/password", { method: "PATCH", as: user, body: { currentPassword: "old-password", newPassword: "new-password-1" } });
+    const ok = await call(account.password.PATCH, "/api/account/password", { method: "PATCH", as: user, body: { currentPassword: TEST_PASSWORD, newPassword: "new-password-1" } });
     expect(ok.status).toBe(204);
 
-    const [row] = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, user.id));
-    expect(await verifyPassword("new-password-1", row.passwordHash)).toBe(true);
-    expect(await verifyPassword("old-password", row.passwordHash)).toBe(false);
+    const signedIn = await auth.api.signInEmail({ body: { email: user.email, password: "new-password-1" } });
+    expect(signedIn.user.id).toBe(user.id);
+    await expect(auth.api.signInEmail({ body: { email: user.email, password: TEST_PASSWORD } })).rejects.toMatchObject({ status: "UNAUTHORIZED" });
   });
 
   it("removing an avatar clears the column and is idempotent", async () => {

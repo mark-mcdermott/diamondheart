@@ -76,7 +76,7 @@ Running `playwright test` directly is refused on purpose: without the wrapper it
 
 Next.js 15 App Router · React 19 · TypeScript · Tailwind 4 · shadcn/Radix · Drizzle + Neon Postgres · Zod · Recharts · Capacitor 8 · Tauri 2.
 
-Auth is hand-rolled: bcrypt hashes, a `jose` JWT in a `session` cookie, route guarding in `middleware.ts`. `getCurrentUser()` in `src/lib/auth.ts` returns `{ userId } | null` — the single source of identity on the server.
+Auth is Better Auth (`src/lib/server/auth.ts`), mounted at `/api/auth/*`, with bcrypt passwords through the app's own hasher and the `bearer` plugin for native builds. `getCurrentUser()` in `src/lib/auth.ts` returns `{ userId } | null` for pages and server actions; API handlers use `resolveSession()` in `src/server/api/_lib/session.ts`. `middleware.ts` only checks that a session cookie exists.
 
 ## Architecture
 
