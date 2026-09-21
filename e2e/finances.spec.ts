@@ -11,7 +11,8 @@ test("an account can be added and shows on the finances dashboard", async ({ pag
   await signUp(page);
   await gotoReady(page, "/finances/accounts");
 
-  await page.getByRole("button", { name: "Add Account" }).click();
+  // A fresh account list shows the button twice: the header trigger and the empty state's.
+  await page.getByRole("button", { name: "Add Account" }).first().click();
   const dialog = page.getByRole("dialog");
   await dialog.getByPlaceholder("e.g. Chase Checking").fill("Chase Checking");
   await dialog.getByRole("combobox").click();
