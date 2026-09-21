@@ -6,15 +6,17 @@ Personal health and life tracking app. Web + iOS/Android (Capacitor) + desktop (
 
 | | |
 |---|---|
-| `pnpm dev` | Next dev server (Turbopack) |
-| `pnpm build` | Production build |
-| `pnpm typecheck` | `tsc --noEmit` |
-| `pnpm lint` | ESLint |
+| `pnpm dev` | Astro dev server on port 3000 |
+| `pnpm build` | `astro build` — static pages plus one Vercel function |
+| `pnpm typecheck` | `astro check` (covers `.ts`, `.tsx` and `.astro`) |
+| `pnpm lint` | ESLint, flat config, whole tree |
 | `pnpm test:unit` | Vitest |
-| `pnpm test:e2e` | Playwright — provisions a disposable Neon branch, see below |
+| `pnpm test:e2e` | Playwright against `astro dev` — provisions a disposable Neon branch, see below |
 | `pnpm test:api` | API integration tests (Vitest) — same disposable branch, see `docs/API.md` |
 
 **The verify loop is `typecheck` → `lint` → `test:unit` → `build`.** CI runs exactly these. Run them before opening a PR.
+
+> `.env` reaches `process.env` in dev through `dotenv/config` at the top of `astro.config.mjs`; Astro alone loads it only into its own layer. Client-side reads use `import.meta.env` and keep their `NEXT_PUBLIC_` names through `envPrefix`, so the Vercel project needed no renaming.
 
 ### Database
 
@@ -70,29 +72,36 @@ Needs `NEON_API_KEY` (and `NEON_PROJECT_ID` if that key can see several projects
 
 Running `playwright test` directly is refused on purpose: without the wrapper it would inherit `DATABASE_URL` from `.env` and create accounts in a real database.
 
+Playwright's server is `astro dev`, told its own origin (`BETTER_AUTH_URL`) because Better Auth checks every browser call's `Origin` against its base URL and Next used to report `localhost` where the browser said `127.0.0.1`. The Vercel adapter's build output is not runnable outside Vercel, which is why the suite does not run against a build.
+
 `e2e/isolation.spec.ts` is the regression test for the user-scoping rule above — two accounts, and the second must not see or be able to open the first's metric. It has been verified to fail when that scoping is removed.
 
 ## Stack
 
-Next.js 15 App Router · React 19 · TypeScript · Tailwind 4 · shadcn/Radix · Drizzle + Neon Postgres · Zod · Recharts · Capacitor 8 · Tauri 2.
+Astro 7 · React 19 islands · React Router · TanStack Query · TypeScript · Tailwind 4 · shadcn/Radix · Drizzle + Neon Postgres · Zod · Recharts · Capacitor 8 · Tauri 2. Deployed on Vercel through `@astrojs/vercel`.
 
-Auth is Better Auth (`src/lib/server/auth.ts`), mounted at `/api/auth/*`, with bcrypt passwords through the app's own hasher and the `bearer` plugin for native builds. `getCurrentUser()` in `src/lib/auth.ts` returns `{ userId } | null` for pages; API handlers use `resolveSession()` in `src/server/api/_lib/session.ts`. `middleware.ts` at the repo root is **not registered**: Next only loads `src/middleware.ts` for an app under `src/`, and the build's middleware manifest is empty, so every page guards itself with `getCurrentUser()` and the `?redirect=` and PWA-standalone redirects in that file have never run. Phase 4 deletes it.
+Auth is Better Auth (`src/lib/server/auth.ts`), mounted at `/api/auth/*`, with bcrypt passwords through the app's own hasher and the `bearer` plugin for native builds. Astro pages never touch the session: every API handler resolves it itself with `resolveSession()` in `src/server/api/_lib/session.ts`, and the applet decides what to render from `GET /api/auth/me`. Sign-in, sign-up and sign-out use Better Auth's browser client in `src/lib/auth-client.ts`.
 
 ## Architecture
 
 ```
-src/app/(public)/      unauthenticated pages — landing, login, signup, merch
-src/app/(dashboard)/   authenticated app, one directory per section
-src/app/actions/       the last server action: the public contact form
-src/server/api/        framework-agnostic API handlers, one file per resource
+src/pages/             Astro routes: public pages, one [...slug].astro per dashboard section, /api endpoints
+src/pages/api/         three-line APIRoute adapters over src/server/api/*
+src/layouts/           Base (document, theme boot, root islands) and Public (nav + footer)
+src/app/AppRoot.tsx    the applet: QueryClient → BrowserRouter → AppShell → lazy routes
+src/app/routes/        one module per section, the route components
+src/app/sections/      the section clients (formerly the Next route group)
 src/app/api.ts         the browser's whole view of the API, with every query key
-src/app/api/           route handlers — integrations, webhooks, export, push
+src/app/link.tsx       Link with next/link's shape: a route change inside the applet, a navigation elsewhere
+src/components/islands/ what Astro pages hydrate: nav, footer, auth forms, contact form, root bootstraps
+src/server/api/        framework-agnostic API handlers, one file per resource
+src/stores/            nanostores shared across islands (the signed-in user)
 src/lib/               shared client + server helpers
 src/lib/server/db/     Drizzle schema (the real one; src/db/schema.ts just re-exports)
 scripts/               seeds and migrations
 ```
 
-Every dashboard page is a thin server component (session check, then a `*-page-client.tsx`) whose client reads through `src/app/api.ts` with TanStack Query and writes through the `/api/*` handlers in `src/server/api/` (Phase 3 of the port). `QueryGate` gives each page its skeleton and retry card; `useApiMutation` toasts a failed write and refetches what it touched. Sign-in, sign-up and sign-out use Better Auth's browser client in `src/lib/auth-client.ts`; the only server action left is the public contact form.
+The dashboard is one `client:only` React applet (docs/PORT-PLAN.md, Phase 4). Every section page under `src/pages/<section>/[...slug].astro` mounts the same `AppRoot`, so moving between sections is a client-side route change; each screen reads through `src/app/api.ts` with TanStack Query and writes through the `/api/*` handlers. `QueryGate` gives a page its skeleton and retry card; `useApiMutation` toasts a failed write and refetches what it touched. Public pages are static Astro with React blocks, hydrated only where they need a browser. Cross-island state is a nanostore, not React context, because each island is its own React root.
 
 ## Conventions
 
@@ -110,14 +119,10 @@ Other conventions:
 
 ## Known gaps
 
-- **Lint is not applying Next's rules** — `next lint` warns the plugin is not detected. `next lint` is also deprecated and removed in Next 16.
 - **Deployment protection hides the apex redirect.** Both `diamondheart.app` and `www.diamondheart.app` serve the app, with www canonical. While Vercel Authentication is on, the edge answers with an SSO redirect before the apex-to-www hop, so that redirect cannot be observed from outside.
 
 ## Scope
 
 The app has 16 dashboard sections, most of them shallow. See `docs/ROADMAP.md` for which are being kept and why.
 
-**The Astro port is in progress** — `docs/PORT-PLAN.md` is the plan and the status. Until
-its Phase 4 lands, this is still a Next app and everything above applies. New server
-code goes in `src/server/api/` as framework-agnostic handlers (plan, Decision 1), not in
-new server actions.
+**The Astro port has landed through Phase 4** — `docs/PORT-PLAN.md` is the plan and the status. Phase 5 (the bundled native applet) and Phase 6 (cleanup) remain. New server code goes in `src/server/api/` as framework-agnostic handlers (plan, Decision 1), mounted by an adapter in `src/pages/api/`.

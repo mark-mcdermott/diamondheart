@@ -32,8 +32,11 @@ export default defineConfig({
   // Astro's dev server, locally and on CI: the Vercel adapter's build output is
   // not runnable outside Vercel, and Vite's on-demand compile is fast enough
   // that `gotoReady`'s hydration wait covers the first hit of each page.
+  // `--ignore-lock` keeps it in the foreground: Astro 7 daemonises the dev
+  // server when it detects an agent-driven shell, and Playwright needs the
+  // process it started to be the server.
   webServer: {
-    command: `pnpm exec astro dev --port ${PORT} --host 127.0.0.1`,
+    command: `pnpm exec astro dev --port ${PORT} --host 127.0.0.1 --ignore-lock`,
     url: baseURL,
     // Better Auth checks every browser call's Origin against its base URL, and
     // Next reports the server's own host, not the one Playwright connects to.
