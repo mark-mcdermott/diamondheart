@@ -37,6 +37,9 @@ export default defineConfig({
       ? `pnpm exec next start --port ${PORT}`
       : `pnpm exec next dev --port ${PORT}`,
     url: baseURL,
+    // Better Auth checks every browser call's Origin against its base URL, and
+    // Next reports the server's own host, not the one Playwright connects to.
+    env: { ...process.env, BETTER_AUTH_URL: baseURL },
     reuseExistingServer: false,
     timeout: 180_000,
     stdout: "pipe",

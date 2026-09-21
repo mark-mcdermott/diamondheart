@@ -433,7 +433,13 @@ auth server actions are gone and `src/app/actions/` holds only the public contac
 The sign-up form now checks that the two passwords match, which the action never did, and
 sign-in honours the `redirect` the middleware sets, for paths on this site only. **Phase 3
 is complete**: every page reads and writes through the API, and Phase 4 can begin once the
-Vercel framework preset is switched.
+Vercel framework preset is switched. Found on the way: the root `middleware.ts` has never
+been registered, because Next only loads `src/middleware.ts` for an app under `src/`, so its
+`?redirect=` and PWA-standalone redirects never ran and every page has always guarded itself.
+Left as is for Phase 4 to delete rather than switched on from a forms PR. Also found: Next
+reports its own hostname in `request.url`, so Better Auth's inferred base URL is
+`localhost:<port>` even when the browser is on `127.0.0.1`; the e2e server therefore sets
+`BETTER_AUTH_URL` explicitly, and deployments set `NEXT_PUBLIC_APP_URL`.
 
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the

@@ -76,7 +76,7 @@ Running `playwright test` directly is refused on purpose: without the wrapper it
 
 Next.js 15 App Router · React 19 · TypeScript · Tailwind 4 · shadcn/Radix · Drizzle + Neon Postgres · Zod · Recharts · Capacitor 8 · Tauri 2.
 
-Auth is Better Auth (`src/lib/server/auth.ts`), mounted at `/api/auth/*`, with bcrypt passwords through the app's own hasher and the `bearer` plugin for native builds. `getCurrentUser()` in `src/lib/auth.ts` returns `{ userId } | null` for pages; API handlers use `resolveSession()` in `src/server/api/_lib/session.ts`. `middleware.ts` only checks that a session cookie exists.
+Auth is Better Auth (`src/lib/server/auth.ts`), mounted at `/api/auth/*`, with bcrypt passwords through the app's own hasher and the `bearer` plugin for native builds. `getCurrentUser()` in `src/lib/auth.ts` returns `{ userId } | null` for pages; API handlers use `resolveSession()` in `src/server/api/_lib/session.ts`. `middleware.ts` at the repo root is **not registered**: Next only loads `src/middleware.ts` for an app under `src/`, and the build's middleware manifest is empty, so every page guards itself with `getCurrentUser()` and the `?redirect=` and PWA-standalone redirects in that file have never run. Phase 4 deletes it.
 
 ## Architecture
 
