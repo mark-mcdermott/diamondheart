@@ -1,5 +1,3 @@
-"use client";
-
 import { Link } from "@/app/link";
 import { useEffect, useState } from "react";
 import { Menu, X, ChevronDown, Github, Bell } from "lucide-react";

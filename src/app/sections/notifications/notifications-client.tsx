@@ -1,5 +1,3 @@
-"use client";
-
 import { useRouter } from "@/app/navigation";
 import { Bell, Check, Trash2, Film, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";

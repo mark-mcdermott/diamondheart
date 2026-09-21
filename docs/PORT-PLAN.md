@@ -197,7 +197,9 @@ server-rendered version never had to show a spinner.
     twin and keeps its browser form.
 
 12. **Stack name — after it lands.** The roster's own rule: naming a half-finished rewrite
-    means renaming it twice. `DUCXZ-WSRRANT` stands until Phase 6 updates the roster.
+    means renaming it twice. `DUCXZ-WSRRANT` stood until Phase 6; the roster now says
+    `DNC-BARUAWSRQZT` — the converged name with UploadThing where the others have Blob,
+    Radix beside shadcn, and the Tauri tail.
 
 13. **Vercel — same project.** Function count drops from one per route to ~1. Preview
     deploys are on; production protection stays on. `USDA_API_KEY` is still unset for the
@@ -551,12 +553,28 @@ reports its own hostname in `request.url`, so Better Auth's inferred base URL is
 
 ## Phase 6 — Cleanup
 
-- Drop the legacy `sessions` table and `AUTH_SECRET` from Vercel; delete `bcryptjs`
-  callers that Better Auth replaced; remove `next`-era ESLint config.
-- Update `CLAUDE.md` (commands, architecture, the Neon notes stay), `docs/ROADMAP.md`,
-  and the roster's stack name (Decision 12).
-- **Checkpoint:** `pnpm typecheck`, `pnpm lint`, `pnpm test:unit`, `pnpm build`,
-  `pnpm test:e2e` all green on the Astro app; no reference to Next in the tree.
+**Landed 2026-09-21** (`chore/port-cleanup`). What it turned out to be:
+
+- The legacy `sessions` table is out of the schema and dropped on the development branch;
+  `scripts/sql/drop-legacy-sessions.sql` is the one statement production needs, run by hand.
+- `bcryptjs` stays: it is not a replaced caller but Better Auth's own hasher (Decision 2),
+  and the existing password hashes are bcrypt. What went was `jose`, `@capacitor/browser`,
+  `@tauri-apps/api` and the two `@typescript-eslint/*` packages the meta-package already
+  carries.
+- `BETTER_AUTH_SECRET` is the name everywhere the repo controls — CI, the API tests,
+  `.env.example`, the README. The runtime still falls back to `AUTH_SECRET` until Vercel
+  carries the new variable; that is the last step and it is a deployment change.
+- 32 components nothing imported (24 starter blocks, 8 `ui/` files), 112 inert
+  `"use client"` directives, the `.next`/`out`/`next-env.d.ts` ignore entries, and every
+  code comment that explained a module through its Next predecessor.
+- `POST /api/contact` is rate-limited per address through a small in-memory fixed window
+  (`src/server/api/_lib/rate-limit.ts`); Better Auth's limiter is the same kind, so the
+  two behave alike on Vercel.
+- `CLAUDE.md`, `README.md`, `docs/ROADMAP.md` and `docs/API.md` describe the app as it is;
+  the roster carries the new stack name (Decision 12).
+- **Checkpoint met:** the verify loop, the API tests and the Playwright suite are green;
+  the only "Next" left in the tree is the history in this file and the roadmap, plus the
+  `NEXT_PUBLIC_` variable names the Vercel project still uses.
 
 ---
 

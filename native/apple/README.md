@@ -98,8 +98,7 @@ separately).
 From the repo root:
 
 ```bash
-pnpm build         # Next.js build
-pnpm cap:sync      # copies web assets into ios/
+pnpm cap:sync      # builds the applet (pnpm build:native) and copies it into ios/
 ```
 
 In Xcode: select the **App** scheme and Run. Then switch to

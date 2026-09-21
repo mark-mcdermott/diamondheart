@@ -1,5 +1,3 @@
-"use client";
-
 import { Link } from "@/app/link";
 import { toast } from "sonner";
 import { api, errorMessage, type Metric } from "@/app/api";

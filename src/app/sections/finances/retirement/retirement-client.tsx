@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { Link } from "@/app/link";
 import { ArrowLeft, Plus, PiggyBank, Trash2, Pencil } from "lucide-react";

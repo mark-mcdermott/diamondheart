@@ -7,7 +7,7 @@ import { NATIVE } from "./platform";
 type LinkProps = Omit<ComponentProps<"a">, "href"> & { href: string };
 
 /**
- * `next/link`'s shape, so call sites changed only their import. Inside the
+ * An `href` link with one rule for the whole applet. Inside the
  * applet a link to another applet path is a client-side route change; a link
  * out to a public page, or any link rendered outside the router (the public
  * nav, an Astro page's island), is an ordinary navigation.

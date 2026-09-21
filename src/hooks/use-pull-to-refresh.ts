@@ -1,5 +1,3 @@
-"use client";
-
 import { useRef, useEffect, useCallback } from "react";
 import { useRouter } from "@/app/navigation";
 import { Capacitor } from "@capacitor/core";

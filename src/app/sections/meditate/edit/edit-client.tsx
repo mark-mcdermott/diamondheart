@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { api, keys, type MeditationPresetInput, type MeditationPresetView, type MeditationStyleInput, type MeditationStyleView } from "@/app/api";
 import { useApiMutation } from "@/hooks/use-api-mutation";

@@ -1,5 +1,3 @@
-"use client";
-
 import { authClient } from "@/lib/auth-client";
 import { NATIVE } from "@/app/platform";
 import { clearToken } from "@/lib/session-token";

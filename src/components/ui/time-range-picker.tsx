@@ -1,5 +1,3 @@
-"use client";
-
 import { TIME_RANGES, type TimeRange } from "@/lib/chart-utils";
 
 interface TimeRangePickerProps {

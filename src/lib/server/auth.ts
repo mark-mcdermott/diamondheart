@@ -17,8 +17,7 @@ import { NATIVE_ORIGINS } from "@/lib/server/origins";
  * - `bearer()` is what a bundled native build authenticates with: the sign-in
  *   response carries `set-auth-token`, and `Authorization: Bearer` resolves it.
  * - The browser client (`src/lib/auth-client.ts`) signs in, up and out over
- *   `/api/auth/*`, so the cookie is set by the handler's own response and no
- *   Next-specific plugin is needed.
+ *   `/api/auth/*`, so the cookie is set by the handler's own response.
  */
 
 const LOCAL_URL = "http://localhost:3000";
@@ -51,9 +50,9 @@ function trustedOrigins(): string[] {
 export const auth = betterAuth({
   appName: "Diamondheart",
   baseURL: baseURL(),
-  // Falls back to the JWT secret so the existing deployment needs no new variable.
-  // No passkeys or TOTP exist yet, so nothing is sealed under it; treat it as
-  // permanent from the moment either is added.
+  // `AUTH_SECRET` is the deployment's old JWT secret, read until Vercel carries
+  // `BETTER_AUTH_SECRET`; nothing is sealed under either yet, so the switch is
+  // free until passkeys or TOTP arrive, and permanent after.
   secret: process.env.BETTER_AUTH_SECRET ?? process.env.AUTH_SECRET,
   trustedOrigins: trustedOrigins(),
 

@@ -3,7 +3,7 @@ import { useStore } from "@nanostores/react";
 import { $theme, applyTheme, readTheme, resolveTheme, setTheme, type ResolvedTheme, type Theme } from "@/lib/theme";
 
 /**
- * The `next-themes` hook shape, on the nanostore: `theme` is the choice,
+ * The theme hook, on the nanostore: `theme` is the choice,
  * `resolvedTheme` what is on screen. Islands each have their own React root,
  * and the store is what keeps the toggle in the nav and the toaster agreeing.
  */

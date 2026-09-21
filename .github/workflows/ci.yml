@@ -38,7 +38,7 @@ jobs:
       - run: pnpm build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          AUTH_SECRET: ci-test-secret
+          BETTER_AUTH_SECRET: ci-test-secret
 
       - run: pnpm build:native
 
@@ -86,7 +86,7 @@ jobs:
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
-          AUTH_SECRET: ci-test-secret
+          BETTER_AUTH_SECRET: ci-test-secret
 
       - if: failure()
         uses: actions/upload-artifact@v4

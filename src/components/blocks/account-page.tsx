@@ -1,5 +1,3 @@
-"use client";
-
 import { Link } from "@/app/link";
 import { useState } from "react";
 import { useRouter } from "@/app/navigation";

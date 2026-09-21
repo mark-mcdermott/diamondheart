@@ -8,9 +8,9 @@ Personal health and life tracking — metrics, food, workouts, meditation and mo
 
 ## Stack
 
-Next.js 15 (App Router) · React 19 · TypeScript · Tailwind 4 · shadcn/Radix · Drizzle + Neon Postgres · Zod · Recharts · Capacitor 8 · Tauri 2
+Astro 7 · React 19 islands · React Router · TanStack Query · TypeScript · Tailwind 4 · shadcn/Radix · Drizzle + Neon Postgres · Zod · Recharts · Capacitor 8 · Tauri 2
 
-Auth is hand-rolled: bcrypt hashes and a `jose` JWT in a session cookie, with route guarding in `middleware.ts`.
+Auth is Better Auth with bcrypt passwords: a cookie session on the web, a bearer token in the native shells. Every API handler resolves the session itself.
 
 ## Getting started
 
@@ -18,12 +18,12 @@ Requires Node 22+ and pnpm 10 (pinned via `packageManager`).
 
 ```bash
 pnpm install
-cp .env.example .env    # then fill in DATABASE_URL and AUTH_SECRET
+cp .env.example .env    # then fill in DATABASE_URL and BETTER_AUTH_SECRET
 pnpm db:push            # push the schema to your Neon database
 pnpm dev
 ```
 
-`DATABASE_URL` is a Neon connection string; `AUTH_SECRET` is any long random string. The rest of `.env.example` is optional and only needed for the features that use it — Stripe and Printful (merch), OMDb (entertainment), Oura (biometrics), USDA (food search), UploadThing (uploads) and VAPID (web push).
+`DATABASE_URL` is a Neon connection string; `BETTER_AUTH_SECRET` is any long random string. The rest of `.env.example` is optional and only needed for the features that use it — Stripe and Printful (merch), OMDb (entertainment), Oura (biometrics), USDA (food search), UploadThing (uploads) and VAPID (web push).
 
 To populate a database with demo data:
 
