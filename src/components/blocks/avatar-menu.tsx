@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { logout } from "@/app/actions/auth";
+import { authClient } from "@/lib/auth-client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,13 +30,14 @@ export function AvatarMenu({ user, notificationCount = 0 }: AvatarMenuProps) {
     .slice(0, 2);
 
   async function handleLogout() {
-    await logout();
+    await authClient.signOut();
     router.push("/login");
+    router.refresh();
   }
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 outline-none transition-colors hover:text-black dark:hover:text-white cursor-pointer">
+      <DropdownMenuTrigger aria-label="Account menu" className="flex items-center gap-2 outline-none transition-colors hover:text-black dark:hover:text-white cursor-pointer">
         <span className="relative">
           <Avatar key={user.avatarUrl ?? "no-avatar"} className="h-8 w-8">
             {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.displayName} />}

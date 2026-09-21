@@ -76,14 +76,14 @@ Running `playwright test` directly is refused on purpose: without the wrapper it
 
 Next.js 15 App Router · React 19 · TypeScript · Tailwind 4 · shadcn/Radix · Drizzle + Neon Postgres · Zod · Recharts · Capacitor 8 · Tauri 2.
 
-Auth is Better Auth (`src/lib/server/auth.ts`), mounted at `/api/auth/*`, with bcrypt passwords through the app's own hasher and the `bearer` plugin for native builds. `getCurrentUser()` in `src/lib/auth.ts` returns `{ userId } | null` for pages and server actions; API handlers use `resolveSession()` in `src/server/api/_lib/session.ts`. `middleware.ts` only checks that a session cookie exists.
+Auth is Better Auth (`src/lib/server/auth.ts`), mounted at `/api/auth/*`, with bcrypt passwords through the app's own hasher and the `bearer` plugin for native builds. `getCurrentUser()` in `src/lib/auth.ts` returns `{ userId } | null` for pages; API handlers use `resolveSession()` in `src/server/api/_lib/session.ts`. `middleware.ts` at the repo root is **not registered**: Next only loads `src/middleware.ts` for an app under `src/`, and the build's middleware manifest is empty, so every page guards itself with `getCurrentUser()` and the `?redirect=` and PWA-standalone redirects in that file have never run. Phase 4 deletes it.
 
 ## Architecture
 
 ```
 src/app/(public)/      unauthenticated pages — landing, login, signup, merch
 src/app/(dashboard)/   authenticated app, one directory per section
-src/app/actions/       the last server actions: auth and the contact form
+src/app/actions/       the last server action: the public contact form
 src/server/api/        framework-agnostic API handlers, one file per resource
 src/app/api.ts         the browser's whole view of the API, with every query key
 src/app/api/           route handlers — integrations, webhooks, export, push
@@ -92,7 +92,7 @@ src/lib/server/db/     Drizzle schema (the real one; src/db/schema.ts just re-ex
 scripts/               seeds and migrations
 ```
 
-Every dashboard page is a thin server component (session check, then a `*-page-client.tsx`) whose client reads through `src/app/api.ts` with TanStack Query and writes through the `/api/*` handlers in `src/server/api/` (Phase 3 of the port). `QueryGate` gives each page its skeleton and retry card; `useApiMutation` toasts a failed write and refetches what it touched. The only server actions left are sign-in, sign-up and sign-out (Better Auth's client replaces them) and the public contact form.
+Every dashboard page is a thin server component (session check, then a `*-page-client.tsx`) whose client reads through `src/app/api.ts` with TanStack Query and writes through the `/api/*` handlers in `src/server/api/` (Phase 3 of the port). `QueryGate` gives each page its skeleton and retry card; `useApiMutation` toasts a failed write and refetches what it touched. Sign-in, sign-up and sign-out use Better Auth's browser client in `src/lib/auth-client.ts`; the only server action left is the public contact form.
 
 ## Conventions
 

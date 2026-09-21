@@ -1,6 +1,5 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { nextCookies } from "better-auth/next-js";
 import { bearer } from "better-auth/plugins";
 import { db } from "@/db";
 import { account, session, users, verification } from "@/db/schema";
@@ -16,14 +15,21 @@ import { hashPassword, verifyPassword } from "@/lib/password";
  *   `account.password`; `scripts/migrate-better-auth.ts` backfills that row.
  * - `bearer()` is what a bundled native build authenticates with: the sign-in
  *   response carries `set-auth-token`, and `Authorization: Bearer` resolves it.
- * - `nextCookies()` sets the cookie when a server action signs someone in. It
- *   must be the last plugin.
+ * - The browser client (`src/lib/auth-client.ts`) signs in, up and out over
+ *   `/api/auth/*`, so the cookie is set by the handler's own response and no
+ *   Next-specific plugin is needed.
  */
 
 const LOCAL_URL = "http://localhost:3000";
 
-function baseURL(): string {
-  return process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? LOCAL_URL;
+/**
+ * Explicit where the deployment sets it; otherwise left for Better Auth to read
+ * off each request. A hard-coded fallback would make the browser's calls fail
+ * the origin check anywhere that is not that exact host, which the e2e server
+ * on 127.0.0.1 found the moment the forms stopped going through server actions.
+ */
+function baseURL(): string | undefined {
+  return process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? undefined;
 }
 
 /** Vercel's per-deploy hosts, so sign-in works on previews without configuration. */
@@ -68,11 +74,19 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24,
   },
 
+  // On in production, as Better Auth defaults it. The e2e server runs the
+  // production build and signs up once per spec from one address, which the
+  // sign-up rule (a few per ten seconds) refuses, so Playwright sets
+  // AUTH_RATE_LIMIT=off for that server and nothing else does.
+  rateLimit: {
+    enabled: process.env.NODE_ENV === "production" && process.env.AUTH_RATE_LIMIT !== "off",
+  },
+
   advanced: {
     database: { generateId: () => crypto.randomUUID() },
   },
 
-  plugins: [bearer(), nextCookies()],
+  plugins: [bearer()],
 });
 
 export type Auth = typeof auth;
