@@ -50,10 +50,9 @@ function trustedOrigins(): string[] {
 export const auth = betterAuth({
   appName: "Diamondheart",
   baseURL: baseURL(),
-  // `AUTH_SECRET` is the deployment's old JWT secret, read until Vercel carries
-  // `BETTER_AUTH_SECRET`; nothing is sealed under either yet, so the switch is
-  // free until passkeys or TOTP arrive, and permanent after.
-  secret: process.env.BETTER_AUTH_SECRET ?? process.env.AUTH_SECRET,
+  // Nothing is sealed under it yet; it becomes permanent the moment passkeys or
+  // TOTP arrive. Rotating it signs every session out once.
+  secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins: trustedOrigins(),
 
   database: drizzleAdapter(db, {
