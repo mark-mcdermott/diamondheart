@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { syncDeviceToken } from "@/lib/native-push";
 import { fetchWidgetSnapshot } from "@/lib/widget-snapshot";
 import { syncStreakToWidgets } from "@/lib/widget-sync";
 
@@ -52,8 +51,6 @@ export function NativeInit() {
           App.minimizeApp();
         }
       });
-
-      syncDeviceToken().catch(() => {});
 
       const pushWidgetSnapshot = async () => {
         const snap = await fetchWidgetSnapshot();

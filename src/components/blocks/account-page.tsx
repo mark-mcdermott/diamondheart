@@ -2,7 +2,7 @@ import { Link } from "@/app/link";
 import { useState } from "react";
 import { useRouter } from "@/app/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ApiError, api, errorMessage, keys } from "@/app/api";
+import { ApiError, api, authHeaders, errorMessage, keys } from "@/app/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -97,7 +97,8 @@ export function AccountPage({
     changePassword.mutate({ currentPassword, newPassword }, { onSuccess: () => form.reset() });
   }
 
-  const { startUpload } = useUploadThing("avatarUploader");
+  // The route resolves the session itself; the bundle has only the bearer token to offer it.
+  const { startUpload } = useUploadThing("avatarUploader", { headers: authHeaders });
 
   async function handleAvatarUpload(file: File): Promise<{ url?: string; error?: string }> {
     try {

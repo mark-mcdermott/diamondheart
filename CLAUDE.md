@@ -83,7 +83,9 @@ Playwright's server is `astro dev`, told its own origin (`BETTER_AUTH_URL`) beca
 
 `pnpm build:native` bundles the applet with `vite.native.config.ts` in `--mode native`, so `.env.native` stamps `NEXT_PUBLIC_NATIVE=1` and the production `NEXT_PUBLIC_API_BASE`. The shells sign in with Better Auth's bearer token (`src/lib/session-token.ts`), never a cookie, and every call is cross-origin: `src/middleware.ts` answers CORS for the origins in `src/lib/server/origins.ts` and nothing else.
 
-To point a build at a local server instead: `NEXT_PUBLIC_API_BASE=http://localhost:3000 pnpm build:native`, then `pnpm exec cap sync ios`. `astro dev` already allows the native origins (`astro.config.mjs`); the iOS project is not in git, so its `Info.plist` needs `NSAppTransportSecurity` → `NSAllowsLocalNetworking` for cleartext to `localhost`.
+`ios/` and `android/` are generated and not in git, so `pnpm cap:sync` re-applies what the app needs after every sync: the Android splash colour (`scripts/patch-android-splash.ts`) and the iOS `Info.plist` keys (`scripts/patch-ios-info.ts`, today `NSFaceIDUsageDescription`, without which the biometric lock cannot be turned on). Safe areas are the page's job (`html` padding from `env()` in `global.css`, the mobile header padding itself), so `capacitor.config.ts` keeps `contentInset: "never"` and `Keyboard.resize: "native"`; the other settings doubled the top inset after typing.
+
+To point a build at a local server instead: `NEXT_PUBLIC_API_BASE=http://localhost:3000 pnpm build:native`, then `pnpm exec cap sync ios`. `astro dev` already allows the native origins (`astro.config.mjs`); add `NSAppTransportSecurity` → `NSAllowsLocalNetworking` to the local `Info.plist` for cleartext to `localhost`. `docs/native-setup.md` records what push, HealthKit and the biometric lock actually do in the bundle.
 
 ## Stack
 

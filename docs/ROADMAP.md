@@ -19,7 +19,7 @@ Each finished before the next starts:
 1. **Coffee** — ✅ settled as a counter metric rather than a section. See below.
 2. **Weight** — ✅ daily single-value tracking with history. The first real take-it-to-done feature.
 3. **Food** — ✅ the largest, and the one with the most existing code to salvage.
-4. **The Astro port** — started 2026-09-20 as Phase 3. Plan and status in `docs/PORT-PLAN.md`.
+4. **The Astro port** — ✅ landed 2026-09-21, all six phases of `docs/PORT-PLAN.md`.
 
 "Finished" means: logs, displays, edits, deletes; empty, loading and error states; works on mobile; survives a fresh account with no data; covered by a test that would catch a regression.
 

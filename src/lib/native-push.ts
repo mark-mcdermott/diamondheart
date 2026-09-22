@@ -1,6 +1,15 @@
 import { Capacitor } from "@capacitor/core";
 import { apiFetch } from "@/app/api";
 
+/** How long to wait for APNs or FCM to answer a registration before giving up. */
+const REGISTRATION_TIMEOUT_MS = 15_000;
+
+/**
+ * Asks for permission and registers with the platform's push service. Resolves
+ * to the device token, or null when permission is refused, registration fails,
+ * or nothing answers in time — a shell without an `aps-environment` entitlement
+ * or a `google-services.json` never does, and the caller must not hang on it.
+ */
 export async function registerNativePush(): Promise<string | null> {
   if (!Capacitor.isNativePlatform()) return null;
 
@@ -9,18 +18,24 @@ export async function registerNativePush(): Promise<string | null> {
   const perm = await PushNotifications.requestPermissions();
   if (perm.receive !== "granted") return null;
 
-  await PushNotifications.register();
-
-  return new Promise((resolve) => {
-    PushNotifications.addListener("registration", (token) => {
-      resolve(token.value);
-    });
-    PushNotifications.addListener("registrationError", () => {
-      resolve(null);
-    });
+  const registered = await PushNotifications.addListener("registration", (token) => settle(token.value));
+  const failed = await PushNotifications.addListener("registrationError", () => settle(null));
+  let settle: (token: string | null) => void = () => {};
+  const outcome = new Promise<string | null>((resolve) => {
+    settle = resolve;
   });
+  const timer = setTimeout(() => settle(null), REGISTRATION_TIMEOUT_MS);
+
+  await PushNotifications.register();
+  try {
+    return await outcome;
+  } finally {
+    clearTimeout(timer);
+    await Promise.all([registered.remove(), failed.remove()]);
+  }
 }
 
+/** Registers and hands the token to the API; false when there is nothing to store. Call it signed in. */
 export async function syncDeviceToken(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
 

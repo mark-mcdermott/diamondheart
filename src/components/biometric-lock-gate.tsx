@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { Fingerprint } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { authenticateWithBiometrics } from "@/lib/biometrics";
+import { authenticateWithBiometrics, biometricPromptSettling } from "@/lib/biometrics";
 import { isBiometricLockEnabled, setBiometricLockEnabled } from "@/lib/biometric-lock";
 
 type Status = "unlocked" | "locked";
@@ -10,6 +10,20 @@ type Status = "unlocked" | "locked";
 export function BiometricLockGate({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<Status>("unlocked");
   const [attempting, setAttempting] = useState(false);
+
+  // Turning the lock off is itself a protected action: whoever is holding an
+  // unlocked phone at this screen must still pass the check to remove it.
+  const turnOff = useCallback(async () => {
+    setAttempting(true);
+    try {
+      const ok = await authenticateWithBiometrics();
+      if (!ok) return;
+      setBiometricLockEnabled(false);
+      setStatus("unlocked");
+    } finally {
+      setAttempting(false);
+    }
+  }, []);
 
   const attemptUnlock = useCallback(async () => {
     setAttempting(true);
@@ -33,11 +47,13 @@ export function BiometricLockGate({ children }: { children: React.ReactNode }) {
     let cleanup: (() => void) | undefined;
     (async () => {
       const { App } = await import("@capacitor/app");
+      // Lock on the way out, so the app switcher's snapshot shows the lock
+      // screen, and ask on the way back in. The prompt's own transitions are
+      // skipped, or a successful unlock would lock again at once.
       const handle = await App.addListener("appStateChange", ({ isActive }) => {
-        if (isActive && isBiometricLockEnabled()) {
-          setStatus("locked");
-          attemptUnlock();
-        }
+        if (!isBiometricLockEnabled() || biometricPromptSettling()) return;
+        setStatus("locked");
+        if (isActive) attemptUnlock();
       });
       cleanup = () => handle.remove();
     })();
@@ -64,13 +80,7 @@ export function BiometricLockGate({ children }: { children: React.ReactNode }) {
         <Button onClick={attemptUnlock} disabled={attempting}>
           Unlock
         </Button>
-        <Button
-          variant="ghost"
-          onClick={() => {
-            setBiometricLockEnabled(false);
-            setStatus("unlocked");
-          }}
-        >
+        <Button variant="ghost" onClick={turnOff} disabled={attempting}>
           Turn off
         </Button>
       </div>

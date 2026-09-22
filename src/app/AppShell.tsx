@@ -4,6 +4,7 @@ import { api, errorMessage, keys } from "@/app/api";
 import { BiometricLockGate } from "@/components/biometric-lock-gate";
 import { SidebarNav, type NavLink } from "@/components/blocks/sidebar-nav";
 import { RetryCard } from "@/components/ui/retry-card";
+import { syncDeviceToken } from "@/lib/native-push";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -19,6 +20,14 @@ export function AppShell({ children, onSignedOut }: { children: ReactNode; onSig
   const nav = useQuery({ queryKey: keys.nav, queryFn: api.nav.list, enabled: signedIn });
   const preferences = useQuery({ queryKey: keys.preferences, queryFn: api.preferences.get, enabled: signedIn });
   const notifications = useQuery({ queryKey: keys.notifications, queryFn: api.notifications.list, enabled: signedIn });
+
+  // Push registration asks the platform for permission, so it waits for a
+  // signed-in user rather than greeting the sign-in screen with a prompt, and
+  // the token it stores is then stored under that user.
+  const userId = me.data?.id;
+  useEffect(() => {
+    if (userId) void syncDeviceToken();
+  }, [userId]);
 
   useEffect(() => {
     if (!(me.isSuccess && me.data === null)) return;
