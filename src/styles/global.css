@@ -443,6 +443,11 @@ html {
 
 /* Utilities */
 @layer utilities {
+	/* Fixed chrome sits outside the html padding, so the bottom bar pads itself. */
+	.safe-area-bottom {
+		padding-bottom: env(safe-area-inset-bottom);
+	}
+
 	.font-logo {
 		font-family: var(--font-logo);
 	}

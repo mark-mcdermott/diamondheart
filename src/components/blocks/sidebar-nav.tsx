@@ -186,7 +186,7 @@ export function SidebarNav({
       </aside>
 
       {/* Mobile top bar */}
-      <header className="md:hidden sticky top-0 z-50 w-full bg-card/80 backdrop-blur-xl border-b border-border">
+      <header className="md:hidden sticky top-0 z-50 w-full bg-card/80 backdrop-blur-xl border-b border-border pt-[env(safe-area-inset-top)] -mt-[env(safe-area-inset-top)]">
         <div className="flex h-14 items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2 no-underline shrink-0">
             <img src={logo || "/logo.png"} alt="Diamondheart" className="h-8 w-8 object-contain" />

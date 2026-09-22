@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { Nav } from "@/components/blocks/nav";
-import { NativeHide } from "@/components/native-hide";
 import { defaultNavLinks } from "@/lib/config/nav";
 import { $user, loadUser } from "@/stores/user";
 
@@ -12,9 +11,5 @@ export function PublicNav() {
     void loadUser();
   }, []);
 
-  return (
-    <NativeHide>
-      <Nav logo="💎💜" links={defaultNavLinks} user={user} showThemeToggle />
-    </NativeHide>
-  );
+  return <Nav logo="💎💜" links={defaultNavLinks} user={user} showThemeToggle />;
 }

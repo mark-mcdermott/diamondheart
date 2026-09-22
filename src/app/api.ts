@@ -102,9 +102,16 @@ export function setUnauthorizedHandler(handler: () => void): void {
  */
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
-  const token = getToken();
-  if (token && !headers.has("authorization")) headers.set("authorization", `Bearer ${token}`);
+  for (const [name, value] of Object.entries(authHeaders())) {
+    if (!headers.has(name)) headers.set(name, value);
+  }
   return fetch(`${API_BASE}${path}`, { ...init, headers });
+}
+
+/** The bearer header, for a client that fetches the site on its own rather than through `apiFetch`. */
+export function authHeaders(): Record<string, string> {
+  const token = getToken();
+  return token ? { authorization: `Bearer ${token}` } : {};
 }
 
 export class ApiError extends Error {

@@ -7,7 +7,10 @@ const config: CapacitorConfig = {
   webDir: "dist-native",
   ios: {
     scheme: "Diamondheart",
-    contentInset: "always",
+    // The page handles the safe areas itself (`html` padding from `env()` in
+    // global.css, the same as the installed web app). Letting the webview inset
+    // as well doubled the top gap whenever the keyboard came and went.
+    contentInset: "never",
     preferredContentMode: "mobile",
     allowsLinkPreview: false,
   },
@@ -31,7 +34,9 @@ const config: CapacitorConfig = {
       presentationOptions: ["badge", "sound", "alert"],
     },
     Keyboard: {
-      resize: "body",
+      // The webview frame shrinks for the keyboard and grows back; resizing the
+      // body instead left the page offset by the status bar after typing.
+      resize: "native",
       resizeOnFullScreen: true,
     },
   },

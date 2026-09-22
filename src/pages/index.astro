@@ -6,13 +6,11 @@ import { Showcase } from "@/components/blocks/showcase";
 import { Journey } from "@/components/blocks/journey";
 import { PullQuote } from "@/components/blocks/pull-quote";
 import { ClosingCta } from "@/components/blocks/closing-cta";
-import { NativeRedirect } from "@/components/native-redirect";
 
 /** The landing page: static HTML, with the animated sections hydrating as they scroll into view. */
 ---
 
 <Public>
-  <NativeRedirect client:only="react" />
   <Hero
     title="Diamondheart"
     image="/illustration.png"

@@ -61,15 +61,15 @@ const SECTION_ICONS: Record<string, typeof Brain> = {
 function Frame({ children, actions }: { children: React.ReactNode; actions?: React.ReactNode }) {
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex flex-wrap items-center gap-4 mb-8">
         <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <h2>Metrics</h2>
           <p className="text-muted-foreground mt-1">Manage your tracking metrics</p>
         </div>
-        {actions}
+        {actions && <div className="flex w-full gap-2 sm:w-auto">{actions}</div>}
       </div>
       {children}
     </div>
