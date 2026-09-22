@@ -561,9 +561,9 @@ reports its own hostname in `request.url`, so Better Auth's inferred base URL is
   and the existing password hashes are bcrypt. What went was `jose`, `@capacitor/browser`,
   `@tauri-apps/api` and the two `@typescript-eslint/*` packages the meta-package already
   carries.
-- `BETTER_AUTH_SECRET` is the name everywhere the repo controls — CI, the API tests,
-  `.env.example`, the README. The runtime still falls back to `AUTH_SECRET` until Vercel
-  carries the new variable; that is the last step and it is a deployment change.
+- `BETTER_AUTH_SECRET` is the only name left — CI, the API tests, `.env.example`, the
+  README and, since Vercel carries it (2026-09-22), the runtime; `AUTH_SECRET` is deleted
+  from the project.
 - 32 components nothing imported (24 starter blocks, 8 `ui/` files), 112 inert
   `"use client"` directives, the `.next`/`out`/`next-env.d.ts` ignore entries, and every
   code comment that explained a module through its Next predecessor.
