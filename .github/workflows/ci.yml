@@ -37,7 +37,6 @@ jobs:
 
       - run: pnpm build
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           BETTER_AUTH_SECRET: ci-test-secret
 
       - run: pnpm build:native
