@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { plistString, withPlistEntries } from "./plist";
 
 /**
  * `ios/` is generated and not in git, so the Info.plist keys the app needs are
@@ -16,15 +17,11 @@ export const REQUIRED_KEYS: Record<string, string> = {
 export function patchIosInfo(plistPath = PLIST_PATH): "missing" | "patched" | "unchanged" {
   if (!existsSync(plistPath)) return "missing";
 
-  const original = readFileSync(plistPath, "utf8");
-  const missing = Object.entries(REQUIRED_KEYS).filter(([key]) => !original.includes(`<key>${key}</key>`));
-  if (missing.length === 0) return "unchanged";
+  const entries = Object.fromEntries(Object.entries(REQUIRED_KEYS).map(([key, value]) => [key, plistString(value)]));
+  const patched = withPlistEntries(readFileSync(plistPath, "utf8"), entries);
+  if (patched === null) return "unchanged";
 
-  const closing = original.lastIndexOf("</dict>");
-  if (closing === -1) return "unchanged";
-
-  const entries = missing.map(([key, value]) => `\t<key>${key}</key>\n\t<string>${value}</string>\n`).join("");
-  writeFileSync(plistPath, original.slice(0, closing) + entries + original.slice(closing), "utf8");
+  writeFileSync(plistPath, patched, "utf8");
   return "patched";
 }
 

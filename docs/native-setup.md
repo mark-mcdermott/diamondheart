@@ -59,25 +59,43 @@ Requires native WidgetKit target:
 
 ## Push Notifications
 
-**State on 2026-09-22 (checked against the bundled build):** the applet asks for
-permission and registers once a user is signed in (`src/app/AppShell.tsx` →
-`src/lib/native-push.ts`), waits at most 15 s for a token, and stores it through
-`POST /api/push/device-token`. Nothing yet sends to those tokens: the only sender
-(`src/lib/server/web-push.ts`) speaks VAPID web push, not APNs or FCM. Until a
-sender exists, granting the prompt stores a token and produces no notifications.
+The applet asks for permission and registers once a user is signed in
+(`src/app/AppShell.tsx` → `src/lib/native-push.ts`), waits at most 15 s for a
+token, and stores it through `POST /api/push/device-token`. Tapping a
+notification opens the path it carries, and only a path.
+
+`sendPushToUser()` in `src/lib/server/push.ts` reaches every address a user has:
+browser subscriptions over web push, iPhones over APNs (`apns.ts`), Android over
+FCM (`fcm.ts`). A channel the deployment holds no credentials for is skipped, and
+only an address its own service disowns is deleted. Settings → Notifications has
+a "Send test" button (`POST /api/push/test`) that pushes to the caller's own
+devices and says how it went.
+
+| Channel | Environment variables |
+|---|---|
+| APNs | `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_PRIVATE_KEY` (the `.p8` text), optionally `APNS_BUNDLE_ID` |
+| FCM | `FCM_SERVICE_ACCOUNT` (the service account JSON, whole) |
+| Web push | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` |
 
 ### iOS
-1. Enable the Push Notifications capability in Xcode (adds the `aps-environment`
-   entitlement; the project has none today, so registration reports an error on
-   a device and stays silent on the simulator)
-2. Create an APNs key in the Apple Developer portal
-3. Add an APNs sender next to the web-push one and call it from the same places
+`pnpm cap:sync` applies what the generated project lacks through
+`scripts/patch-ios-push.ts`: the `aps-environment` entitlement, the build
+setting that points at it, and the two `AppDelegate` callbacks that hand APNs'
+answer to Capacitor. With automatic signing, the first build after that
+registers the explicit App ID with the push capability.
+
+One APNs key (Apple Developer → Keys → Apple Push Notifications service) serves
+both environments. A build run from Xcode gets a sandbox token and a TestFlight
+or App Store build a production one; the sender tries production, then the
+sandbox, so neither needs configuring.
 
 ### Android
-1. Set up Firebase Cloud Messaging
+**Written against FCM's HTTP v1 API and unit-tested, never run against Google:**
+there is no Firebase project yet.
+1. Create the Firebase project and add the Android app (`app.diamondheart.mobile`)
 2. Add `google-services.json` to `android/app/` (absent today; the Gradle file
    skips the plugin without it, so registration fails at runtime)
-3. Add an FCM sender the same way
+3. Set `FCM_SERVICE_ACCOUNT` from the project's service account key
 
 ## HealthKit
 

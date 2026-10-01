@@ -28,7 +28,7 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "cap": "cap",
-    "cap:sync": "pnpm build:native && cap sync && tsx scripts/patch-android-splash.ts && tsx scripts/patch-ios-info.ts",
+    "cap:sync": "pnpm build:native && cap sync && tsx scripts/patch-android-splash.ts && tsx scripts/patch-ios-info.ts && tsx scripts/patch-ios-push.ts",
     "cap:ios": "cap open ios",
     "cap:android": "cap open android",
     "preview": "astro preview",

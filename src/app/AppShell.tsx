@@ -1,10 +1,11 @@
 import { useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, errorMessage, keys } from "@/app/api";
+import { useRouter } from "@/app/navigation";
 import { BiometricLockGate } from "@/components/biometric-lock-gate";
 import { SidebarNav, type NavLink } from "@/components/blocks/sidebar-nav";
 import { RetryCard } from "@/components/ui/retry-card";
-import { syncDeviceToken } from "@/lib/native-push";
+import { onNativePushTap, syncDeviceToken } from "@/lib/native-push";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -28,6 +29,12 @@ export function AppShell({ children, onSignedOut }: { children: ReactNode; onSig
   useEffect(() => {
     if (userId) void syncDeviceToken();
   }, [userId]);
+
+  const { push } = useRouter();
+  useEffect(() => {
+    const listening = onNativePushTap(push);
+    return () => void listening.then((stop) => stop());
+  }, [push]);
 
   useEffect(() => {
     if (!(me.isSuccess && me.data === null)) return;

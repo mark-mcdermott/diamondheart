@@ -1,51 +1,47 @@
-import webPush from "web-push";
-import { db } from "@/db";
-import { pushSubscriptions } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import webPush, { WebPushError } from "web-push";
+import type { PushSubscription } from "@/db/schema";
+import type { DeliveryOutcome, PushPayload } from "./push";
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.diamondheart.app";
+const DEFAULT_APP_URL = "https://www.diamondheart.app";
+const ICON = "/icons/icon-192.png";
 
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  webPush.setVapidDetails(APP_URL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+export interface VapidConfig {
+  subject: string;
+  publicKey: string;
+  privateKey: string;
 }
 
-export async function sendPushToUser(
-  userId: string,
-  payload: { title: string; body?: string; href?: string; icon?: string }
-) {
-  const subs = await db
-    .select()
-    .from(pushSubscriptions)
-    .where(eq(pushSubscriptions.userId, userId));
+/** Null when the deployment has no VAPID key pair. */
+export function vapidConfig(env: NodeJS.ProcessEnv = process.env): VapidConfig | null {
+  const { NEXT_PUBLIC_VAPID_PUBLIC_KEY: publicKey, VAPID_PRIVATE_KEY: privateKey } = env;
+  if (!publicKey || !privateKey) return null;
+  return { subject: env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL, publicKey, privateKey };
+}
 
-  const message = JSON.stringify({
+/** The shape `public/sw.js` reads in its `push` listener. */
+export function webPushBody(payload: PushPayload): string {
+  return JSON.stringify({
     title: payload.title,
-    body: payload.body || "",
-    icon: payload.icon || "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
-    data: { href: payload.href || "/notifications" },
+    body: payload.body ?? "",
+    icon: ICON,
+    badge: ICON,
+    data: { href: payload.href ?? "/notifications" },
   });
+}
 
-  const results = await Promise.allSettled(
-    subs.map((sub) =>
-      webPush.sendNotification(
-        {
-          endpoint: sub.endpoint,
-          keys: { p256dh: sub.p256dh, auth: sub.auth },
-        },
-        message
-      )
-    )
-  );
+/** A push service answers 404 or 410 for a subscription the browser has dropped. */
+const isExpired = (cause: unknown) => cause instanceof WebPushError && (cause.statusCode === 404 || cause.statusCode === 410);
 
-  // Clean up expired/invalid subscriptions
-  for (let i = 0; i < results.length; i++) {
-    if (results[i].status === "rejected") {
-      await db
-        .delete(pushSubscriptions)
-        .where(eq(pushSubscriptions.id, subs[i].id));
-    }
+export async function sendWebPush(config: VapidConfig, subscription: PushSubscription, payload: PushPayload): Promise<DeliveryOutcome> {
+  try {
+    await webPush.sendNotification(
+      { endpoint: subscription.endpoint, keys: { p256dh: subscription.p256dh, auth: subscription.auth } },
+      webPushBody(payload),
+      { vapidDetails: config }
+    );
+    return "sent";
+  } catch (cause) {
+    if (isExpired(cause)) return "gone";
+    throw cause;
   }
 }
