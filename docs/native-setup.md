@@ -75,7 +75,7 @@ devices and says how it went.
 |---|---|
 | APNs | `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_PRIVATE_KEY` (the `.p8` text), optionally `APNS_BUNDLE_ID` |
 | FCM | `FCM_SERVICE_ACCOUNT` (the service account JSON, whole) |
-| Web push | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` |
+| Web push | `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` |
 
 ### iOS
 `pnpm cap:sync` applies what the generated project lacks through

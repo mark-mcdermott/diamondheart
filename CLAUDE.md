@@ -19,7 +19,7 @@ Personal health and life tracking app. Web + iOS/Android (Capacitor) + desktop (
 
 **The verify loop is `typecheck` → `lint` → `test:unit` → `build` → `build:native`.** CI runs exactly these. Run them before opening a PR.
 
-> `.env` reaches `process.env` in dev through `dotenv/config` at the top of `astro.config.mjs`; Astro alone loads it only into its own layer. Client-side reads use `import.meta.env` and keep their `NEXT_PUBLIC_` names through `envPrefix`, so the Vercel project needed no renaming.
+> `.env` reaches `process.env` in dev through `dotenv/config` at the top of `astro.config.mjs`; Astro alone loads it only into its own layer. What the client may read is named `PUBLIC_*` (Astro's convention) and reaches it through `import.meta.env`; the native Vite build is given the same prefix.
 
 ### Database
 
@@ -81,11 +81,11 @@ Playwright's server is `astro dev`, told its own origin (`BETTER_AUTH_URL`) beca
 
 ### Native shells
 
-`pnpm build:native` bundles the applet with `vite.native.config.ts` in `--mode native`, so `.env.native` stamps `NEXT_PUBLIC_NATIVE=1` and the production `NEXT_PUBLIC_API_BASE`. The shells sign in with Better Auth's bearer token (`src/lib/session-token.ts`), never a cookie, and every call is cross-origin: `src/middleware.ts` answers CORS for the origins in `src/lib/server/origins.ts` and nothing else.
+`pnpm build:native` bundles the applet with `vite.native.config.ts` in `--mode native`, so `.env.native` stamps `PUBLIC_NATIVE=1` and the production `PUBLIC_API_BASE`. The shells sign in with Better Auth's bearer token (`src/lib/session-token.ts`), never a cookie, and every call is cross-origin: `src/middleware.ts` answers CORS for the origins in `src/lib/server/origins.ts` and nothing else.
 
 `ios/` and `android/` are generated and not in git, so `pnpm cap:sync` re-applies what the app needs after every sync: the Android splash colour (`scripts/patch-android-splash.ts`), the iOS `Info.plist` keys (`scripts/patch-ios-info.ts`, without which the biometric lock cannot be turned on and Apple Health cannot be asked for) and the capabilities (`scripts/patch-ios-capabilities.ts`: the push and HealthKit entitlements, and the `AppDelegate` callbacks that hand the device token to Capacitor). The usage strings for Face ID and Apple Health are among those `Info.plist` keys. Safe areas are the page's job (`html` padding from `env()` in `global.css`, the mobile header padding itself), so `capacitor.config.ts` keeps `contentInset: "never"` and `Keyboard.resize: "native"`; the other settings doubled the top inset after typing.
 
-To point a build at a local server instead: `NEXT_PUBLIC_API_BASE=http://localhost:3000 pnpm build:native`, then `pnpm exec cap sync ios`. `astro dev` already allows the native origins (`astro.config.mjs`); add `NSAppTransportSecurity` → `NSAllowsLocalNetworking` to the local `Info.plist` for cleartext to `localhost`. `docs/native-setup.md` records what push, HealthKit and the biometric lock actually do in the bundle.
+To point a build at a local server instead: `PUBLIC_API_BASE=http://localhost:3000 pnpm build:native`, then `pnpm exec cap sync ios`. `astro dev` already allows the native origins (`astro.config.mjs`); add `NSAppTransportSecurity` → `NSAllowsLocalNetworking` to the local `Info.plist` for cleartext to `localhost`. `docs/native-setup.md` records what push, HealthKit and the biometric lock actually do in the bundle.
 
 ## Stack
 
