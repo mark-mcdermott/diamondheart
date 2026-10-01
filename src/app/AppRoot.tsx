@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, type ComponentType } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, MemoryRouter, Route, Routes, useNavigate } from "react-router";
+import { BrowserRouter, MemoryRouter, Route, Routes, useLocation, useNavigate, useNavigationType } from "react-router";
 import { ApiError } from "./api";
 import { AppShell } from "./AppShell";
 import { NATIVE } from "./platform";
@@ -103,6 +103,21 @@ function DeepLinks() {
   return null;
 }
 
+/**
+ * A route change is a new page, and it starts at the top. The applet is one
+ * document, so without this a page opened from the bottom of another arrives
+ * already scrolled, its heading under the header. Going back is left alone:
+ * that is a return to where the reader was.
+ */
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  const navigationType = useNavigationType();
+  useEffect(() => {
+    if (navigationType !== "POP") window.scrollTo(0, 0);
+  }, [pathname, navigationType]);
+  return null;
+}
+
 interface AppRootProps {
   /** The bundle has no URL bar: memory history, starting at the dashboard. */
   router?: "browser" | "memory";
@@ -116,6 +131,7 @@ export function AppRoot({ router = "browser", onSignedOut }: AppRootProps) {
     <QueryClientProvider client={queryClient}>
       <Router {...(router === "memory" ? { initialEntries: ["/dashboard"] } : {})}>
         <DeepLinks />
+        <ScrollToTop />
         <AppShell onSignedOut={onSignedOut}>
           <Suspense fallback={<PageSkeleton />}>
             <Routes>

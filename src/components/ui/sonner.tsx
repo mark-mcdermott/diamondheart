@@ -8,6 +8,13 @@ import {
 import { useTheme } from "@/hooks/use-theme"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
+/**
+ * The toaster is fixed to the viewport, so the page's safe-area padding never
+ * reaches it: in the native shells a toast at the top sat under the notch.
+ * Sonner's own gaps (24px, 16px on a narrow screen) are kept on top of the inset.
+ */
+const belowSafeArea = (gap: string) => ({ top: `calc(env(safe-area-inset-top, 0px) + ${gap})` });
+
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme()
 
@@ -15,6 +22,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      offset={belowSafeArea("24px")}
+      mobileOffset={belowSafeArea("16px")}
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,
