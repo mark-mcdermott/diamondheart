@@ -3,7 +3,7 @@ import type { HealthDataType } from "@capgo/capacitor-health";
 import { api } from "@/app/api";
 import { startOfDay, toISODate } from "./dates";
 import type { HealthDay } from "./health-day";
-import { summarizeHealth, type HealthReading } from "./health-summary";
+import { SLEEP_DAY_SHIFT_MS, summarizeHealth, type HealthReading } from "./health-summary";
 
 const READ_TYPES: HealthDataType[] = ["steps", "calories", "restingHeartRate", "heartRateVariability", "oxygenSaturation", "sleep"];
 /** Each sync resends this many days, so a day missed while the app was closed is filled in. */
@@ -38,8 +38,12 @@ export async function readHealthDays(now = new Date()): Promise<HealthDay[]> {
   const { Health } = await import("@capgo/capacitor-health");
   const firstDay = new Date(startOfDay(now).getTime() - (SYNC_DAYS - 1) * MS_PER_DAY);
   const range = { startDate: firstDay.toISOString(), endDate: now.toISOString() };
+  // The first day's night began the evening before. Reading sleep from midnight would
+  // undercount that day, and a sync replaces what is stored: a week on, every night's
+  // figure would be overwritten with its after-midnight half.
+  const nights = { ...range, startDate: new Date(firstDay.getTime() - SLEEP_DAY_SHIFT_MS).toISOString() };
   const dayTotals = (dataType: HealthDataType) => orNone(Health.queryAggregated({ dataType, ...range, bucket: "day", aggregation: "sum" }));
-  const samples = (dataType: HealthDataType) => orNone(Health.readSamples({ dataType, ...range, limit: SAMPLE_LIMIT, ascending: true }));
+  const samples = (dataType: HealthDataType, span = range) => orNone(Health.readSamples({ dataType, ...span, limit: SAMPLE_LIMIT, ascending: true }));
 
   const [steps, activeCalories, restingHeartRate, hrv, spo2, sleep] = await Promise.all([
     dayTotals("steps"),
@@ -47,7 +51,7 @@ export async function readHealthDays(now = new Date()): Promise<HealthDay[]> {
     samples("restingHeartRate"),
     samples("heartRateVariability"),
     samples("oxygenSaturation"),
-    samples("sleep"),
+    samples("sleep", nights),
   ]);
   return summarizeHealth({ steps, activeCalories, restingHeartRate, hrv, spo2, sleep });
 }
