@@ -138,7 +138,7 @@ function WebPush() {
       setPermission(result);
       if (result !== "granted") return;
 
-      const vapidKey = import.meta.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      const vapidKey = import.meta.env.PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapidKey) return;
 
       const sub = await reg.pushManager.subscribe({

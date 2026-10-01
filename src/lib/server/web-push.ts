@@ -13,9 +13,9 @@ export interface VapidConfig {
 
 /** Null when the deployment has no VAPID key pair. */
 export function vapidConfig(env: NodeJS.ProcessEnv = process.env): VapidConfig | null {
-  const { NEXT_PUBLIC_VAPID_PUBLIC_KEY: publicKey, VAPID_PRIVATE_KEY: privateKey } = env;
+  const { PUBLIC_VAPID_PUBLIC_KEY: publicKey, VAPID_PRIVATE_KEY: privateKey } = env;
   if (!publicKey || !privateKey) return null;
-  return { subject: env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL, publicKey, privateKey };
+  return { subject: env.PUBLIC_APP_URL || DEFAULT_APP_URL, publicKey, privateKey };
 }
 
 /** The shape `public/sw.js` reads in its `push` listener. */

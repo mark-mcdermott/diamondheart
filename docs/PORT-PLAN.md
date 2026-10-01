@@ -441,7 +441,7 @@ been registered, because Next only loads `src/middleware.ts` for an app under `s
 Left as is for Phase 4 to delete rather than switched on from a forms PR. Also found: Next
 reports its own hostname in `request.url`, so Better Auth's inferred base URL is
 `localhost:<port>` even when the browser is on `127.0.0.1`; the e2e server therefore sets
-`BETTER_AUTH_URL` explicitly, and deployments set `NEXT_PUBLIC_APP_URL`.
+`BETTER_AUTH_URL` explicitly, and deployments set `NEXT_PUBLIC_APP_URL` (`PUBLIC_APP_URL` since 2026-10-01).
 
 - `src/app/api.ts`: the applet's whole view of the API — `fetch` with `PUBLIC_API_BASE`,
   `ApiError`, 401 → `/login`, and every query key. TanStack Query provider at the
@@ -465,7 +465,8 @@ reports its own hostname in `request.url`, so Better Auth's inferred base URL is
   at the repo root; `next`, `next-themes` and the never-registered `middleware.ts` gone.
   `dotenv/config` at the top of `astro.config.mjs` is what puts `.env` into `process.env`
   for dev, since every server module reads it there; `envPrefix` keeps the `NEXT_PUBLIC_`
-  names working on the client so the Vercel project needed no renaming.
+  names working on the client so the Vercel project needed no renaming. (Renamed to Astro's
+  `PUBLIC_` on 2026-10-01, once nothing else depended on the old prefix.)
 - `src/pages/api/**`: 81 adapters generated from the Next ones by a script, three lines each
   over `src/server/api/*` (Decision 1 paid off exactly as written). The eighteen hand-written
   Next handlers became Astro endpoints by mechanical rewrite: `NextResponse` → `Response`,
@@ -527,7 +528,7 @@ reports its own hostname in `request.url`, so Better Auth's inferred base URL is
 
 - Not an Astro build: `pnpm build:native` is a second Vite config (`vite.native.config.ts`,
   rooted at `native/`) that bundles the same applet with `--mode native`, so `.env.native`
-  stamps `NEXT_PUBLIC_NATIVE=1` and the production `NEXT_PUBLIC_API_BASE`. Output is
+  stamps `NEXT_PUBLIC_NATIVE=1` and the production `NEXT_PUBLIC_API_BASE` (both `PUBLIC_*` now). Output is
   `dist-native/`; Capacitor's `webDir` and Tauri's `frontendDist` point at it and
   `server.url` is gone. `native/NativeRoot.tsx` is the shell: no public pages, the sign-in
   and sign-up cards swapping in place, and `AppRoot` on memory history once a token exists.
@@ -574,7 +575,8 @@ reports its own hostname in `request.url`, so Better Auth's inferred base URL is
   the roster carries the new stack name (Decision 12).
 - **Checkpoint met:** the verify loop, the API tests and the Playwright suite are green;
   the only "Next" left in the tree is the history in this file and the roadmap, plus the
-  `NEXT_PUBLIC_` variable names the Vercel project still uses.
+  `NEXT_PUBLIC_` variable names the Vercel project still uses. (Those went on 2026-10-01:
+  the client's variables are `PUBLIC_*` now.)
 
 ---
 

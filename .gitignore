@@ -44,6 +44,8 @@ android/
 www/
 src-tauri/target/
 .env*
+# The native bundle's public build settings, not secrets
+!.env.native
 
 # Astro
 .astro/
