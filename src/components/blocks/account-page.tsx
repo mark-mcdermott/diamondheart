@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, User, Lock, Mail, Camera } from "lucide-react";
+import { ArrowLeft, User, Lock, Mail, Camera, ChevronRight, HeartPulse } from "lucide-react";
 import { AvatarUpload } from "@/components/blocks/avatar-upload";
 import { BiometricUnlockToggle } from "@/components/biometric-unlock-toggle";
 import { useUploadThing } from "@/lib/uploadthing-client";
@@ -282,6 +282,22 @@ export function AccountPage({
         )}
 
         <BiometricUnlockToggle />
+
+        <Card className="p-0">
+          <Link
+            href="/account/integrations"
+            className="flex items-center justify-between gap-4 rounded-[inherit] px-6 py-6 text-card-foreground transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          >
+            <div className="space-y-2">
+              <CardTitle className="flex items-center gap-2">
+                <HeartPulse className="h-5 w-5" />
+                Integrations
+              </CardTitle>
+              <CardDescription>Sync Apple Health and Oura into your tracking</CardDescription>
+            </div>
+            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+          </Link>
+        </Card>
 
         <Card>
           <CardHeader>

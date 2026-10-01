@@ -38,6 +38,14 @@ describe("patch-ios-info", () => {
     expect(updated.indexOf("NSFaceIDUsageDescription")).toBeLessThan(updated.lastIndexOf("</dict>"));
   });
 
+  it("adds the Apple Health usage strings, which iOS demands before it shows the permission sheet", () => {
+    writeFileSync(plistPath, TEMPLATE, "utf8");
+    patchIosInfo(plistPath);
+    const updated = readFileSync(plistPath, "utf8");
+    expect(updated).toContain("<key>NSHealthShareUsageDescription</key>");
+    expect(updated).toContain("<key>NSHealthUpdateUsageDescription</key>");
+  });
+
   it("is idempotent — a second run reports 'unchanged'", () => {
     writeFileSync(plistPath, TEMPLATE, "utf8");
     expect(patchIosInfo(plistPath)).toBe("patched");

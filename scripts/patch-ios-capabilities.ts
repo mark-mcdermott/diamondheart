@@ -3,21 +3,23 @@ import { resolve } from "node:path";
 import { plistString, withPlistEntries } from "./plist";
 
 /**
- * What remote notifications need that the generated iOS project does not
- * carry, applied after every `cap sync` because `ios/` is not in git:
+ * The capabilities the generated iOS project does not carry, applied after
+ * every `cap sync` because `ios/` is not in git:
  *
- * - the `aps-environment` entitlement, without which registering for push
+ * - the entitlements: `aps-environment`, without which registering for push
  *   fails on a device (Xcode signs a distribution build with `production`
- *   whatever this file says);
+ *   whatever this file says), and HealthKit, without which Apple Health
+ *   refuses every query;
  * - `CODE_SIGN_ENTITLEMENTS` on the app target, so the file is used;
  * - the two `AppDelegate` callbacks that hand APNs' answer to Capacitor, or
- *   the plugin's `registration` event never fires.
+ *   the push plugin's `registration` event never fires.
  */
 const IOS_APP = resolve(process.cwd(), "ios/App");
 const ENTITLEMENTS_FILE = "App/App.entitlements";
 
 export const REQUIRED_ENTITLEMENTS: Record<string, string> = {
   "aps-environment": plistString("development"),
+  "com.apple.developer.healthkit": "<true/>",
 };
 
 const EMPTY_ENTITLEMENTS = `<?xml version="1.0" encoding="UTF-8"?>
@@ -82,6 +84,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   };
   for (const [what, result] of Object.entries(results)) {
     const outcome = result === "missing" ? "ios/ not generated yet — skipping" : result === "patched" ? "patched" : "already patched — no changes";
-    console.log(`[patch-ios-push] ${what}: ${outcome}`);
+    console.log(`[patch-ios-capabilities] ${what}: ${outcome}`);
   }
 }

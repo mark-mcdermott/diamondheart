@@ -5,6 +5,7 @@ import { useRouter } from "@/app/navigation";
 import { BiometricLockGate } from "@/components/biometric-lock-gate";
 import { SidebarNav, type NavLink } from "@/components/blocks/sidebar-nav";
 import { RetryCard } from "@/components/ui/retry-card";
+import { useHealthAutoSync } from "@/hooks/use-health-auto-sync";
 import { onNativePushTap, syncDeviceToken } from "@/lib/native-push";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -29,6 +30,8 @@ export function AppShell({ children, onSignedOut }: { children: ReactNode; onSig
   useEffect(() => {
     if (userId) void syncDeviceToken();
   }, [userId]);
+
+  useHealthAutoSync(signedIn);
 
   const { push } = useRouter();
   useEffect(() => {
