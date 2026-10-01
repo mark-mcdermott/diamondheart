@@ -129,3 +129,21 @@ Two things worth knowing:
 
 The plugin also speaks Health Connect on Android. Nothing here uses that yet:
 the card is offered on the iPhone build only.
+
+## TestFlight
+
+**As far as it has been taken (2026-10-01):** a release archive builds and signs
+with both entitlements.
+
+```bash
+pnpm cap:sync
+xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+  -destination 'generic/platform=iOS' -archivePath build/App.xcarchive \
+  -allowProvisioningUpdates archive
+```
+
+Not done, and each needs the Apple account: the app record in App Store Connect,
+a distribution export of that archive, and the upload. The archive above is
+signed for development; the export re-signs it for distribution and switches
+`aps-environment` to `production`, which is the environment the APNs sender
+tries first.

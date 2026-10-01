@@ -153,6 +153,27 @@ serving; a logged item also carries `quantity`, and every total multiplies the t
 
 Notifications are created server-side only. The old action file exported `createNotification`, which made it a callable action for any signed-in client against any user id; it has no callers and now lives in the server module.
 
+### Push
+
+| Method | Path | Notes |
+|---|---|---|
+| `POST` | `/api/push/test` | Pushes a test notification to every address the caller has registered (browser subscriptions, iPhones, Android) → `{ sent, failed, removed }`. A channel the deployment has no credentials for is skipped and counts as none of the three; `removed` are addresses their own push service disowned, which are deleted. `429` after five in a minute from one account. |
+
+`POST`/`DELETE` `/api/push/subscribe` and `/api/push/device-token` register and drop those
+addresses; they predate this layer and still live in `src/pages/api/push/`.
+
+### Integrations
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/integrations` | `{ connections, ouraConfigured }`. Tokens are never returned. |
+| `POST` | `/api/integrations/healthkit/connect` | `{ connection }`. Idempotent: connecting again reactivates the one the account has. |
+| `POST` | `/api/integrations/healthkit/sync` | `{ days: [{ date, steps?, activeCalories?, restingHeartRate?, hrv?, spo2?, sleepDuration? }] }`, one to thirty-one days, no day twice → `{ entries }`. `404` unless Apple Health is connected. Each reading replaces the one Health gave for that metric and day; a reading left out leaves what is stored alone. |
+| `POST` | `/api/integrations/healthkit/disconnect` | 204; `404` if there was nothing to disconnect. |
+
+The old sync skipped any day it had already seen, so today's totals froze at the first sync
+of the day. The Oura routes predate this layer and still live in `src/pages/api/integrations/oura/`.
+
 ### Tracking, medical and appointments
 
 Three shelved sections, each a plain owned list.
