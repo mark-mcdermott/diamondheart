@@ -31,6 +31,22 @@ describe("the API client", () => {
     expect(new Headers(init.headers).get("content-type")).toBe("application/json");
   });
 
+  it("declares JSON on a write with no body, which Astro's origin check demands of the native bundle", async () => {
+    respond(204);
+    await api.notifications.remove("abc");
+    const [, init] = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
+    expect(init.method).toBe("DELETE");
+    expect(init.body).toBeUndefined();
+    expect(new Headers(init.headers).get("content-type")).toBe("application/json");
+  });
+
+  it("declares no content type on a read", async () => {
+    respond(200, { notifications: [], unread: 0 });
+    await api.notifications.list();
+    const [, init] = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
+    expect(new Headers(init.headers).get("content-type")).toBeNull();
+  });
+
   it("posts a count delta to the item's count route", async () => {
     respond(200, { item: { id: "abc", count: 3 } });
     const item = await api.tracking.adjust("abc", 1);
