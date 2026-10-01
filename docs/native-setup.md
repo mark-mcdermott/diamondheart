@@ -79,7 +79,7 @@ devices and says how it went.
 
 ### iOS
 `pnpm cap:sync` applies what the generated project lacks through
-`scripts/patch-ios-push.ts`: the `aps-environment` entitlement, the build
+`scripts/patch-ios-capabilities.ts`: the `aps-environment` entitlement, the build
 setting that points at it, and the two `AppDelegate` callbacks that hand APNs'
 answer to Capacitor. With automatic signing, the first build after that
 registers the explicit App ID with the push capability.
@@ -99,11 +99,33 @@ there is no Firebase project yet.
 
 ## HealthKit
 
-**There is no HealthKit integration yet, only its outline.** No plugin is
-installed, `Info.plist` carries no `NSHealthShareUsageDescription`, and the
-project has no `com.apple.developer.healthkit` entitlement. The "HealthKit" card
-under Account → Integrations posts only today's date to
-`/api/integrations/healthkit/sync`, which accepts step, heart-rate, HRV, sleep,
-calorie and SpO2 fields it never receives, so a sync writes nothing and marks the
-day done. Building it means: a HealthKit plugin, the two usage strings and the
-entitlement, reading the samples on the device, and posting them in that shape.
+**Verified on the simulator 2026-10-01.** Account → Integrations → Apple Health
+asks for read access, marks the account connected and syncs. After that the
+iPhone build syncs on launch and whenever it returns to the foreground, at most
+hourly (`src/hooks/use-health-auto-sync.ts`), and "Sync Now" does it on demand.
+
+What a sync does:
+
+- `src/lib/health.ts` reads the last seven days through
+  `@capgo/capacitor-health`: day totals for steps and active energy, raw
+  samples for resting heart rate, HRV, blood oxygen and sleep.
+- `src/lib/health-summary.ts` turns those into one reading per metric per
+  calendar day. Sleep is the hours asleep, counted once where a watch and a
+  phone both recorded the night, and a night belongs to the day it ends on.
+- `POST /api/integrations/healthkit/sync` stores each reading as an entry on
+  the account's hidden Biometrics metrics, replacing the one Health gave for
+  that metric and day before. Resending a day is therefore safe, and today's
+  totals grow through the day instead of freezing at the first sync.
+
+Two things worth knowing:
+
+- iOS never says whether read access was granted. A denied type simply reads
+  as empty, so "connected" means the sheet was answered, not that data flows.
+- `pnpm cap:sync` applies what the generated project lacks: the HealthKit
+  entitlement (`scripts/patch-ios-capabilities.ts`) and the two usage strings
+  (`scripts/patch-ios-info.ts`). The app only reads; the update string is
+  there because App Store validation asks for it of any binary that links the
+  write API, which the plugin does.
+
+The plugin also speaks Health Connect on Android. Nothing here uses that yet:
+the card is offered on the iPhone build only.
