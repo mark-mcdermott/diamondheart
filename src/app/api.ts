@@ -1,3 +1,4 @@
+import type { HealthDay } from "@/lib/health-day";
 import type { MeditationPreset, MeditationSession, MeditationStyle, Notification, TrackerCategory, TrackerEntry, TrackerMetric } from "@/db/schema";
 import type {
   AddSet,
@@ -475,6 +476,13 @@ export const api = {
   },
   integrations: {
     list: () => request<{ connections: IntegrationConnectionView[]; ouraConfigured: boolean }>("/api/integrations"),
+    healthkit: {
+      connect: () =>
+        request<{ connection: IntegrationConnectionView }>("/api/integrations/healthkit/connect", { method: "POST" }).then((r) => r.connection),
+      disconnect: () => request<void>("/api/integrations/healthkit/disconnect", { method: "POST" }),
+      /** Stores the days' readings; resolves to how many were written. */
+      sync: (days: HealthDay[]) => request<{ entries: number }>("/api/integrations/healthkit/sync", { method: "POST", ...json({ days }) }),
+    },
   },
   entertainment: {
     list: () => request<{ items: EntertainmentItemView[] }>("/api/entertainment").then((r) => r.items),

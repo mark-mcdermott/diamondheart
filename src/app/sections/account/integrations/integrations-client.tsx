@@ -3,30 +3,15 @@ import { Link } from "@/app/link";
 import { useRouter } from "@/app/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { ArrowLeft, RefreshCw, Unplug, ExternalLink, Heart, Watch } from "lucide-react";
-import { API_BASE, apiFetch } from "@/app/api";
+import { ArrowLeft, RefreshCw, Unplug, ExternalLink, Heart } from "lucide-react";
+import { API_BASE, apiFetch, type IntegrationConnectionView } from "@/app/api";
 import { siteUrl } from "@/app/platform";
-
-interface Connection {
-  id: string;
-  service: string;
-  status: string;
-  lastSyncAt: string | null;
-  lastSyncError: string | null;
-}
+import { AppleHealthCard } from "./apple-health-card";
+import { formatLastSync } from "./last-sync";
 
 interface IntegrationsClientProps {
-  connections: Connection[];
+  connections: IntegrationConnectionView[];
   ouraConfigured: boolean;
-}
-
-function formatLastSync(date: string | null) {
-  if (!date) return "Never";
-  const d = new Date(date);
-  const diffHr = Math.floor((Date.now() - d.getTime()) / 3600000);
-  if (diffHr < 1) return "Just now";
-  if (diffHr < 24) return `${diffHr}h ago`;
-  return d.toLocaleDateString();
 }
 
 export function IntegrationsClient({ connections, ouraConfigured }: IntegrationsClientProps) {
@@ -47,30 +32,6 @@ export function IntegrationsClient({ connections, ouraConfigured }: Integrations
 
   async function disconnectOura() {
     await apiFetch("/api/integrations/oura/disconnect", { method: "POST" });
-    router.refresh();
-  }
-
-  async function connectHealthKit() {
-    await apiFetch("/api/integrations/healthkit/connect", { method: "POST" });
-    router.refresh();
-  }
-
-  async function syncHealthKit() {
-    setSyncing("healthkit");
-    try {
-      const today = new Date().toISOString().split("T")[0];
-      await apiFetch("/api/integrations/healthkit/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: today }),
-      });
-      router.refresh();
-    } catch { /* silent */ }
-    setSyncing(null);
-  }
-
-  async function disconnectHealthKit() {
-    await apiFetch("/api/integrations/healthkit/disconnect", { method: "POST" });
     router.refresh();
   }
 
@@ -129,48 +90,7 @@ export function IntegrationsClient({ connections, ouraConfigured }: Integrations
           </CardContent>
         </Card>
 
-        {/* Apple Health */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                  <Watch className="w-5 h-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <CardTitle>Apple Health</CardTitle>
-                  <CardDescription>Steps, heart rate, HRV, sleep, calories, SpO2</CardDescription>
-                </div>
-              </div>
-              {healthkit?.status === "active" && (
-                <span className="text-xs font-medium text-success bg-success/10 px-2 py-1 rounded-full">Connected</span>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {healthkit?.status === "active" ? (
-              <>
-                <p className="text-sm text-muted-foreground mb-4">Last sync: {formatLastSync(healthkit.lastSyncAt)}</p>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={syncHealthKit} disabled={syncing === "healthkit"}>
-                    <RefreshCw className={`w-4 h-4 mr-1 ${syncing === "healthkit" ? "animate-spin" : ""}`} />
-                    {syncing === "healthkit" ? "Syncing..." : "Sync Now"}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={disconnectHealthKit}>
-                    <Unplug className="w-4 h-4 mr-1" /> Disconnect
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="text-sm text-muted-foreground mb-4">Available on iOS only.</p>
-                <Button onClick={connectHealthKit}>
-                  <Watch className="w-4 h-4 mr-2" /> Connect Apple Health
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <AppleHealthCard connection={healthkit} />
       </div>
     </div>
   );

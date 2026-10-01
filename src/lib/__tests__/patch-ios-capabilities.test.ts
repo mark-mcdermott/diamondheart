@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { patchAppDelegate, patchCodeSignEntitlements, patchEntitlements } from "../../../scripts/patch-ios-push";
+import { patchAppDelegate, patchCodeSignEntitlements, patchEntitlements } from "../../../scripts/patch-ios-capabilities";
 
 const PROJECT = `		504EC3171FED79650016851F /* Debug */ = {
 			buildSettings = {
@@ -34,7 +34,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 let appDir: string;
 
 beforeEach(() => {
-  appDir = mkdtempSync(join(tmpdir(), "patch-ios-push-"));
+  appDir = mkdtempSync(join(tmpdir(), "patch-ios-capabilities-"));
   mkdirSync(join(appDir, "App"));
 });
 
@@ -49,9 +49,10 @@ describe("patchEntitlements", () => {
     expect(patchEntitlements(join(appDir, "nope"))).toBe("missing");
   });
 
-  it("creates the entitlements file with the push environment", () => {
+  it("creates the entitlements file with push and HealthKit", () => {
     expect(patchEntitlements(appDir)).toBe("patched");
     expect(entitlements()).toContain("<key>aps-environment</key>\n\t<string>development</string>");
+    expect(entitlements()).toContain("<key>com.apple.developer.healthkit</key>\n\t<true/>");
     expect(entitlements().indexOf("aps-environment")).toBeLessThan(entitlements().lastIndexOf("</dict>"));
   });
 

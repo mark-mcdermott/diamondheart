@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { HEALTH_FIELDS, type HealthField } from "@/lib/health-day";
 import { MASS_UNITS } from "@/lib/units";
 import { DASHBOARD_SECTIONS } from "@/lib/config/dashboard-sections";
 import { MACRO_KEYS } from "@/lib/targets";
@@ -157,6 +158,20 @@ export type MealType = (typeof MEAL_TYPES)[number];
 
 /** A calendar day as the user sees it, `YYYY-MM-DD`; parsed in local time like the pages do. */
 export const calendarDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD");
+
+const healthReading = z.number().min(0).finite();
+const healthReadings = Object.fromEntries(HEALTH_FIELDS.map((field) => [field, healthReading.optional()])) as Record<HealthField, z.ZodOptional<typeof healthReading>>;
+
+/** Up to a month of days per call: the phone resends its recent days on every sync. */
+export const healthkitSyncSchema = z
+  .object({
+    days: z
+      .array(z.object({ date: calendarDay, ...healthReadings }).strict())
+      .min(1)
+      .max(31)
+      .refine((days) => new Set(days.map((day) => day.date)).size === days.length, "Days must not repeat"),
+  })
+  .strict();
 
 const macro = z.number().min(0).finite();
 const positive = z.number().positive().finite();
