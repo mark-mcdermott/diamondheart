@@ -29,7 +29,7 @@ const LOCAL_URL = "http://localhost:3000";
  * on 127.0.0.1 found the moment the forms stopped going through server actions.
  */
 function baseURL(): string | undefined {
-  return process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? undefined;
+  return process.env.BETTER_AUTH_URL ?? process.env.PUBLIC_APP_URL ?? undefined;
 }
 
 /**

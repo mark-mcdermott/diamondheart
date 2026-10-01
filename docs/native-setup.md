@@ -75,7 +75,7 @@ devices and says how it went.
 |---|---|
 | APNs | `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_PRIVATE_KEY` (the `.p8` text), optionally `APNS_BUNDLE_ID` |
 | FCM | `FCM_SERVICE_ACCOUNT` (the service account JSON, whole) |
-| Web push | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` |
+| Web push | `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` |
 
 ### iOS
 `pnpm cap:sync` applies what the generated project lacks through
@@ -131,3 +131,21 @@ The plugin also speaks Health Connect on Android. Nothing here uses that yet:
 the card is offered on the iPhone build only, and `capacitor.config.ts` leaves
 the plugin out of the Android project, which it would otherwise stop from
 building (it needs API 26; the app supports 24).
+
+## TestFlight
+
+**As far as it has been taken (2026-10-01):** a release archive builds and signs
+with both entitlements.
+
+```bash
+pnpm cap:sync
+xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+  -destination 'generic/platform=iOS' -archivePath build/App.xcarchive \
+  -allowProvisioningUpdates archive
+```
+
+Not done, and each needs the Apple account: the app record in App Store Connect,
+a distribution export of that archive, and the upload. The archive above is
+signed for development; the export re-signs it for distribution and switches
+`aps-environment` to `production`, which is the environment the APNs sender
+tries first.

@@ -82,7 +82,7 @@ import { getToken } from "@/lib/session-token";
  * token instead (Phase 5).
  */
 
-export const API_BASE = import.meta.env.NEXT_PUBLIC_API_BASE ?? "";
+export const API_BASE = import.meta.env.PUBLIC_API_BASE ?? "";
 
 /**
  * What happens when the session is gone. On the web the browser goes to sign
