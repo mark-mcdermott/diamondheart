@@ -24,7 +24,7 @@ export interface HealthSamples {
 
 const ASLEEP_STATES = new Set(["asleep", "rem", "deep", "light"]);
 /** A night belongs to the day it ends on; sleep that ends after 18:00 is the next day's. */
-const SLEEP_DAY_SHIFT_MS = 6 * 60 * 60 * 1000;
+export const SLEEP_DAY_SHIFT_MS = 6 * 60 * 60 * 1000;
 const MS_PER_HOUR = 60 * 60 * 1000;
 
 const round = (value: number, places = 0) => Math.round(value * 10 ** places) / 10 ** places;
