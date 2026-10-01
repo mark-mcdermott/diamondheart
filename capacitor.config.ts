@@ -1,5 +1,27 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
+/**
+ * Apple Health is read on the iPhone only, but its plugin also carries Health
+ * Connect code for Android: that wants API 26 where this app supports 24, so
+ * the Android build fails outright, and it adds health permissions to the
+ * manifest that Play asks to be justified. Capacitor can only include, not
+ * exclude, so Android gets an explicit list. `capacitor-plugins.test.ts` fails
+ * when a plugin is installed and named in neither.
+ */
+export const IOS_ONLY_PLUGINS = ["@capgo/capacitor-health"];
+
+export const ANDROID_PLUGINS = [
+  "@aparajita/capacitor-biometric-auth",
+  "@capacitor/app",
+  "@capacitor/haptics",
+  "@capacitor/keyboard",
+  "@capacitor/network",
+  "@capacitor/preferences",
+  "@capacitor/push-notifications",
+  "@capacitor/splash-screen",
+  "@capacitor/status-bar",
+];
+
 const config: CapacitorConfig = {
   appId: "app.diamondheart.mobile",
   appName: "Diamondheart",
@@ -15,6 +37,7 @@ const config: CapacitorConfig = {
     allowsLinkPreview: false,
   },
   android: {
+    includePlugins: ANDROID_PLUGINS,
     buildOptions: {
       keystorePath: undefined,
       keystoreAlias: undefined,
