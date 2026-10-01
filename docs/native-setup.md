@@ -128,4 +128,6 @@ Two things worth knowing:
   write API, which the plugin does.
 
 The plugin also speaks Health Connect on Android. Nothing here uses that yet:
-the card is offered on the iPhone build only.
+the card is offered on the iPhone build only, and `capacitor.config.ts` leaves
+the plugin out of the Android project, which it would otherwise stop from
+building (it needs API 26; the app supports 24).
