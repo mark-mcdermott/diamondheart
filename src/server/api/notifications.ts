@@ -1,7 +1,7 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { notifications, type Notification } from "@/db/schema";
-import { sendPushToUser } from "@/lib/server/web-push";
+import { sendPushToUser } from "@/lib/server/push";
 import type { ApiHandler } from "./_lib/context";
 import { requireSession } from "./_lib/guard";
 import { HttpError, handler, json, noContent, notFound, readJson } from "./_lib/http";

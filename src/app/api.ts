@@ -41,6 +41,7 @@ import type {
 } from "@/server/api/_lib/schemas";
 import type { Appointment } from "@/server/api/appointments";
 import type { SessionUser } from "@/server/api/auth";
+import type { PushReport } from "@/lib/server/push";
 import type { CustomFood, FavoriteFood, FavoriteMeal, FoodDay, FoodLogItem, MacroTotals } from "@/server/api/food";
 import type { Dashboard } from "@/server/api/dashboard";
 import type { EntertainmentItem, EntertainmentTotals, ShowEpisode } from "@/server/api/entertainment";
@@ -467,6 +468,10 @@ export const api = {
   },
   reminders: {
     list: () => request<{ reminders: ReminderView[] }>("/api/reminders").then((r) => r.reminders),
+  },
+  push: {
+    /** Pushes a test notification to every device the caller registered. */
+    test: () => request<PushReport>("/api/push/test", { method: "POST" }),
   },
   integrations: {
     list: () => request<{ connections: IntegrationConnectionView[]; ouraConfigured: boolean }>("/api/integrations"),
