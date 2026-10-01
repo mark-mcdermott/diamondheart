@@ -286,7 +286,7 @@ export function AccountPage({
         <Card className="p-0">
           <Link
             href="/account/integrations"
-            className="flex items-center justify-between gap-4 rounded-[inherit] px-6 py-6 transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex items-center justify-between gap-4 rounded-[inherit] px-6 py-6 text-card-foreground transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             <div className="space-y-2">
               <CardTitle className="flex items-center gap-2">
