@@ -96,16 +96,25 @@ export function setUnauthorizedHandler(handler: () => void): void {
   onUnauthorized = handler;
 }
 
+const READ_METHODS = new Set(["GET", "HEAD"]);
+
 /**
  * `fetch` against the API: the base URL prefixed and, when the bundle holds a
  * bearer token, the `Authorization` header set. Returns the raw `Response`, for
  * the callers that want the status or a stream rather than the JSON envelope.
+ *
+ * A write with no body still declares JSON. Astro's CSRF check refuses a
+ * cross-origin write that names no content type, and from the native bundle
+ * every call is cross-origin: without the header each body-less POST and
+ * DELETE answers 403 there while working on the web.
  */
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
   for (const [name, value] of Object.entries(authHeaders())) {
     if (!headers.has(name)) headers.set(name, value);
   }
+  const isWrite = !READ_METHODS.has((init.method ?? "GET").toUpperCase());
+  if (isWrite && init.body == null && !headers.has("content-type")) headers.set("content-type", "application/json");
   return fetch(`${API_BASE}${path}`, { ...init, headers });
 }
 
