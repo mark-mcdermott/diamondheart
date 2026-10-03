@@ -8,7 +8,6 @@ const MIN_PASSWORD_LENGTH = 8;
 /** The sign-up card, an island on an Astro page. */
 export function Signup({ onLogin }: { onLogin?: () => void } = {}) {
   const [error, setError] = useState<string | undefined>();
-  const [pending, setPending] = useState(false);
 
   async function signUp(formData: FormData) {
     const email = String(formData.get("email") ?? "").trim();
@@ -26,7 +25,6 @@ export function Signup({ onLogin }: { onLogin?: () => void } = {}) {
       return;
     }
 
-    setPending(true);
     const failure = await attempt(
       () =>
         authClient.signUp.email({
@@ -38,7 +36,6 @@ export function Signup({ onLogin }: { onLogin?: () => void } = {}) {
       "Could not create the account",
     );
     if (failure) {
-      setPending(false);
       setError(failure);
       return;
     }
@@ -52,7 +49,7 @@ export function Signup({ onLogin }: { onLogin?: () => void } = {}) {
 
   return (
     <div className="flex-1 flex items-center justify-center px-4 py-16">
-      <SignupForm action={signUp} error={error} pending={pending} onLogin={onLogin} />
+      <SignupForm action={signUp} error={error} onLogin={onLogin} />
     </div>
   );
 }

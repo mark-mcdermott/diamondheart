@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { api, ApiError, errorMessage, keys } from "@/app/api";
 import { Button } from "@/components/ui/button";
 import { displayUnitFor, roundMass, toDisplayValue } from "@/lib/units";
+import { displayGoal, goalLabel } from "@/lib/metric-display";
 import { EntriesTable } from "./entries-table";
 import { MetricChart } from "./metric-chart";
 
@@ -94,14 +95,14 @@ export function MetricDetailClient({ id }: { id: string }) {
   return (
     <Frame
       title={metric.name}
-      subtitle={metric.dailyGoal ? `Daily goal: ${metric.dailyGoal}${metric.unit ? ` ${metric.unit}` : ""}` : (displayUnit ?? "No daily goal")}
+      subtitle={[displayUnit, goalLabel(metric, weightUnit)].filter(Boolean).join(" · ")}
     >
       {entries.length > 0 && (
         <MetricChart
           entries={displayed.map((e) => ({ value: e.value, date: e.date }))}
           valueType={metric.valueType}
           unit={displayUnit}
-          dailyGoal={metric.dailyGoal}
+          dailyGoal={displayGoal(metric, weightUnit)}
         />
       )}
 
