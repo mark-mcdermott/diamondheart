@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api, errorMessage, keys, type Category, type Metric, type Overview } from "@/app/api";
 import { VALUE_TYPES } from "@/lib/metric-types";
+import { goalLabel } from "@/lib/metric-display";
+import { DEFAULT_MASS_UNIT, displayUnitFor, type MassUnit } from "@/lib/units";
 import { TRACKING_SECTIONS } from "@/lib/nav-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,11 +127,13 @@ export function MetricsClient() {
 
 function SortableMetricRow({
   metric,
+  weightUnit,
   disabled,
   onToggleHidden,
   onDelete,
 }: {
   metric: Metric;
+  weightUnit: MassUnit;
   disabled: boolean;
   onToggleHidden: (id: string) => void;
   onDelete: (id: string) => void;
@@ -162,7 +166,7 @@ function SortableMetricRow({
         </Link>
         <p className="text-xs text-muted-foreground">
           {metric.valueType}
-          {metric.unit ? ` (${metric.unit})` : ""} &middot; Goal: {metric.dailyGoal ?? 1}
+          {displayUnitFor(metric.unit, weightUnit) ? ` (${displayUnitFor(metric.unit, weightUnit)})` : ""} &middot; {goalLabel(metric, weightUnit)}
         </p>
       </div>
 
@@ -258,6 +262,9 @@ function CategoryHeader({
 
 function MetricsPage({ data }: { data: Overview }) {
   const queryClient = useQueryClient();
+  // The list labels mass metrics in the viewer's unit; until the preference loads, the default one.
+  const preferences = useQuery({ queryKey: keys.preferences, queryFn: api.preferences.get });
+  const weightUnit = preferences.data?.weightUnit ?? DEFAULT_MASS_UNIT;
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newName, setNewName] = useState("");
@@ -524,6 +531,7 @@ function MetricsPage({ data }: { data: Overview }) {
                         <SortableMetricRow
                           key={metric.id}
                           metric={metric}
+                          weightUnit={weightUnit}
                           disabled={busy}
                           onToggleHidden={(id) => setHidden.mutate({ id, hidden: !metric.hidden })}
                           onDelete={(id) => removeMetric.mutate(id)}

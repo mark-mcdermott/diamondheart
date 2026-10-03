@@ -319,19 +319,80 @@ interface UsdaNutrient {
 interface UsdaFood {
   fdcId: number;
   description?: string;
+  dataType?: string;
+  brandName?: string;
+  brandOwner?: string;
   foodNutrients?: UsdaNutrient[];
   servingSize?: number;
   servingSizeUnit?: string;
+  householdServingFullText?: string;
 }
+
+/**
+ * Every dataset USDA offers. The reference ones (Foundation, SR Legacy) are
+ * generic ingredients; Survey (FNDDS) has prepared dishes as people eat them,
+ * "Peanut butter and jelly sandwich" among them; Branded has products off the
+ * shelf. The first two alone could not find a box of cereal.
+ */
+const USDA_DATA_TYPES = ["Foundation", "SR Legacy", "Survey (FNDDS)", "Branded"];
+const USDA_PAGE_SIZE = 20;
+const USDA_SEARCH_URL = "https://api.nal.usda.gov/fdc/v1/foods/search";
+
+/** USDA's abbreviations for the two units a branded serving comes in. */
+const SERVING_UNITS: Record<string, string> = { GRM: "g", g: "g", MLT: "ml", ml: "ml" };
 
 function findNutrient(nutrients: UsdaNutrient[], nutrientId: number): number {
   return nutrients.find((n) => n.nutrientId === nutrientId)?.value ?? 0;
 }
 
+export interface FoodSearchResult {
+  fdcId: string;
+  description: string;
+  /** The maker, for a branded product; the generic datasets have none. */
+  brand?: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  servingSize: number;
+  servingUnit: string;
+  /** "2/3 cup", when the label says so. */
+  householdServing?: string;
+}
+
+/**
+ * One row of the search as the app stores it. USDA reports every nutrient per
+ * 100 g whatever the dataset, while a branded food also states its serving;
+ * the macros are scaled to that serving so "225 kcal per 40 g" is not
+ * silently 225 kcal per 100 g.
+ */
+export function toFoodSearchResult(food: UsdaFood): FoodSearchResult {
+  const nutrients = food.foodNutrients ?? [];
+  const servingUnit = SERVING_UNITS[food.servingSizeUnit ?? ""];
+  const servingSize = servingUnit && food.servingSize ? Math.round(food.servingSize) : 100;
+  const perServing = (nutrientId: number) => Math.round((findNutrient(nutrients, nutrientId) * servingSize) / 100);
+  const brand = food.brandName?.trim() || food.brandOwner?.trim() || undefined;
+  const householdServing = food.householdServingFullText?.trim() || undefined;
+  return {
+    fdcId: String(food.fdcId),
+    description: food.description ?? "",
+    ...(brand ? { brand } : {}),
+    calories: perServing(1008),
+    protein: perServing(1003),
+    carbs: perServing(1005),
+    fat: perServing(1004),
+    servingSize,
+    servingUnit: servingUnit ?? "g",
+    ...(householdServing ? { householdServing } : {}),
+  };
+}
+
 /**
  * Proxies the USDA FoodData Central search. Signed-in only: the deployment's
  * key should not be usable by anyone who finds the URL. `reason` lets the UI
- * explain an unavailable search instead of showing an empty list.
+ * explain an unavailable search instead of showing an empty list. The POST
+ * form is used because the GET form answers 400 to some orderings of the
+ * `dataType` list.
  */
 export async function searchFoods(query: string): Promise<Response> {
   const apiKey = process.env.USDA_API_KEY;
@@ -343,10 +404,13 @@ export async function searchFoods(query: string): Promise<Response> {
   }
   if (query.trim().length === 0) return json({ foods: [] });
 
-  const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${apiKey}&query=${encodeURIComponent(query)}&dataType=Foundation,SR%20Legacy&pageSize=15`;
   let response: Response;
   try {
-    response = await fetch(url);
+    response = await fetch(`${USDA_SEARCH_URL}?api_key=${apiKey}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query: query.trim(), dataType: USDA_DATA_TYPES, pageSize: USDA_PAGE_SIZE }),
+    });
   } catch {
     return json({ error: "Couldn't reach the food database. Try again shortly.", reason: "unreachable" }, 502);
   }
@@ -363,20 +427,7 @@ export async function searchFoods(query: string): Promise<Response> {
   }
 
   const data = (await response.json()) as { foods?: UsdaFood[] };
-  const foods = (data.foods ?? []).map((food) => {
-    const nutrients = food.foodNutrients ?? [];
-    return {
-      fdcId: String(food.fdcId),
-      description: food.description ?? "",
-      calories: Math.round(findNutrient(nutrients, 1008)),
-      protein: Math.round(findNutrient(nutrients, 1003)),
-      carbs: Math.round(findNutrient(nutrients, 1005)),
-      fat: Math.round(findNutrient(nutrients, 1004)),
-      servingSize: food.servingSize ? Math.round(food.servingSize) : 100,
-      servingUnit: food.servingSizeUnit ?? "g",
-    };
-  });
-  return json({ foods });
+  return json({ foods: (data.foods ?? []).map(toFoodSearchResult) });
 }
 
 // --- handlers ---------------------------------------------------------------

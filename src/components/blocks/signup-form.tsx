@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "@/app/link";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/blocks/submit-button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +15,6 @@ interface SignupFormProps {
   error?: string;
   /** Receives the form's data; a client function is fine, React 19 awaits it. */
   action?: (formData: FormData) => void | Promise<void>;
-  /** Disables the submit while a sign-in or sign-up call is in flight. */
-  pending?: boolean;
   className?: string;
 }
 
@@ -27,9 +26,11 @@ export function SignupForm({
   onLogin,
   error,
   action,
-  pending = false,
   className,
 }: SignupFormProps) {
+  // React resets a form's fields once its action settles, which wiped the
+  // address after a wrong password. The email is worth keeping; the password is not.
+  const [email, setEmail] = useState("");
   return (
     <div className={className}>
       <div className="mx-auto max-w-sm w-full">
@@ -48,7 +49,7 @@ export function SignupForm({
             )}
           </CardHeader>
           <CardContent>
-            <form action={action} className="space-y-4">
+            <form action={action} className="space-y-5">
               {error && (
                 <div className="alert alert-error">{error}</div>
               )}
@@ -60,6 +61,9 @@ export function SignupForm({
                   type="email"
                   autoComplete="email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-12 text-base"
                 />
               </div>
               <div className="space-y-2">
@@ -69,6 +73,7 @@ export function SignupForm({
                   name="name"
                   type="text"
                   autoComplete="name"
+                  className="h-12 text-base"
                 />
               </div>
               <div className="space-y-2">
@@ -80,6 +85,7 @@ export function SignupForm({
                   autoComplete="new-password"
                   minLength={8}
                   required
+                  className="h-12 text-base"
                 />
               </div>
               <div className="space-y-2">
@@ -91,11 +97,12 @@ export function SignupForm({
                   autoComplete="new-password"
                   minLength={8}
                   required
+                  className="h-12 text-base"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={pending}>
-                {pending ? "Creating account…" : "Create account"}
-              </Button>
+              <SubmitButton className="w-full h-12 text-base" pendingLabel="Creating account…">
+                Create account
+              </SubmitButton>
             </form>
           </CardContent>
           <CardFooter className="justify-center">

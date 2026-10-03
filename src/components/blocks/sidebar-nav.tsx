@@ -24,6 +24,7 @@ import { Sheet, SheetContent, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { AvatarMenu } from "@/components/blocks/avatar-menu";
+import { hapticTap } from "@/lib/haptics";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
@@ -100,7 +101,7 @@ export function SidebarNav({
       {/* Desktop sidebar — icon rail */}
       <aside className="hidden md:flex fixed left-0 top-0 bottom-0 z-50 w-[68px] flex-col items-center py-5 bg-card/80 backdrop-blur-xl border-r border-border">
         {/* Logo */}
-        <Link href="/" className="mb-6 flex items-center justify-center shrink-0">
+        <Link href="/dashboard" aria-label="Dashboard" className="mb-6 flex items-center justify-center shrink-0">
           <img src={logo || "/logo.png"} alt="Diamondheart" className="h-10 w-10 object-contain" />
         </Link>
 
@@ -188,7 +189,7 @@ export function SidebarNav({
       {/* Mobile top bar */}
       <header className="md:hidden sticky top-0 z-50 w-full bg-card/80 backdrop-blur-xl border-b border-border pt-[env(safe-area-inset-top)] -mt-[env(safe-area-inset-top)]">
         <div className="flex h-14 items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2 no-underline shrink-0">
+          <Link href="/dashboard" aria-label="Dashboard" className="flex items-center gap-2 no-underline shrink-0">
             <img src={logo || "/logo.png"} alt="Diamondheart" className="h-8 w-8 object-contain" />
             <span className="font-display text-base font-semibold" style={{ color: "var(--app-heading-color)" }}>
               Diamondheart
@@ -219,7 +220,16 @@ export function SidebarNav({
                 notificationCount={notificationCount}
               />
             )}
-            <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} className="text-foreground">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Open menu"
+              onClick={() => {
+                hapticTap();
+                setMobileOpen(true);
+              }}
+              className="text-foreground active:scale-90 active:bg-accent transition-transform"
+            >
               <List className="h-5 w-5" weight="bold" />
             </Button>
           </div>
@@ -269,10 +279,10 @@ export function SidebarNav({
 
       {/* Mobile full nav sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="right" className="w-[280px] px-5 pt-0" showCloseButton={false}>
+        <SheetContent side="right" className="w-[280px] px-5 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]" showCloseButton={false}>
           <div className="flex items-center justify-end h-14 -mr-1">
             <SheetClose asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Close menu">
                 <X className="h-5 w-5" weight="bold" />
               </Button>
             </SheetClose>

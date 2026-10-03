@@ -57,12 +57,14 @@ interface FoodItem {
 interface SearchResult {
   fdcId: string;
   description: string;
+  brand?: string;
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
   servingSize: number;
   servingUnit: string;
+  householdServing?: string;
 }
 
 interface FavFood {
@@ -134,6 +136,17 @@ export function FoodClient({ onChanged, meals, totals, targets, favoriteFoods, f
   const [customUnit, setCustomUnit] = useState("serving");
   const searchRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const hasResults = searchResults.length > 0;
+
+  // On a phone the keyboard takes the lower half of the screen and the search
+  // box sits wherever its meal is on the page, so the results that appeared
+  // under it were under the keyboard. Bringing the panel to the top of what is
+  // visible gives them the room there is; once the keyboard has settled.
+  useEffect(() => {
+    if (!activeMeal) return;
+    const id = window.setTimeout(() => searchRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }), 80);
+    return () => window.clearTimeout(id);
+  }, [activeMeal, hasResults]);
 
   const [year, month, day] = selectedDate.split("-").map(Number);
   const viewDate = new Date(year, month - 1, day);
@@ -544,7 +557,7 @@ export function FoodClient({ onChanged, meals, totals, targets, favoriteFoods, f
 
           {/* Search panel */}
           {activeMeal === key && (
-            <div ref={searchRef} className="bg-card rounded-lg p-4 mb-3 space-y-3">
+            <div ref={searchRef} className="bg-card rounded-lg p-4 mb-3 space-y-3 scroll-mt-[calc(3.5rem+env(safe-area-inset-top)+0.75rem)] md:scroll-mt-4">
               {/* Staged food — quantity picker */}
               {stagedFood ? (
                 <div className="space-y-3">
@@ -628,18 +641,21 @@ export function FoodClient({ onChanged, meals, totals, targets, favoriteFoods, f
                     </p>
                   )}
                   {searchResults.length > 0 && (
-                    <div className="max-h-60 overflow-y-auto space-y-1">
+                    <div className="max-h-60 overflow-y-auto overflow-x-hidden space-y-1">
                       {searchResults.map((food) => (
-                        <div key={food.fdcId} className="flex items-center justify-between px-3 py-2 rounded hover:bg-muted/50 transition-colors">
+                        <div key={food.fdcId} className="flex items-center justify-between gap-2 px-3 py-2 rounded hover:bg-muted/50 transition-colors">
                           <button
                             onClick={() => stageSearchResult(food)}
                             disabled={isPending}
-                            className="flex-1 text-left cursor-pointer"
+                            className="flex-1 min-w-0 text-left cursor-pointer"
                           >
-                            <p className="text-sm font-medium truncate">{food.description}</p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-sm font-medium truncate">
+                              {food.description}
+                              {food.brand && <span className="font-normal text-muted-foreground"> · {food.brand}</span>}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
                               {food.calories} cal &middot; {food.protein}p &middot; {food.carbs}c &middot; {food.fat}f
-                              &middot; per {food.servingSize}{food.servingUnit}
+                              &middot; per {food.householdServing ?? `${food.servingSize} ${food.servingUnit}`}
                             </p>
                           </button>
                           <Button

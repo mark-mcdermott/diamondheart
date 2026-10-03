@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { searchFoods } from "@/server/api/food";
+import { searchFoods, toFoodSearchResult } from "@/server/api/food";
 
 const original = process.env.USDA_API_KEY;
 const realFetch = globalThis.fetch;
@@ -69,7 +69,7 @@ describe("food search with a key", () => {
     expect((await res.json()).reason).toBe("unreachable");
   });
 
-  it("maps USDA nutrients onto the app's shape", async () => {
+  it("maps USDA nutrients onto the app's shape, per the stated serving", async () => {
     process.env.USDA_API_KEY = "test-key";
     globalThis.fetch = (async () =>
       new Response(
@@ -95,7 +95,63 @@ describe("food search with a key", () => {
     const res = await searchFoods("egg");
     expect(res.status).toBe(200);
     expect((await res.json()).foods).toEqual([
-      { fdcId: "123", description: "Egg, whole", calories: 143, protein: 13, carbs: 1, fat: 10, servingSize: 50, servingUnit: "g" },
+      // USDA's figures are per 100 g; a 50 g serving gets half of each.
+      { fdcId: "123", description: "Egg, whole", calories: 72, protein: 6, carbs: 0, fat: 5, servingSize: 50, servingUnit: "g" },
     ]);
+  });
+});
+
+describe("search results", () => {
+  it("asks for every USDA dataset, with the POST form the API accepts", async () => {
+    process.env.USDA_API_KEY = "test-key";
+    let sent: { url: string; init?: RequestInit } | undefined;
+    globalThis.fetch = (async (url: string | URL | Request, init?: RequestInit) => {
+      sent = { url: String(url), init };
+      return Response.json({ foods: [] });
+    }) as typeof fetch;
+
+    await searchFoods("fiber one cereal");
+    expect(sent?.init?.method).toBe("POST");
+    expect(sent?.url).toMatch(/^https:\/\/api\.nal\.usda\.gov\/fdc\/v1\/foods\/search\?api_key=test-key$/);
+    const body = JSON.parse(String(sent?.init?.body)) as { query: string; dataType: string[] };
+    expect(body.query).toBe("fiber one cereal");
+    expect(body.dataType).toEqual(["Foundation", "SR Legacy", "Survey (FNDDS)", "Branded"]);
+  });
+
+  it("scales a branded food's macros to its stated serving and names the brand", () => {
+    const row = toFoodSearchResult({
+      fdcId: 1,
+      description: "Fiber One Cereal",
+      dataType: "Branded",
+      brandName: "Fiber One",
+      brandOwner: "GENERAL MILLS SALES INC.",
+      servingSize: 40,
+      servingSizeUnit: "GRM",
+      householdServingFullText: "2/3 cup",
+      foodNutrients: [
+        { nutrientId: 1008, value: 225 },
+        { nutrientId: 1003, value: 7.5 },
+        { nutrientId: 1005, value: 72.5 },
+        { nutrientId: 1004, value: 5 },
+      ],
+    });
+    expect(row).toEqual({
+      fdcId: "1",
+      description: "Fiber One Cereal",
+      brand: "Fiber One",
+      calories: 90,
+      protein: 3,
+      carbs: 29,
+      fat: 2,
+      servingSize: 40,
+      servingUnit: "g",
+      householdServing: "2/3 cup",
+    });
+  });
+
+  it("keeps a reference food per 100 g, as before", () => {
+    const row = toFoodSearchResult({ fdcId: 2, description: "Egg, whole, raw", dataType: "Foundation", foodNutrients: [{ nutrientId: 1008, value: 143 }] });
+    expect(row).toMatchObject({ calories: 143, servingSize: 100, servingUnit: "g" });
+    expect(row).not.toHaveProperty("brand");
   });
 });

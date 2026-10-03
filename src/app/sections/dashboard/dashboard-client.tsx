@@ -1,7 +1,8 @@
 import { Link } from "@/app/link";
 import { toast } from "sonner";
 import { api, errorMessage, type Metric } from "@/app/api";
-import type { MassUnit } from "@/lib/units";
+import { displayUnitFor, type MassUnit } from "@/lib/units";
+import { displayGoal, formatReading, goalLabel } from "@/lib/metric-display";
 import { useRouter } from "@/app/navigation";
 import { useState, useTransition } from "react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -396,8 +397,9 @@ export function DashboardClient({ onChanged, weightUnit, metrics, todayEntries, 
                 const { sum, count } = getTodayValue(metric.id, todayEntries);
                 const goal = metric.dailyGoal ?? 1;
                 const isCountType = metric.valueType === "none" || metric.valueType === "bool";
-                const currentValue = isCountType ? count : (Number.isInteger(sum) ? sum : sum.toFixed(1));
-                const unit = metric.unit || (isCountType ? "" : "");
+                // Readings are stored in the metric's unit; the tile speaks the viewer's.
+                const shownGoal = displayGoal(metric, weightUnit);
+                const current = isCountType ? String(count) : count === 0 && metric.singleValuePerDay ? "—" : formatReading(sum, metric.unit, weightUnit);
                 const progress = getProgress(metric, todayEntries);
                 const weekBars = buildWeekBars(metric.id, goal, recentEntries);
                 const isSettling = settledIds.has(metric.id);
@@ -433,7 +435,7 @@ export function DashboardClient({ onChanged, weightUnit, metrics, todayEntries, 
                             {titleCase(metric.name)}
                           </Link>
                           <span className="text-xs text-muted-foreground">
-                            goal: {goal} {unit}
+                            {goalLabel(metric, weightUnit)}
                           </span>
                         </div>
                       </div>
@@ -457,11 +459,13 @@ export function DashboardClient({ onChanged, weightUnit, metrics, todayEntries, 
                     {/* Bottom row: value + actions */}
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-mono text-muted-foreground">
-                        {currentValue}{unit ? ` ${unit}` : ""} / {goal}
+                        {current}
+                        {shownGoal !== null && ` / ${shownGoal}`}
                       </span>
                       <div className="flex items-center gap-1.5">
                         <button
                           className="w-8 h-8 rounded-lg bg-secondary text-muted-foreground hover:bg-border hover:text-foreground flex items-center justify-center transition-all duration-200 cursor-pointer border-0"
+                          aria-label={metric.counter ? `Add one to ${metric.name}` : `Log ${metric.name}`}
                           disabled={pendingId === metric.id + "-add"}
                           onClick={() => {
                             if (metric.counter) {
@@ -478,19 +482,23 @@ export function DashboardClient({ onChanged, weightUnit, metrics, todayEntries, 
                         >
                           <Plus className="w-4 h-4" />
                         </button>
-                        <button
-                          className={`
-                            w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer border-0
-                            ${completed
-                              ? "bg-success/10 text-success"
-                              : "bg-primary text-primary-foreground hover:brightness-110"
-                            }
-                          `}
-                          disabled={pendingId === metric.id}
-                          onClick={() => handleQuickLog(metric.id)}
-                        >
-                          <Check className="w-4 h-4" strokeWidth={2.5} />
-                        </button>
+                        {/* A reading is a number; "done" is not one. The + is the only way to log it. */}
+                        {!metric.singleValuePerDay && (
+                          <button
+                            className={`
+                              w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer border-0
+                              ${completed
+                                ? "bg-success/10 text-success"
+                                : "bg-primary text-primary-foreground hover:brightness-110"
+                              }
+                            `}
+                            aria-label={`Mark ${metric.name} done`}
+                            disabled={pendingId === metric.id}
+                            onClick={() => handleQuickLog(metric.id)}
+                          >
+                            <Check className="w-4 h-4" strokeWidth={2.5} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -510,8 +518,7 @@ export function DashboardClient({ onChanged, weightUnit, metrics, todayEntries, 
                   const MetricIcon = getMetricIcon(metric, index);
                   const { sum, count } = getTodayValue(metric.id, todayEntries);
                   const isCountType = metric.valueType === "none" || metric.valueType === "bool";
-                  const currentValue = isCountType ? count : (Number.isInteger(sum) ? sum : sum.toFixed(1));
-                  const unit = metric.unit || "";
+                  const current = isCountType ? String(count) : formatReading(sum, metric.unit, weightUnit);
 
                   return (
                     <div key={metric.id} className="bg-card rounded-2xl border border-border p-4 card-texture">
@@ -537,7 +544,7 @@ export function DashboardClient({ onChanged, weightUnit, metrics, todayEntries, 
                         </button>
                       </div>
                       <p className="text-lg font-mono font-semibold" style={{ color: "var(--app-heading-color)" }}>
-                        {currentValue} <span className="text-sm font-normal text-muted-foreground">{unit}</span>
+                        {current}
                       </p>
                     </div>
                   );
@@ -634,8 +641,7 @@ export function DashboardClient({ onChanged, weightUnit, metrics, todayEntries, 
                         </span>
                         {entry.value && entry.value !== "done" && (
                           <span className="text-sm text-muted-foreground font-mono">
-                            {entry.value}
-                            {metric?.unit ? ` ${metric.unit}` : ""}
+                            {Number.isNaN(Number(entry.value)) ? entry.value : formatReading(Number(entry.value), metric?.unit ?? null, weightUnit)}
                           </span>
                         )}
                       </div>
@@ -702,7 +708,9 @@ export function DashboardClient({ onChanged, weightUnit, metrics, todayEntries, 
                         placeholder="0"
                         className="w-24 text-center font-mono text-lg"
                       />
-                      {entryMetric.unit && <span className="text-sm text-muted-foreground">{entryMetric.unit}</span>}
+                      {displayUnitFor(entryMetric.unit, weightUnit) && (
+                        <span className="text-sm text-muted-foreground">{displayUnitFor(entryMetric.unit, weightUnit)}</span>
+                      )}
                     </div>
                   )}
                 </div>

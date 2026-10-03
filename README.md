@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/mark-mcdermott/diamondheart/actions/workflows/ci.yml/badge.svg)](https://github.com/mark-mcdermott/diamondheart/actions/workflows/ci.yml)
 
-Personal health and life tracking — metrics, food, workouts, meditation and more. Web, iOS/Android via Capacitor, desktop via Tauri.
+> **Pre-beta, being dogfooded.** The app works end to end and is in daily use by its author, who is currently living in it to find the rough edges. Expect UX bugs, and please report any you meet.
 
-> Not currently deployed. There is no hosted instance; run it locally.
+Personal health and life tracking — metrics, food, workouts, meditation and more. Web, iOS/Android via Capacitor, desktop via Tauri. The web app runs at [www.diamondheart.app](https://www.diamondheart.app); the native apps are built from this repo and are not in the stores yet.
 
 ## Stack
 
