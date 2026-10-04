@@ -89,7 +89,7 @@ To point a build at a local server instead: `PUBLIC_API_BASE=http://localhost:30
 
 ## Stack
 
-Astro 7 · React 19 islands · React Router · TanStack Query · TypeScript · Tailwind 4 · shadcn/Radix · Drizzle + Neon Postgres · Zod · Recharts · Capacitor 8 · Tauri 2. Deployed on Vercel through `@astrojs/vercel`.
+Astro 7 · React 19 islands · React Router · TanStack Query · TypeScript · Tailwind 4 · shadcn/Base UI · Drizzle + Neon Postgres · Zod · Recharts · Capacitor 8 · Tauri 2. Deployed on Vercel through `@astrojs/vercel`.
 
 Auth is Better Auth (`src/lib/server/auth.ts`), mounted at `/api/auth/*`, with bcrypt passwords through the app's own hasher and the `bearer` plugin for native builds. Astro pages never touch the session: every API handler resolves it itself with `resolveSession()` in `src/server/api/_lib/session.ts`, and the applet decides what to render from `GET /api/auth/me`. Sign-in, sign-up and sign-out use Better Auth's browser client in `src/lib/auth-client.ts`.
 
