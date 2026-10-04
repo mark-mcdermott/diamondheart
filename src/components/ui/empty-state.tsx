@@ -1,5 +1,4 @@
-import { Link } from "@/app/link";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import type { LucideIcon } from "lucide-react";
 
 interface EmptyStateProps {
@@ -43,9 +42,7 @@ export function EmptyState({
         </p>
       )}
       {actionLabel && actionHref && (
-        <Button asChild variant="outline" className="rounded-xl">
-          <Link href={actionHref}>{actionLabel}</Link>
-        </Button>
+        <ButtonLink variant="outline" className="rounded-xl" href={actionHref}>{actionLabel}</ButtonLink>
       )}
       {actionLabel && onAction && !actionHref && (
         <Button variant="outline" className="rounded-xl" onClick={onAction}>

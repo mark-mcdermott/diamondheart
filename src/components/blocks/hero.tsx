@@ -1,5 +1,4 @@
-import { Link } from "@/app/link";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 
 interface HeroProps {
   title: string;
@@ -94,14 +93,10 @@ export function Hero({
             style={{ animation: "fade-in-up 0.8s var(--ease-settle) backwards", animationDelay: "500ms" }}
           >
             {primaryCta && (
-              <Button asChild size="lg" className="hover:!bg-[#e86529] hover:!brightness-100">
-                <Link href={primaryCta.href}>{primaryCta.label}</Link>
-              </Button>
+              <ButtonLink size="lg" className="hover:!bg-[#e86529] hover:!brightness-100" href={primaryCta.href}>{primaryCta.label}</ButtonLink>
             )}
             {secondaryCta && (
-              <Button asChild variant="outline" size="lg" className="bg-white/15 backdrop-blur-[3px] text-[#9A4F2E] border-[rgba(154,79,46,0.6)] transition-all hover:bg-[rgba(154,79,46,0.10)] hover:text-[#B5622F] hover:border-[rgba(154,79,46,0.75)]">
-                <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
-              </Button>
+              <ButtonLink variant="outline" size="lg" className="bg-white/15 backdrop-blur-[3px] text-[#9A4F2E] border-[rgba(154,79,46,0.6)] transition-all hover:bg-[rgba(154,79,46,0.10)] hover:text-[#B5622F] hover:border-[rgba(154,79,46,0.75)]" href={secondaryCta.href}>{secondaryCta.label}</ButtonLink>
             )}
           </div>
         )}

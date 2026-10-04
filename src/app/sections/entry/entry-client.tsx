@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { api, errorMessage, keys } from "@/app/api";
 import { localDateTimeToISO } from "@/lib/dates";
 import { displayUnitFor } from "@/lib/units";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -129,9 +129,7 @@ export function EntryClient() {
       {labelled.length === 0 ? (
         <div className="border border-dashed border-border rounded-lg p-8 text-center">
           <p className="text-muted-foreground mb-4">No metrics set up yet. Create some metrics first.</p>
-          <Button variant="outline" asChild>
-            <Link href="/metrics">Set Up Tracker</Link>
-          </Button>
+          <ButtonLink variant="outline" href="/metrics">Set Up Tracker</ButtonLink>
         </div>
       ) : (
         <form
@@ -218,9 +216,7 @@ export function EntryClient() {
               <Save className="w-4 h-4 mr-2" />
               {save.isPending ? "Saving..." : "Save Entry"}
             </Button>
-            <Button variant="outline" asChild>
-              <Link href="/dashboard">Cancel</Link>
-            </Button>
+            <ButtonLink variant="outline" href="/dashboard">Cancel</ButtonLink>
           </div>
         </form>
       )}

@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Link } from "@/app/link";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { useCart } from "@/lib/cart";
 import {
   type Product,
@@ -43,12 +42,10 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-16">
-      <Button variant="outline" size="sm" asChild className="mb-8">
-        <Link href="/merch">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Merch
-        </Link>
-      </Button>
+      <ButtonLink variant="outline" size="sm" className="mb-8" href="/merch">
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back to Merch
+      </ButtonLink>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Image */}

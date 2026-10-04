@@ -394,13 +394,8 @@ export function FoodClient({ onChanged, meals, totals, targets, favoriteFoods, f
             <ChevronRight className="w-5 h-5" />
           </button>
           <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer ml-1 -translate-y-[7px]"
-              >
-                <Calendar className="w-4 h-4" />
-              </button>
+            <PopoverTrigger className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer ml-1 -translate-y-[7px]">
+              <Calendar className="w-4 h-4" />
             </PopoverTrigger>
             <PopoverContent align="start" sideOffset={8}>
               <DatePickerCalendar

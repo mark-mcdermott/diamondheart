@@ -7,7 +7,7 @@ import { VALUE_TYPES } from "@/lib/metric-types";
 import { goalLabel } from "@/lib/metric-display";
 import { DEFAULT_MASS_UNIT, displayUnitFor, type MassUnit } from "@/lib/units";
 import { TRACKING_SECTIONS } from "@/lib/nav-utils";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -171,11 +171,9 @@ function SortableMetricRow({
       </div>
 
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={`/metrics/${metric.id}/edit`}>
-            <Pencil className="w-4 h-4" />
-          </Link>
-        </Button>
+        <ButtonLink variant="ghost" size="sm" href={`/metrics/${metric.id}/edit`}>
+          <Pencil className="w-4 h-4" />
+        </ButtonLink>
         <Button variant="ghost" size="sm" onClick={() => onDelete(metric.id)} disabled={disabled}>
           <Trash2 className="w-4 h-4 text-destructive" />
         </Button>

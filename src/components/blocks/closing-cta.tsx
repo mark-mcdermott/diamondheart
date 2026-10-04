@@ -1,6 +1,5 @@
-import { Link } from "@/app/link";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 
 interface ClosingCtaProps {
   eyebrow: string;
@@ -55,13 +54,9 @@ export function ClosingCta({
           className={`closing-cta-actions ${visible ? "is-visible" : ""}`}
           style={{ transitionDelay: "400ms" }}
         >
-          <Button asChild size="lg">
-            <Link href={primaryCta.href}>{primaryCta.label}</Link>
-          </Button>
+          <ButtonLink size="lg" href={primaryCta.href}>{primaryCta.label}</ButtonLink>
           {secondaryCta && (
-            <Button asChild variant="outline" size="lg" className="closing-cta-secondary">
-              <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
-            </Button>
+            <ButtonLink variant="outline" size="lg" className="closing-cta-secondary" href={secondaryCta.href}>{secondaryCta.label}</ButtonLink>
           )}
         </div>
       </div>
