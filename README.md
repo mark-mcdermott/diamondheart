@@ -8,7 +8,7 @@ Personal health and life tracking — metrics, food, workouts, meditation and mo
 
 ## Stack
 
-Astro 7 · React 19 islands · React Router · TanStack Query · TypeScript · Tailwind 4 · shadcn/Radix · Drizzle + Neon Postgres · Zod · Recharts · Capacitor 8 · Tauri 2
+Astro 7 · React 19 islands · React Router · TanStack Query · TypeScript · Tailwind 4 · shadcn/Base UI · Drizzle + Neon Postgres · Zod · Recharts · Capacitor 8 · Tauri 2
 
 Auth is Better Auth with bcrypt passwords: a cookie session on the web, a bearer token in the native shells. Every API handler resolves the session itself.
 

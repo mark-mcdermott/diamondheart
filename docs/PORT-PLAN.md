@@ -122,6 +122,8 @@ server-rendered version never had to show a spinner.
 3. **Component library — DECIDED: keep shadcn `new-york` on Radix.** Fifty components
    exist and work. Re-basing them on Base UI is a design-system job, not a port job, and
    the roster's naming rule already has a letter for this flavour.
+   *Revisited 2026-10-04 (#265): the components now run on Base UI (`base-nova`) with
+   their existing classes kept, so the look did not change. The roster letter is gone.*
 
 4. **Repo shape — DECIDED: flat stock Astro layout at the repo root, no `legacy/`.**
    frunk kept `legacy/` as the reference for 60 Svelte components that had to be
@@ -199,7 +201,7 @@ server-rendered version never had to show a spinner.
 12. **Stack name — after it lands.** The roster's own rule: naming a half-finished rewrite
     means renaming it twice. `DUCXZ-WSRRANT` stood until Phase 6; the roster now says
     `DNC-BARUAWSRQZT` — the converged name with UploadThing where the others have Blob,
-    Radix beside shadcn, and the Tauri tail.
+    Radix beside shadcn, and the Tauri tail. The `R` went with #265: `DNC-BARUAWSQZT`.
 
 13. **Vercel — same project.** Function count drops from one per route to ~1. Preview
     deploys are on; production protection stays on. `USDA_API_KEY` is still unset for the
