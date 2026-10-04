@@ -120,11 +120,9 @@ export function TransactionsClient({ transactions, accounts, categories }: Props
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Transaction
-            </Button>
+          <DialogTrigger render={<Button />}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Transaction
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

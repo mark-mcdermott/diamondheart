@@ -1,6 +1,5 @@
-import { Link } from "@/app/link";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import type { LucideIcon } from "lucide-react";
 
 interface TrackingSectionCardProps {
@@ -51,9 +50,7 @@ export function TrackingSectionCard({
       {enabled && (
         <>
           <p className="text-sm font-medium mb-3">{summaryLine}</p>
-          <Button variant="secondary" size="sm" asChild className="w-full">
-            <Link href={href}>Open {title}</Link>
-          </Button>
+          <ButtonLink variant="secondary" size="sm" className="w-full" href={href}>Open {title}</ButtonLink>
         </>
       )}
     </div>

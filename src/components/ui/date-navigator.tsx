@@ -52,13 +52,8 @@ export function DateNavigator({ className }: DateNavigatorProps) {
         <ChevronLeft className="w-4 h-4" />
       </button>
       <Popover open={calOpen} onOpenChange={setCalOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className="px-2 py-1 text-sm font-medium rounded-md text-foreground hover:bg-secondary transition-colors cursor-pointer min-w-[7rem] text-center"
-          >
-            {viewRangeLabel(view, anchor)}
-          </button>
+        <PopoverTrigger className="px-2 py-1 text-sm font-medium rounded-md text-foreground hover:bg-secondary transition-colors cursor-pointer min-w-[7rem] text-center">
+          {viewRangeLabel(view, anchor)}
         </PopoverTrigger>
         <PopoverContent align="center" sideOffset={8} className="p-0 w-auto">
           <DatePickerCalendar

@@ -7,7 +7,7 @@ import { useRouter } from "@/app/navigation";
 import { useState, useTransition } from "react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { DatePickerCalendar } from "@/components/ui/date-picker-calendar";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ProgressRing } from "@/components/ui/progress-ring";
@@ -323,13 +323,8 @@ export function DashboardClient({ onChanged, weightUnit, metrics, todayEntries, 
               <ChevronRight className="w-5 h-5" />
             </button>
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer ml-1 -translate-y-[7px]"
-                >
-                  <Calendar className="w-4 h-4" />
-                </button>
+              <PopoverTrigger className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer ml-1 -translate-y-[7px]">
+                <Calendar className="w-4 h-4" />
               </PopoverTrigger>
               <PopoverContent align="start" sideOffset={8}>
                 <DatePickerCalendar
@@ -361,18 +356,14 @@ export function DashboardClient({ onChanged, weightUnit, metrics, todayEntries, 
 
       {/* Action Buttons */}
       <div className="flex gap-3 mb-10 fade-section" style={{ animationDelay: "60ms" }}>
-        <Button asChild>
-          <Link href="/entry">
-            <Plus className="w-4 h-4 mr-1.5" />
-            Log Entry
-          </Link>
-        </Button>
-        <Button variant="secondary" asChild>
-          <Link href="/metrics">
-            <Settings className="w-4 h-4 mr-1.5" />
-            Metrics
-          </Link>
-        </Button>
+        <ButtonLink href="/entry">
+          <Plus className="w-4 h-4 mr-1.5" />
+          Log Entry
+        </ButtonLink>
+        <ButtonLink variant="secondary" href="/metrics">
+          <Settings className="w-4 h-4 mr-1.5" />
+          Metrics
+        </ButtonLink>
       </div>
 
       {metrics.length === 0 ? (
@@ -604,11 +595,9 @@ export function DashboardClient({ onChanged, weightUnit, metrics, todayEntries, 
                         )}
                       </div>
                     </div>
-                    <Button size="icon-xs" variant="secondary" asChild className="rounded-lg">
-                      <Link href="/food">
-                        <Plus className="w-3.5 h-3.5" />
-                      </Link>
-                    </Button>
+                    <ButtonLink size="icon-xs" variant="secondary" className="rounded-lg" href="/food">
+                      <Plus className="w-3.5 h-3.5" />
+                    </ButtonLink>
                   </div>
                 );
               })}

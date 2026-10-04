@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api, ApiError, errorMessage, keys, type Metric, type MetricDetail } from "@/app/api";
 import { VALUE_TYPES } from "@/lib/metric-types";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save } from "lucide-react";
@@ -32,9 +32,7 @@ export function MetricEditClient({ id }: { id: string }) {
       <div className="max-w-2xl mx-auto">
         <h2>{missing ? "Page not found" : "Metric could not be loaded"}</h2>
         <p className="text-muted-foreground mt-2">{missing ? "There is no metric at this address, or it is not yours." : errorMessage(detail.error)}</p>
-        <Button variant="outline" className="mt-6" asChild>
-          <Link href="/metrics">Back to metrics</Link>
-        </Button>
+        <ButtonLink variant="outline" className="mt-6" href="/metrics">Back to metrics</ButtonLink>
       </div>
     );
   }
@@ -151,9 +149,7 @@ function MetricEditForm({ metric }: { metric: Metric }) {
             <Save className="w-4 h-4 mr-2" />
             {save.isPending ? "Saving..." : "Save Changes"}
           </Button>
-          <Button variant="secondary" asChild>
-            <Link href={`/metrics/${metric.id}`}>Cancel</Link>
-          </Button>
+          <ButtonLink variant="secondary" href={`/metrics/${metric.id}`}>Cancel</ButtonLink>
         </div>
       </div>
     </div>

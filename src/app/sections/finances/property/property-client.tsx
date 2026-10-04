@@ -82,11 +82,9 @@ export function PropertyClient({ properties }: Props) {
           <p className="text-muted-foreground mt-1">Real estate tracking and equity</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-1" />
-              Add Property
-            </Button>
+          <DialogTrigger render={<Button size="sm" />}>
+            <Plus className="w-4 h-4 mr-1" />
+            Add Property
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

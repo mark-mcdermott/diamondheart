@@ -116,11 +116,9 @@ export function AccountsClient({ accounts }: Props) {
           </p>
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Account
-            </Button>
+          <DialogTrigger render={<Button size="sm" />}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Account
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

@@ -2,7 +2,7 @@ import { Link } from "@/app/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { api, ApiError, errorMessage, keys } from "@/app/api";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { displayUnitFor, roundMass, toDisplayValue } from "@/lib/units";
 import { displayGoal, goalLabel } from "@/lib/metric-display";
 import { EntriesTable } from "./entries-table";
@@ -30,9 +30,7 @@ function Frame({ title, subtitle, children }: { title: React.ReactNode; subtitle
 function NotFound() {
   return (
     <Frame title="Page not found" subtitle="There is no metric at this address, or it is not yours.">
-      <Button variant="outline" asChild>
-        <Link href="/metrics">Back to metrics</Link>
-      </Button>
+      <ButtonLink variant="outline" href="/metrics">Back to metrics</ButtonLink>
     </Frame>
   );
 }

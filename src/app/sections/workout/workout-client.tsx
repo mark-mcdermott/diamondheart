@@ -3,7 +3,7 @@ import { Link } from "@/app/link";
 import { useRouter } from "@/app/navigation";
 import { api, type AddSet, type ExerciseView, type FinishWorkout, type WorkoutSetView, type WorkoutView } from "@/app/api";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -128,12 +128,10 @@ export function WorkoutClient({
           <>
             <DateNavigator />
             <PageViewToggle defaultRange="week" />
-            <Button asChild>
-              <Link href="/records">
-                <Trophy className="w-4 h-4 mr-2" />
-                Records
-              </Link>
-            </Button>
+            <ButtonLink href="/records">
+              <Trophy className="w-4 h-4 mr-2" />
+              Records
+            </ButtonLink>
           </>
         )}
       </div>

@@ -2,14 +2,14 @@ import { Link } from "@/app/link";
 import { useEffect, useState } from "react";
 import { Menu, X, ChevronDown, Github, Bell } from "lucide-react";
 import { Sheet, SheetContent, SheetClose } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { AvatarMenu } from "@/components/blocks/avatar-menu";
 import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuLinkItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -93,11 +93,9 @@ export function Nav({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     {link.children.map((child) => (
-                      <DropdownMenuItem key={child.href} asChild className="cursor-pointer">
-                        <Link href={child.href} className="no-underline">
-                          {child.label}
-                        </Link>
-                      </DropdownMenuItem>
+                      <DropdownMenuLinkItem key={child.href} className="cursor-pointer no-underline" render={<Link href={child.href} />}>
+                        {child.label}
+                      </DropdownMenuLinkItem>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -133,9 +131,7 @@ export function Nav({
             </Link>
           )}
           {!isLoggedIn && (
-            <Button asChild variant="secondary" size="sm">
-              <Link href="/signup">Sign Up</Link>
-            </Button>
+            <ButtonLink variant="secondary" size="sm" href="/signup">Sign Up</ButtonLink>
           )}
           {user && (
             <>
@@ -192,10 +188,8 @@ export function Nav({
             <SheetContent side="right" className="w-[300px] px-6 pt-0" showCloseButton={false}>
               {/* Close button in same position as hamburger */}
               <div className="flex items-center justify-end h-14 -mr-2">
-                <SheetClose asChild>
-                  <Button variant="ghost" size="icon">
-                    <X className="h-6 w-6" strokeWidth={2.5} />
-                  </Button>
+                <SheetClose render={<Button variant="ghost" size="icon" />}>
+                  <X className="h-6 w-6" strokeWidth={2.5} />
                 </SheetClose>
               </div>
 

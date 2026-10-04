@@ -1,7 +1,8 @@
 import * as React from "react"
+import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
-import { Slot } from "radix-ui"
 
+import { Link } from "@/app/link"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
@@ -38,20 +39,16 @@ const buttonVariants = cva(
   }
 )
 
+type ButtonVariants = VariantProps<typeof buttonVariants>
+
 function Button({
   className,
   variant = "default",
   size = "default",
-  asChild = false,
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
-  const Comp = asChild ? Slot.Root : "button"
-
+}: ButtonPrimitive.Props & ButtonVariants) {
   return (
-    <Comp
+    <ButtonPrimitive
       data-slot="button"
       data-variant={variant}
       data-size={size}
@@ -61,4 +58,26 @@ function Button({
   )
 }
 
-export { Button, buttonVariants }
+/**
+ * A link that looks like a button. Base UI's Button enforces button semantics
+ * on whatever it renders, so an `<a>` must not go through its `render` prop;
+ * this styles the link directly, as the Base UI docs ask.
+ */
+function ButtonLink({
+  className,
+  variant = "default",
+  size = "default",
+  ...props
+}: React.ComponentProps<typeof Link> & ButtonVariants) {
+  return (
+    <Link
+      data-slot="button"
+      data-variant={variant}
+      data-size={size}
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
+
+export { Button, ButtonLink, buttonVariants }

@@ -90,11 +90,9 @@ export function BudgetsClient({ budgets, categories, monthlySpending }: Props) {
           <p className="text-muted-foreground mt-1">Monthly spending limits by category</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-1" />
-              Add Budget
-            </Button>
+          <DialogTrigger render={<Button size="sm" />}>
+            <Plus className="w-4 h-4 mr-1" />
+            Add Budget
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

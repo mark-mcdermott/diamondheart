@@ -142,11 +142,9 @@ export function InvestmentsClient({ investments, accounts }: Props) {
       {/* Add Investment Button + Dialog */}
       <div className="flex justify-end">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Investment
-            </Button>
+          <DialogTrigger render={<Button />}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Investment
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>

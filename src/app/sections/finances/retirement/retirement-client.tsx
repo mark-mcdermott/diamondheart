@@ -165,11 +165,9 @@ export function RetirementClient({ plans }: Props) {
         </div>
 
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-1" />
-              Add Plan
-            </Button>
+          <DialogTrigger render={<Button size="sm" />}>
+            <Plus className="w-4 h-4 mr-1" />
+            Add Plan
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

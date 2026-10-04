@@ -108,7 +108,7 @@ export function SidebarNav({
         <Separator className="w-8 mb-4" />
 
         {/* Nav links */}
-        <TooltipProvider delayDuration={150}>
+        <TooltipProvider delay={150}>
           <nav className="flex flex-1 flex-col items-center gap-1 overflow-y-auto overflow-x-hidden">
             {allVisibleLinks.map((link) => {
               if (!link.href) return null;
@@ -117,21 +117,19 @@ export function SidebarNav({
 
               return (
                 <Tooltip key={link.href}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      href={link.href}
-                      className={`
-                        flex items-center justify-center w-11 h-11 rounded-xl
-                        transition-all duration-200 no-underline
-                        ${isActive
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                        }
-                      `}
-                      aria-label={link.label}
-                    >
-                      <Icon className="w-5 h-5" weight={isActive ? "bold" : "regular"} />
-                    </Link>
+                  <TooltipTrigger
+                    render={<Link href={link.href} />}
+                    className={`
+                      flex items-center justify-center w-11 h-11 rounded-xl
+                      transition-all duration-200 no-underline
+                      ${isActive
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      }
+                    `}
+                    aria-label={link.label}
+                  >
+                    <Icon className="w-5 h-5" weight={isActive ? "bold" : "regular"} />
                   </TooltipTrigger>
                   <TooltipContent side="right" sideOffset={8}>
                     {link.label}
@@ -281,10 +279,8 @@ export function SidebarNav({
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="right" className="w-[280px] px-5 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]" showCloseButton={false}>
           <div className="flex items-center justify-end h-14 -mr-1">
-            <SheetClose asChild>
-              <Button variant="ghost" size="icon" aria-label="Close menu">
-                <X className="h-5 w-5" weight="bold" />
-              </Button>
+            <SheetClose render={<Button variant="ghost" size="icon" aria-label="Close menu" />}>
+              <X className="h-5 w-5" weight="bold" />
             </SheetClose>
           </div>
 
