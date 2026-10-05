@@ -4,6 +4,7 @@ import { bearer } from "better-auth/plugins";
 import { db } from "@/db";
 import { account, session, users, verification } from "@/db/schema";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/server/email";
 import { NATIVE_ORIGINS } from "@/lib/server/origins";
 
 /**
@@ -71,6 +72,37 @@ export const auth = betterAuth({
     password: {
       hash: hashPassword,
       verify: ({ password, hash }) => verifyPassword(password, hash),
+    },
+    /**
+     * Until this landed there was no way back into an account: password was the only
+     * credential (the biometric lock is a local convenience, not account recovery), and
+     * nothing sent mail, so a forgotten password was permanent.
+     *
+     * Unlike `sendVerificationEmail` below, this is not a background task — a failed send
+     * reaches the caller, so the form can say so instead of claiming the mail is on its way.
+     */
+    sendResetPassword: async ({ user, url }) => {
+      await sendPasswordResetEmail(user.email, url);
+    },
+  },
+
+  /**
+   * `requireEmailVerification` is deliberately **not** set.
+   *
+   * Every existing row has `emailVerified = false` — the column's own comment says nobody
+   * has verified an address — so requiring it would lock out every account that exists,
+   * including Mark's, the moment this deploys. That is the opposite of the lockout this
+   * change is meant to fix.
+   *
+   * The order is: send verification mail now, let accounts verify, and only then consider
+   * requiring it. frunk could require it from day one because it had no accounts to migrate;
+   * diamondheart is live and does.
+   */
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendVerificationEmail(user.email, url);
     },
   },
 

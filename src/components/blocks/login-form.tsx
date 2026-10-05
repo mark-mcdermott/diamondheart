@@ -67,7 +67,13 @@ export function LoginForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  {/* The only way back into an account: password is the sole credential here. */}
+                  <Link href="/forgot-password" className="text-sm text-muted-foreground hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
                 <Input
                   id="password"
                   name="password"
