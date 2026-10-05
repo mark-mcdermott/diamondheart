@@ -22,13 +22,13 @@ importers:
         version: 10.0.0
       '@astrojs/react':
         specifier: ^6.0.6
-        version: 6.0.6(@types/node@22.19.17)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tsx@4.23.15)(yaml@2.9.1)
+        version: 6.0.6(@types/node@22.19.17)(@types/react-dom@19.2.3(@types/react@19.3.0))(@types/react@19.3.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.2.8(react@19.3.0))(react@19.3.0)(tsx@4.23.15)(yaml@2.9.1)
       '@astrojs/vercel':
         specifier: ^11.0.11
-        version: 11.0.11(astro@7.3.5(@capacitor/preferences@8.0.1(@capacitor/core@8.3.5))(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.23.15)(uploadthing@7.7.4(h3@1.15.11)(tailwindcss@4.2.2))(yaml@2.9.1))(react@19.2.8)(rollup@4.60.1)
+        version: 11.0.11(astro@7.3.5(@capacitor/preferences@8.0.1(@capacitor/core@8.3.5))(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.23.15)(uploadthing@7.7.4(h3@1.15.11)(tailwindcss@4.2.2))(yaml@2.9.1))(react@19.3.0)(rollup@4.60.1)
       '@base-ui/react':
         specifier: ^1.8.0
-        version: 1.8.0(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 1.8.0(@types/react@19.3.0)(react-dom@19.2.8(react@19.3.0))(react@19.3.0)
       '@capacitor/android':
         specifier: ^8.3.5
         version: 8.3.5(@capacitor/core@8.3.5)
@@ -67,31 +67,31 @@ importers:
         version: 8.11.4(@capacitor/core@8.3.5)
       '@dnd-kit/core':
         specifier: ^6.3.1
-        version: 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 6.3.1(react-dom@19.2.8(react@19.3.0))(react@19.3.0)
       '@dnd-kit/sortable':
         specifier: ^10.0.0
-        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
+        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.3.0))(react@19.3.0))(react@19.3.0)
       '@dnd-kit/utilities':
         specifier: ^3.2.2
-        version: 3.2.2(react@19.2.8)
+        version: 3.2.2(react@19.3.0)
       '@nanostores/react':
         specifier: ^2.0.1
-        version: 2.0.1(nanostores@1.5.4)(react@19.2.8)
+        version: 2.0.1(nanostores@1.5.4)(react@19.3.0)
       '@neondatabase/serverless':
         specifier: ^1.0.2
         version: 1.0.2
       '@phosphor-icons/react':
         specifier: ^2.1.10
-        version: 2.1.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 2.1.10(react-dom@19.2.8(react@19.3.0))(react@19.3.0)
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.3.1(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
       '@tanstack/react-query':
         specifier: 5.103.1
-        version: 5.103.1(react@19.2.8)
+        version: 5.103.1(react@19.3.0)
       '@uploadthing/react':
         specifier: ^7.3.3
-        version: 7.3.3(react@19.2.8)(uploadthing@7.7.4(h3@1.15.11)(tailwindcss@4.2.2))
+        version: 7.3.3(react@19.3.0)(uploadthing@7.7.4(h3@1.15.11)(tailwindcss@4.2.2))
       astro:
         specifier: ^7.3.5
         version: 7.3.5(@capacitor/preferences@8.0.1(@capacitor/core@8.3.5))(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.23.15)(uploadthing@7.7.4(h3@1.15.11)(tailwindcss@4.2.2))(yaml@2.9.1)
@@ -100,7 +100,7 @@ importers:
         version: 3.0.3
       better-auth:
         specifier: 1.7.6
-        version: 1.7.6(drizzle-kit@0.31.11)(drizzle-orm@0.45.3(@neondatabase/serverless@1.0.2)(@types/pg@8.20.0)(kysely@0.29.6))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vitest@4.1.11(@types/node@22.19.17)(vite@8.3.1(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))
+        version: 1.7.6(drizzle-kit@0.31.11)(drizzle-orm@0.45.3(@neondatabase/serverless@1.0.2)(@types/pg@8.20.0)(kysely@0.29.6))(react-dom@19.2.8(react@19.3.0))(react@19.3.0)(vitest@4.1.11(@types/node@22.19.17)(vite@8.3.1(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -112,28 +112,28 @@ importers:
         version: 0.45.3(@neondatabase/serverless@1.0.2)(@types/pg@8.20.0)(kysely@0.29.6)
       lucide-react:
         specifier: ^0.400.0
-        version: 0.400.0(react@19.2.8)
+        version: 0.400.0(react@19.3.0)
       nanostores:
         specifier: ^1.5.4
         version: 1.5.4
       react:
-        specifier: ^19.2.8
-        version: 19.2.8
+        specifier: ^19.3.0
+        version: 19.3.0
       react-dom:
         specifier: ^19.2.8
-        version: 19.2.8(react@19.2.8)
+        version: 19.2.8(react@19.3.0)
       react-router:
         specifier: ^8.4.0
-        version: 8.4.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 8.4.0(react-dom@19.2.8(react@19.3.0))(react@19.3.0)
       recharts:
         specifier: ^3.8.1
-        version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.8))(react-is@19.2.5)(react@19.2.8)(redux@5.0.1)
+        version: 3.8.1(@types/react@19.3.0)(react-dom@19.2.8(react@19.3.0))(react-is@19.2.5)(react@19.3.0)(redux@5.0.1)
       resend:
         specifier: ^6.32.0
         version: 6.32.0
       sonner:
         specifier: ^2.0.8
-        version: 2.0.8(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 2.0.8(@types/react@19.3.0)(react-dom@19.2.8(react@19.3.0))(react@19.3.0)
       stripe:
         specifier: ^20.1.0
         version: 20.4.1(@types/node@22.19.17)
@@ -175,11 +175,11 @@ importers:
         specifier: ^22.0.0
         version: 22.19.17
       '@types/react':
-        specifier: ^19.2.14
-        version: 19.2.14
+        specifier: ^19.3.0
+        version: 19.3.0
       '@types/react-dom':
         specifier: ^19.2.3
-        version: 19.2.3(@types/react@19.2.14)
+        version: 19.2.3(@types/react@19.3.0)
       '@types/web-push':
         specifier: ^3.6.4
         version: 3.6.4
@@ -2010,8 +2010,8 @@ packages:
     peerDependencies:
       '@types/react': ^19.2.0
 
-  '@types/react@19.2.14':
-    resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
+  '@types/react@19.3.0':
+    resolution: {integrity: sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg==}
 
   '@types/slice-ansi@4.0.0':
     resolution: {integrity: sha512-+OpjSaq85gvlZAYINyzKpLeiFkSC4EsC6IIiT6v6TLSU5k5U83fHGj9Lel8oKEXM0HqgrMVCjXPDPVICtxF7EQ==}
@@ -3812,8 +3812,8 @@ packages:
       react-dom:
         optional: true
 
-  react@19.2.8:
-    resolution: {integrity: sha512-PWaYA1L/q9u2u7xYQi+Y3L3Yfnie7XyLeaJICV1MGD6LprsBxcAqGjYyr0eY3p+QdsA+x/Irkt4Qif8D63+Sbw==}
+  react@19.3.0:
+    resolution: {integrity: sha512-E8LUcbtBWt20bbl2YoHfx4ZDBdxVTfOKtCZn9cDSJ4l6/nuoApcpIBcj47t2wZoVX8g2ZHuMHbiShgCR1T5Sog==}
     engines: {node: '>=0.10.0'}
 
   readable-stream@3.6.2:
@@ -4777,15 +4777,15 @@ snapshots:
     dependencies:
       prismjs: 1.30.0
 
-  '@astrojs/react@6.0.6(@types/node@22.19.17)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(tsx@4.23.15)(yaml@2.9.1)':
+  '@astrojs/react@6.0.6(@types/node@22.19.17)(@types/react-dom@19.2.3(@types/react@19.3.0))(@types/react@19.3.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.2.8(react@19.3.0))(react@19.3.0)(tsx@4.23.15)(yaml@2.9.1)':
     dependencies:
       '@astrojs/internal-helpers': 0.11.0
-      '@types/react': 19.2.14
-      '@types/react-dom': 19.2.3(@types/react@19.2.14)
+      '@types/react': 19.3.0
+      '@types/react-dom': 19.2.3(@types/react@19.3.0)
       '@vitejs/plugin-react': 5.2.0(vite@8.3.1(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
       devalue: 5.9.4
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
+      react: 19.3.0
+      react-dom: 19.2.8(react@19.3.0)
       ultrahtml: 1.7.0
       vite: 8.3.1(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
     transitivePeerDependencies:
@@ -4810,10 +4810,10 @@ snapshots:
       is-docker: 4.0.0
       package-manager-detector: 1.8.0
 
-  '@astrojs/vercel@11.0.11(astro@7.3.5(@capacitor/preferences@8.0.1(@capacitor/core@8.3.5))(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.23.15)(uploadthing@7.7.4(h3@1.15.11)(tailwindcss@4.2.2))(yaml@2.9.1))(react@19.2.8)(rollup@4.60.1)':
+  '@astrojs/vercel@11.0.11(astro@7.3.5(@capacitor/preferences@8.0.1(@capacitor/core@8.3.5))(@types/node@22.19.17)(@vercel/functions@3.9.8)(jiti@2.7.0)(tsx@4.23.15)(uploadthing@7.7.4(h3@1.15.11)(tailwindcss@4.2.2))(yaml@2.9.1))(react@19.3.0)(rollup@4.60.1)':
     dependencies:
       '@astrojs/internal-helpers': 0.11.0
-      '@vercel/analytics': 2.0.1(react@19.2.8)
+      '@vercel/analytics': 2.0.1(react@19.3.0)
       '@vercel/functions': 3.9.8
       '@vercel/nft': 1.11.0(rollup@4.60.1)
       '@vercel/routing-utils': 6.6.0
@@ -4953,28 +4953,28 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@base-ui/react@1.8.0(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@base-ui/react@1.8.0(@types/react@19.3.0)(react-dom@19.2.8(react@19.3.0))(react@19.3.0)':
     dependencies:
       '@babel/runtime': 7.29.7
-      '@base-ui/utils': 0.4.0(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@floating-ui/react-dom': 2.1.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@base-ui/utils': 0.4.0(@types/react@19.3.0)(react-dom@19.2.8(react@19.3.0))(react@19.3.0)
+      '@floating-ui/react-dom': 2.1.9(react-dom@19.2.8(react@19.3.0))(react@19.3.0)
       '@floating-ui/utils': 0.2.12
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-      use-sync-external-store: 1.6.0(react@19.2.8)
+      react: 19.3.0
+      react-dom: 19.2.8(react@19.3.0)
+      use-sync-external-store: 1.6.0(react@19.3.0)
     optionalDependencies:
-      '@types/react': 19.2.14
+      '@types/react': 19.3.0
 
-  '@base-ui/utils@0.4.0(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@base-ui/utils@0.4.0(@types/react@19.3.0)(react-dom@19.2.8(react@19.3.0))(react@19.3.0)':
     dependencies:
       '@babel/runtime': 7.29.7
       '@floating-ui/utils': 0.2.12
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
+      react: 19.3.0
+      react-dom: 19.2.8(react@19.3.0)
       reselect: 5.3.0
-      use-sync-external-store: 1.6.0(react@19.2.8)
+      use-sync-external-store: 1.6.0(react@19.3.0)
     optionalDependencies:
-      '@types/react': 19.2.14
+      '@types/react': 19.3.0
 
   '@better-auth/core@1.7.6(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.4)':
     dependencies:
@@ -5151,29 +5151,29 @@ snapshots:
       fast-wrap-ansi: 0.2.2
       sisteransi: 1.0.5
 
-  '@dnd-kit/accessibility@3.1.1(react@19.2.8)':
+  '@dnd-kit/accessibility@3.1.1(react@19.3.0)':
     dependencies:
-      react: 19.2.8
+      react: 19.3.0
       tslib: 2.8.1
 
-  '@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.3.0))(react@19.3.0)':
     dependencies:
-      '@dnd-kit/accessibility': 3.1.1(react@19.2.8)
-      '@dnd-kit/utilities': 3.2.2(react@19.2.8)
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
+      '@dnd-kit/accessibility': 3.1.1(react@19.3.0)
+      '@dnd-kit/utilities': 3.2.2(react@19.3.0)
+      react: 19.3.0
+      react-dom: 19.2.8(react@19.3.0)
       tslib: 2.8.1
 
-  '@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)':
+  '@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.3.0))(react@19.3.0))(react@19.3.0)':
     dependencies:
-      '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@dnd-kit/utilities': 3.2.2(react@19.2.8)
-      react: 19.2.8
+      '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.3.0))(react@19.3.0)
+      '@dnd-kit/utilities': 3.2.2(react@19.3.0)
+      react: 19.3.0
       tslib: 2.8.1
 
-  '@dnd-kit/utilities@3.2.2(react@19.2.8)':
+  '@dnd-kit/utilities@3.2.2(react@19.3.0)':
     dependencies:
-      react: 19.2.8
+      react: 19.3.0
       tslib: 2.8.1
 
   '@drizzle-team/brocli@0.10.2': {}
@@ -5464,11 +5464,11 @@ snapshots:
       '@floating-ui/core': 1.8.0
       '@floating-ui/utils': 0.2.12
 
-  '@floating-ui/react-dom@2.1.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@floating-ui/react-dom@2.1.9(react-dom@19.2.8(react@19.3.0))(react@19.3.0)':
     dependencies:
       '@floating-ui/dom': 1.8.0
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
+      react: 19.3.0
+      react-dom: 19.2.8(react@19.3.0)
 
   '@floating-ui/utils@0.2.12': {}
 
@@ -5725,10 +5725,10 @@ snapshots:
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.3':
     optional: true
 
-  '@nanostores/react@2.0.1(nanostores@1.5.4)(react@19.2.8)':
+  '@nanostores/react@2.0.1(nanostores@1.5.4)(react@19.3.0)':
     dependencies:
       nanostores: 1.5.4
-      react: 19.2.8
+      react: 19.3.0
 
   '@napi-rs/wasm-runtime@1.2.4(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)':
     dependencies:
@@ -5760,16 +5760,16 @@ snapshots:
 
   '@oxc-project/types@0.151.0': {}
 
-  '@phosphor-icons/react@2.1.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@phosphor-icons/react@2.1.10(react-dom@19.2.8(react@19.3.0))(react@19.3.0)':
     dependencies:
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
+      react: 19.3.0
+      react-dom: 19.2.8(react@19.3.0)
 
   '@playwright/test@1.63.0':
     dependencies:
       playwright: 1.63.0
 
-  '@reduxjs/toolkit@2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.8)(redux@5.0.1))(react@19.2.8)':
+  '@reduxjs/toolkit@2.11.2(react-redux@9.2.0(@types/react@19.3.0)(react@19.3.0)(redux@5.0.1))(react@19.3.0)':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@standard-schema/utils': 0.3.0
@@ -5778,8 +5778,8 @@ snapshots:
       redux-thunk: 3.1.0(redux@5.0.1)
       reselect: 5.1.1
     optionalDependencies:
-      react: 19.2.8
-      react-redux: 9.2.0(@types/react@19.2.14)(react@19.2.8)(redux@5.0.1)
+      react: 19.3.0
+      react-redux: 9.2.0(@types/react@19.3.0)(react@19.3.0)(redux@5.0.1)
 
   '@remix-run/route-pattern@0.22.1': {}
 
@@ -6033,10 +6033,10 @@ snapshots:
 
   '@tanstack/query-core@5.103.1': {}
 
-  '@tanstack/react-query@5.103.1(react@19.2.8)':
+  '@tanstack/react-query@5.103.1(react@19.3.0)':
     dependencies:
       '@tanstack/query-core': 5.103.1
-      react: 19.2.8
+      react: 19.3.0
 
   '@tauri-apps/cli-darwin-arm64@2.12.0':
     optional: true
@@ -6181,11 +6181,11 @@ snapshots:
       pg-protocol: 1.13.0
       pg-types: 2.2.0
 
-  '@types/react-dom@19.2.3(@types/react@19.2.14)':
+  '@types/react-dom@19.2.3(@types/react@19.3.0)':
     dependencies:
-      '@types/react': 19.2.14
+      '@types/react': 19.3.0
 
-  '@types/react@19.2.14':
+  '@types/react@19.3.0':
     dependencies:
       csstype: 3.2.3
 
@@ -6294,11 +6294,11 @@ snapshots:
 
   '@uploadthing/mime-types@0.3.6': {}
 
-  '@uploadthing/react@7.3.3(react@19.2.8)(uploadthing@7.7.4(h3@1.15.11)(tailwindcss@4.2.2))':
+  '@uploadthing/react@7.3.3(react@19.3.0)(uploadthing@7.7.4(h3@1.15.11)(tailwindcss@4.2.2))':
     dependencies:
       '@uploadthing/shared': 7.1.10
       file-selector: 0.6.0
-      react: 19.2.8
+      react: 19.3.0
       uploadthing: 7.7.4(h3@1.15.11)(tailwindcss@4.2.2)
 
   '@uploadthing/shared@7.1.10':
@@ -6307,9 +6307,9 @@ snapshots:
       effect: 3.20.0
       sqids: 0.3.0
 
-  '@vercel/analytics@2.0.1(react@19.2.8)':
+  '@vercel/analytics@2.0.1(react@19.3.0)':
     optionalDependencies:
-      react: 19.2.8
+      react: 19.3.0
 
   '@vercel/cli-config@0.2.7':
     dependencies:
@@ -6643,7 +6643,7 @@ snapshots:
 
   bcryptjs@3.0.3: {}
 
-  better-auth@1.7.6(drizzle-kit@0.31.11)(drizzle-orm@0.45.3(@neondatabase/serverless@1.0.2)(@types/pg@8.20.0)(kysely@0.29.6))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vitest@4.1.11(@types/node@22.19.17)(vite@8.3.1(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))):
+  better-auth@1.7.6(drizzle-kit@0.31.11)(drizzle-orm@0.45.3(@neondatabase/serverless@1.0.2)(@types/pg@8.20.0)(kysely@0.29.6))(react-dom@19.2.8(react@19.3.0))(react@19.3.0)(vitest@4.1.11(@types/node@22.19.17)(vite@8.3.1(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))):
     dependencies:
       '@better-auth/core': 1.7.6(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.4)
       '@better-auth/drizzle-adapter': 1.7.6(@better-auth/core@1.7.6(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.4))(@better-auth/utils@0.4.2)(drizzle-orm@0.45.3(@neondatabase/serverless@1.0.2)(@types/pg@8.20.0)(kysely@0.29.6))
@@ -6665,8 +6665,8 @@ snapshots:
     optionalDependencies:
       drizzle-kit: 0.31.11
       drizzle-orm: 0.45.3(@neondatabase/serverless@1.0.2)(@types/pg@8.20.0)(kysely@0.29.6)
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
+      react: 19.3.0
+      react-dom: 19.2.8(react@19.3.0)
       vitest: 4.1.11(@types/node@22.19.17)(vite@8.3.1(@types/node@22.19.17)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
     transitivePeerDependencies:
       - '@opentelemetry/api'
@@ -7523,9 +7523,9 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@0.400.0(react@19.2.8):
+  lucide-react@0.400.0(react@19.3.0):
     dependencies:
-      react: 19.2.8
+      react: 19.3.0
 
   magic-string@0.30.21:
     dependencies:
@@ -7837,33 +7837,33 @@ snapshots:
 
   radix3@1.1.2: {}
 
-  react-dom@19.2.8(react@19.2.8):
+  react-dom@19.2.8(react@19.3.0):
     dependencies:
-      react: 19.2.8
+      react: 19.3.0
       scheduler: 0.27.0
 
   react-is@19.2.5: {}
 
-  react-redux@9.2.0(@types/react@19.2.14)(react@19.2.8)(redux@5.0.1):
+  react-redux@9.2.0(@types/react@19.3.0)(react@19.3.0)(redux@5.0.1):
     dependencies:
       '@types/use-sync-external-store': 0.0.6
-      react: 19.2.8
-      use-sync-external-store: 1.6.0(react@19.2.8)
+      react: 19.3.0
+      use-sync-external-store: 1.6.0(react@19.3.0)
     optionalDependencies:
-      '@types/react': 19.2.14
+      '@types/react': 19.3.0
       redux: 5.0.1
 
   react-refresh@0.18.0: {}
 
-  react-router@8.4.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  react-router@8.4.0(react-dom@19.2.8(react@19.3.0))(react@19.3.0):
     dependencies:
       '@remix-run/route-pattern': 0.22.1
       cookie-es: 3.1.1
-      react: 19.2.8
+      react: 19.3.0
     optionalDependencies:
-      react-dom: 19.2.8(react@19.2.8)
+      react-dom: 19.2.8(react@19.3.0)
 
-  react@19.2.8: {}
+  react@19.3.0: {}
 
   readable-stream@3.6.2:
     dependencies:
@@ -7875,21 +7875,21 @@ snapshots:
 
   readdirp@5.1.1: {}
 
-  recharts@3.8.1(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.8))(react-is@19.2.5)(react@19.2.8)(redux@5.0.1):
+  recharts@3.8.1(@types/react@19.3.0)(react-dom@19.2.8(react@19.3.0))(react-is@19.2.5)(react@19.3.0)(redux@5.0.1):
     dependencies:
-      '@reduxjs/toolkit': 2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.8)(redux@5.0.1))(react@19.2.8)
+      '@reduxjs/toolkit': 2.11.2(react-redux@9.2.0(@types/react@19.3.0)(react@19.3.0)(redux@5.0.1))(react@19.3.0)
       clsx: 2.1.1
       decimal.js-light: 2.5.1
       es-toolkit: 1.45.1
       eventemitter3: 5.0.4
       immer: 10.2.0
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
+      react: 19.3.0
+      react-dom: 19.2.8(react@19.3.0)
       react-is: 19.2.5
-      react-redux: 9.2.0(@types/react@19.2.14)(react@19.2.8)(redux@5.0.1)
+      react-redux: 9.2.0(@types/react@19.3.0)(react@19.3.0)(redux@5.0.1)
       reselect: 5.1.1
       tiny-invariant: 1.3.3
-      use-sync-external-store: 1.6.0(react@19.2.8)
+      use-sync-external-store: 1.6.0(react@19.3.0)
       victory-vendor: 37.3.6
     transitivePeerDependencies:
       - '@types/react'
@@ -8102,12 +8102,12 @@ snapshots:
 
   smol-toml@1.8.0: {}
 
-  sonner@2.0.8(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  sonner@2.0.8(@types/react@19.3.0)(react-dom@19.2.8(react@19.3.0))(react@19.3.0):
     dependencies:
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
+      react: 19.3.0
+      react-dom: 19.2.8(react@19.3.0)
     optionalDependencies:
-      '@types/react': 19.2.14
+      '@types/react': 19.3.0
 
   source-map-js@1.2.1: {}
 
@@ -8360,9 +8360,9 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
-  use-sync-external-store@1.6.0(react@19.2.8):
+  use-sync-external-store@1.6.0(react@19.3.0):
     dependencies:
-      react: 19.2.8
+      react: 19.3.0
 
   util-deprecate@1.0.2: {}
 
