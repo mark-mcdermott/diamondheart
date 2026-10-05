@@ -28,14 +28,39 @@ export const authClient = createAuthClient({
  * promise from a form action unmounts the React tree. Returns the message to
  * show, or nothing on success.
  */
-export async function attempt(call: () => Promise<{ error: { message?: string } | null }>, fallback: string): Promise<string | undefined> {
+export type AuthFailure = {
+  message: string;
+  /** Better Auth's own code, where it gave one — `EMAIL_NOT_VERIFIED` is the one acted on. */
+  code?: string;
+};
+
+/**
+ * As `attempt`, but keeps the error code.
+ *
+ * Sign-in has to tell "wrong password" apart from "verify your address first", and those
+ * differ only by code — the messages are both prose the user should not be asked to parse.
+ */
+export async function attemptDetailed(
+  call: () => Promise<{ error: { message?: string; code?: string } | null }>,
+  fallback: string,
+): Promise<AuthFailure | undefined> {
   try {
     const { error } = await call();
-    return error ? error.message || fallback : undefined;
+    return error ? { message: error.message || fallback, code: error.code } : undefined;
   } catch {
-    return "Could not reach the server. Check your connection and try again.";
+    return { message: "Could not reach the server. Check your connection and try again." };
   }
 }
+
+export async function attempt(
+  call: () => Promise<{ error: { message?: string } | null }>,
+  fallback: string,
+): Promise<string | undefined> {
+  return (await attemptDetailed(call, fallback))?.message;
+}
+
+/** Better Auth's code for a sign-in refused because the address is unverified. */
+export const EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED";
 
 export function safeRedirect(target: string | null | undefined, fallback = "/dashboard"): string {
   return target && target.startsWith("/") && !target.startsWith("//") ? target : fallback;

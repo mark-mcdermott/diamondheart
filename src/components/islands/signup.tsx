@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { NATIVE } from "@/app/platform";
 import { attempt, authClient } from "@/lib/auth-client";
+import { CheckInbox } from "@/components/blocks/check-inbox";
 import { SignupForm } from "@/components/blocks/signup-form";
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -8,6 +8,8 @@ const MIN_PASSWORD_LENGTH = 8;
 /** The sign-up card, an island on an Astro page. */
 export function Signup({ onLogin }: { onLogin?: () => void } = {}) {
   const [error, setError] = useState<string | undefined>();
+  /** Set once the account exists; sign-up no longer signs anyone in. */
+  const [pendingAddress, setPendingAddress] = useState<string | undefined>();
 
   async function signUp(formData: FormData) {
     const email = String(formData.get("email") ?? "").trim();
@@ -39,13 +41,16 @@ export function Signup({ onLogin }: { onLogin?: () => void } = {}) {
       setError(failure);
       return;
     }
-    if (NATIVE) {
-      // The token is stored; a reload takes the bundle from its sign-in screen into the applet.
-      window.location.reload();
-      return;
-    }
-    window.location.assign("/dashboard");
+    /*
+     * No redirect any more. `requireEmailVerification` means sign-up creates the account
+     * without a session, so sending anyone to /dashboard would bounce them to login with
+     * nothing explaining why. The native bundle is in the same position — there is no token
+     * to store until the address is verified — so both land here.
+     */
+    setPendingAddress(email);
   }
+
+  if (pendingAddress) return <CheckInbox email={pendingAddress} />;
 
   return (
     <div className="flex-1 flex items-center justify-center px-4 py-16">

@@ -41,7 +41,7 @@ export default defineConfig({
     // Better Auth checks every browser call's Origin against its base URL, and
     // the server would otherwise report its own host, not the one Playwright connects to.
     // Its rate limiter would refuse the suite's one-sign-up-per-spec pace.
-    env: { ...process.env, BETTER_AUTH_URL: baseURL, AUTH_RATE_LIMIT: "off" },
+    env: { ...process.env, BETTER_AUTH_URL: baseURL, AUTH_RATE_LIMIT: "off", AUTH_REQUIRE_VERIFICATION: "off" },
     reuseExistingServer: false,
     timeout: 180_000,
     stdout: "pipe",
