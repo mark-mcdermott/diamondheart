@@ -84,19 +84,33 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url }) => {
       await sendPasswordResetEmail(user.email, url);
     },
+    /*
+     * See the note on `emailVerification` below for why this waited, and for what.
+     *
+     * Off for the e2e server only, the same shape as `AUTH_RATE_LIMIT` below and for the same
+     * reason: Playwright signs up per spec and has no mailbox to collect a link from, so the
+     * gate would block every test rather than test anything. The cost is that the gate itself
+     * is not covered by e2e — the flows behind it are.
+     */
+    requireEmailVerification: process.env.AUTH_REQUIRE_VERIFICATION !== "off",
   },
 
   /**
-   * `requireEmailVerification` is deliberately **not** set.
+   * `requireEmailVerification` is on as of 2026-10-05, and the order it waited for matters.
    *
-   * Every existing row has `emailVerified = false` — the column's own comment says nobody
-   * has verified an address — so requiring it would lock out every account that exists,
-   * including Mark's, the moment this deploys. That is the opposite of the lockout this
-   * change is meant to fix.
+   * It was off when the mail first landed, because every row then had `emailVerified = false`
+   * and requiring it would have locked out every account including Mark's. Two things had to
+   * be true first, and now are:
    *
-   * The order is: send verification mail now, let accounts verify, and only then consider
-   * requiring it. frunk could require it from day one because it had no accounts to migrate;
-   * diamondheart is live and does.
+   * 1. **Both existing accounts are verified** — one through the flow, one set directly.
+   * 2. **There is a way back from a failed send.** Better Auth runs `sendVerificationEmail`
+   *    as a background task, so a failure is logged and never reaches the request: sign-up
+   *    answers 200 and creates the account with no mail sent. With this flag on, that person
+   *    cannot sign in either. `CheckInbox` is the answer — sign-up and a refused sign-in both
+   *    land there, and it offers a resend rather than leaving them to guess.
+   *
+   * Turning this on without (2) would have converted a silent non-delivery into a locked
+   * account with no self-serve recovery.
    */
   emailVerification: {
     sendOnSignUp: true,
