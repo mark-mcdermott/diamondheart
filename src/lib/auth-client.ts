@@ -40,6 +40,9 @@ export type AuthFailure = {
  * Sign-in has to tell "wrong password" apart from "verify your address first", and those
  * differ only by code — the messages are both prose the user should not be asked to parse.
  */
+const UNREACHABLE =
+  "Could not reach the server. Check your connection and try again.";
+
 export async function attemptDetailed(
   call: () => Promise<{ error: { message?: string; code?: string } | null }>,
   fallback: string,
@@ -48,7 +51,38 @@ export async function attemptDetailed(
     const { error } = await call();
     return error ? { message: error.message || fallback, code: error.code } : undefined;
   } catch {
-    return { message: "Could not reach the server. Check your connection and try again." };
+    return { message: UNREACHABLE };
+  }
+}
+
+/** What a call came back with: the response, or the one failure to show. */
+export type AuthOutcome<T> =
+  { data: T; failure?: undefined } | { data?: undefined; failure: AuthFailure };
+
+/**
+ * `attemptDetailed` with the response kept. Sign-up needs it: whether the
+ * server opened a session is in the body, and the form has to read that
+ * rather than guess. A success with no body is reported as the fallback —
+ * Better Auth never answers that way, and passing it through would hand a
+ * form `undefined` to navigate on.
+ */
+export async function attemptWith<T>(
+  call: () => Promise<{
+    data: T | null;
+    error: { message?: string; code?: string } | null;
+  }>,
+  fallback: string,
+): Promise<AuthOutcome<T>> {
+  try {
+    const { data, error } = await call();
+    if (error || data === null) {
+      return {
+        failure: { message: error?.message || fallback, code: error?.code },
+      };
+    }
+    return { data };
+  } catch {
+    return { failure: { message: UNREACHABLE } };
   }
 }
 
