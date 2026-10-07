@@ -31,8 +31,8 @@ importers:
         specifier: ^1.8.0
         version: 1.8.0(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@capacitor/android':
-        specifier: ^8.3.5
-        version: 8.3.5(@capacitor/core@8.3.5)
+        specifier: ^8.4.3
+        version: 8.4.3(@capacitor/core@8.3.5)
       '@capacitor/app':
         specifier: ^8.1.1
         version: 8.1.1(@capacitor/core@8.3.5)
@@ -596,10 +596,10 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@capacitor/android@8.3.5':
-    resolution: {integrity: sha512-OvqNG8kTgLxttWszpTt9M2JzrbWLdSWu4JtasLivvtZMFF8cgbOVU073ub3fbP4SY6ZSsBTFQfnwhtGPufNGYA==}
+  '@capacitor/android@8.4.3':
+    resolution: {integrity: sha512-VICd1+E2u5uPvCb5hseoZr84u7/wi334BqayKyXvSLeqURn/iw7nCFEWK29RQNW2rxiW5l1vTVHQ2K6tAJkpTQ==}
     peerDependencies:
-      '@capacitor/core': ^8.3.0
+      '@capacitor/core': ^8.4.0
 
   '@capacitor/app@8.1.1':
     resolution: {integrity: sha512-xM2ZTX5jK60tFtmjsmJv+Cdj1Qsb6NcavkqmdEnCPQBeya9oKhamZJxYOnQNj1ZvcJM7sWfG6BEtSLx42pisbA==}
@@ -4653,7 +4653,7 @@ snapshots:
 
   '@aparajita/capacitor-biometric-auth@10.0.0':
     dependencies:
-      '@capacitor/android': 8.3.5(@capacitor/core@8.3.5)
+      '@capacitor/android': 8.4.3(@capacitor/core@8.3.5)
       '@capacitor/app': 8.1.1(@capacitor/core@8.3.5)
       '@capacitor/core': 8.3.5
       '@capacitor/ios': 8.3.5(@capacitor/core@8.3.5)
@@ -5062,7 +5062,7 @@ snapshots:
   '@bruits/satteri-win32-x64-msvc@0.10.5':
     optional: true
 
-  '@capacitor/android@8.3.5(@capacitor/core@8.3.5)':
+  '@capacitor/android@8.4.3(@capacitor/core@8.3.5)':
     dependencies:
       '@capacitor/core': 8.3.5
 
