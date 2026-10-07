@@ -43,8 +43,8 @@ importers:
         specifier: ^8.0.2
         version: 8.0.2(@capacitor/core@8.3.5)
       '@capacitor/ios':
-        specifier: ^8.3.5
-        version: 8.3.5(@capacitor/core@8.3.5)
+        specifier: ^8.4.3
+        version: 8.4.3(@capacitor/core@8.3.5)
       '@capacitor/keyboard':
         specifier: ^8.0.5
         version: 8.0.5(@capacitor/core@8.3.5)
@@ -619,10 +619,10 @@ packages:
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
-  '@capacitor/ios@8.3.5':
-    resolution: {integrity: sha512-6MOdZN3U6LAm6OIC23gcf8Nagydnv1/X0PI0HnlIVvLpLfqC+uHdX8lBVugW8B3XlESZwlmtTlCXcjW44goF9A==}
+  '@capacitor/ios@8.4.3':
+    resolution: {integrity: sha512-ziFt4WskFjUFgwCcudhxklcCFMCPNTUk1yVuwutw6xxCvUZzmiOJjVLjDrZ+3A1G02nV+oizUiGPff97htPRIg==}
     peerDependencies:
-      '@capacitor/core': ^8.3.0
+      '@capacitor/core': ^8.4.0
 
   '@capacitor/keyboard@8.0.5':
     resolution: {integrity: sha512-oFXygC4eKYA5l2MdpTR06L2M/4x6e2SLD5yS1T9+UBDKTkzyvhWKEhbYLUaTIBPpLKqlfGudJw1X73S1H9eUzQ==}
@@ -4656,7 +4656,7 @@ snapshots:
       '@capacitor/android': 8.3.5(@capacitor/core@8.3.5)
       '@capacitor/app': 8.1.1(@capacitor/core@8.3.5)
       '@capacitor/core': 8.3.5
-      '@capacitor/ios': 8.3.5(@capacitor/core@8.3.5)
+      '@capacitor/ios': 8.4.3(@capacitor/core@8.3.5)
 
   '@astrojs/astro2tsx@0.1.1(@emnapi/runtime@1.11.3)':
     dependencies:
@@ -5101,7 +5101,7 @@ snapshots:
     dependencies:
       '@capacitor/core': 8.3.5
 
-  '@capacitor/ios@8.3.5(@capacitor/core@8.3.5)':
+  '@capacitor/ios@8.4.3(@capacitor/core@8.3.5)':
     dependencies:
       '@capacitor/core': 8.3.5
 
